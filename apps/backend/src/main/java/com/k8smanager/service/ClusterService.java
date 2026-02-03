@@ -61,7 +61,7 @@ public class ClusterService {
         podList.getItems().stream()
                 .filter(pod -> pod.getSpec().getNodeName() != null
                         && pod.getSpec().getNodeName().equals(nodeName))
-                .filter(pod -> !pod.getSpec().get nodeName().equals("kube-system"))
+                .filter(pod -> !pod.getSpec().getNodeName().equals("kube-system"))
                 .filter(pod -> !isDaemonSet(pod))
                 .forEach(pod -> {
                     try {

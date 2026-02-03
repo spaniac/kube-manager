@@ -1,0 +1,113 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  namespace: default
+  labels:
+    app: k8s-manager
+    component: backup
+spec:
+  schedule: "0 2 * * *"  # Run daily at 2 AM
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: k8s-manager
+          containers:
+          - name: pg-backup
+            image: postgres:15-alpine
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              # Get current date for backup filename
+              DATE=$(date +%Y%m%d_%H%M%S)
+              BACKUP_FILE="/backups/postgres_backup_${DATE}.sql.gz"
+
+              echo "Starting backup at $(date)"
+              echo "Backup file: ${BACKUP_FILE}"
+
+              # Perform backup
+              PGPASSWORD="${DB_PASSWORD}" pg_dump \
+                -h "${DB_HOST}" \
+                -p "${DB_PORT}" \
+                -U "${DB_USERNAME}" \
+                -d "${DB_NAME}" \
+                --format=plain \
+                --no-owner \
+                --no-acl \
+                | gzip > "${BACKUP_FILE}"
+
+              echo "Backup completed successfully"
+
+              # Calculate backup size
+              BACKUP_SIZE=$(du -h "${BACKUP_FILE}" | cut -f1)
+              echo "Backup size: ${BACKUP_SIZE}"
+
+              # Delete backups older than RETENTION_DAYS
+              find /backups -name "postgres_backup_*.sql.gz" -mtime +${RETENTION_DAYS} -delete
+
+              echo "Old backups cleaned up (older than ${RETENTION_DAYS} days)"
+            env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: k8s-manager-config
+                  key: db.host
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: k8s-manager-config
+                  key: db.port
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: k8s-manager-config
+                  key: db.name
+            - name: DB_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: k8s-manager-config
+                  key: db.username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: k8s-manager-secrets
+                  key: db.password
+            - name: RETENTION_DAYS
+              value: "7"
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backups
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "100m"
+              limits:
+                memory: "512Mi"
+                cpu: "500m"
+          restartPolicy: OnFailure
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: postgres-backup-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-backup-pvc
+  namespace: default
+  labels:
+    app: k8s-manager
+    component: backup
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard  # Adjust based on your cluster's storage class

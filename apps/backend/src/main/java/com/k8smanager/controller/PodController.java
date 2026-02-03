@@ -228,9 +228,8 @@ public class PodController {
 
         return ApiResponse.success("Logs not yet implemented - use SSE streaming");
     }
-}
 
-
+    
     /**
      * List pods.
      * GET /api/v1/pods

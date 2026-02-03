@@ -4,15 +4,17 @@ import com.k8smanager.dto.*;
 
 import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
-import io.micrometer.prometheusclient.PrometheusClient;
-import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Instant;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service for resource monitoring metrics.
@@ -21,8 +23,10 @@ import java.util.List;
 @Service
 public class MonitoringService {
 
+    private static final Logger logger = LoggerFactory.getLogger(MonitoringService.class);
+
     private final KubernetesClient kubernetesClient;
-    private final PrometheusClient prometheusClient;
+    private final WebClient prometheusWebClient;
 
     /**
      * Configuration for Prometheus client.
@@ -35,9 +39,9 @@ public class MonitoringService {
     private Duration prometheusTimeout;
 
     @Autowired
-    public MonitoringService(KubernetesClient kubernetesClient, PrometheusClient prometheusClient) {
+    public MonitoringService(KubernetesClient kubernetesClient, WebClient prometheusWebClient) {
         this.kubernetesClient = kubernetesClient;
-        this.prometheusClient = prometheusClient;
+        this.prometheusWebClient = prometheusWebClient;
     }
 
     /**
@@ -344,6 +348,119 @@ public class MonitoringService {
         // In production, this would update alert status in database
         // For now, return true to simulate success
         return true;
+    }
+
+    public PromQLQueryResultDTO executePromQLQuery(String query, String range) {
+        if (prometheusWebClient == null) {
+            logger.warn("Prometheus WebClient not configured");
+            return new PromQLQueryResultDTO(query, range, List.of(), new MetricSummaryDTO(0, 0, 0),
+                    "Prometheus client not configured");
+        }
+
+        try {
+            logger.info("Executing PromQL query: {}", query);
+
+            Duration duration = parseRange(range);
+            long endTime = Instant.now().getEpochSecond();
+            long startTime = endTime - duration.getSeconds();
+            long step = calculateStep(duration);
+
+            String queryUrl = String.format("/api/v1/query_range?query=%s&start=%d&end=%d&step=%d",
+                    java.net.URLEncoder.encode(query, java.nio.charset.StandardCharsets.UTF_8),
+                    startTime, endTime, step);
+
+            Map<String, Object> response = prometheusWebClient.get()
+                    .uri(queryUrl)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+
+            if (response == null || !response.containsKey("data")) {
+                logger.warn("No data returned from Prometheus for query: {}", query);
+                return new PromQLQueryResultDTO(query, range, List.of(), new MetricSummaryDTO(0, 0, 0),
+                        "No data returned from Prometheus");
+            }
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> data = (Map<String, Object>) response.get("data");
+
+            List<MetricPointDTO> dataPoints = parsePrometheusResult(data);
+
+            MetricSummaryDTO summary = dataPoints.isEmpty() ?
+                    new MetricSummaryDTO(0, 0, 0) :
+                    calculateSummary(dataPoints);
+
+            logger.info("PromQL query executed successfully, returned {} data points", dataPoints.size());
+
+            return new PromQLQueryResultDTO(query, range, dataPoints, summary);
+
+        } catch (Exception e) {
+            logger.error("Error executing PromQL query: {}", query, e);
+            return new PromQLQueryResultDTO(query, range, List.of(), new MetricSummaryDTO(0, 0, 0),
+                    "Query execution failed: " + e.getMessage());
+        }
+    }
+
+    private Duration parseRange(String range) {
+        if (range == null) {
+            return Duration.ofHours(1);
+        }
+
+        return switch (range.toLowerCase()) {
+            case "1h" -> Duration.ofHours(1);
+            case "6h" -> Duration.ofHours(6);
+            case "24h" -> Duration.ofHours(24);
+            case "7d" -> Duration.ofDays(7);
+            case "30d" -> Duration.ofDays(30);
+            default -> Duration.ofHours(1);
+        };
+    }
+
+    private long calculateStep(Duration duration) {
+        long totalSeconds = duration.getSeconds();
+        return Math.max(totalSeconds / 1000, 15);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<MetricPointDTO> parsePrometheusResult(Map<String, Object> data) {
+        List<MetricPointDTO> dataPoints = new java.util.ArrayList<>();
+
+        String resultType = (String) data.get("resultType");
+        List<Map<String, Object>> results = (List<Map<String, Object>>) data.get("result");
+
+        if (results == null || results.isEmpty()) {
+            return dataPoints;
+        }
+
+        for (Map<String, Object> result : results) {
+            if ("matrix".equals(resultType)) {
+                List<List<Object>> values = (List<List<Object>>) result.get("values");
+                if (values != null) {
+                    for (List<Object> valuePair : values) {
+                        long timestamp = (long) ((Number) valuePair.get(0)).doubleValue();
+                        double value = Double.parseDouble((String) valuePair.get(1));
+                        dataPoints.add(new MetricPointDTO(
+                                Instant.ofEpochSecond(timestamp),
+                                value
+                        ));
+                    }
+                }
+            } else if ("vector".equals(resultType)) {
+                List<Object> value = (List<Object>) result.get("value");
+                if (value != null) {
+                    long timestamp = (long) ((Number) value.get(0)).doubleValue();
+                    double val = Double.parseDouble((String) value.get(1));
+                    dataPoints.add(new MetricPointDTO(
+                            Instant.ofEpochSecond(timestamp),
+                            val
+                    ));
+                }
+            }
+        }
+
+        dataPoints.sort((a, b) -> a.timestamp().compareTo(b.timestamp()));
+
+        return dataPoints;
     }
 
     private double getCpuUsage(PodStatus status) {

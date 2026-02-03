@@ -130,7 +130,6 @@ public class UserController {
         userRepository.save(user);
         return ResponseEntity.ok(ApiResponse.success(null, "All sessions revoked successfully"));
     }
-}
 
     /**
      * Get current user profile.

@@ -111,71 +111,53 @@ public class PodLogController {
             final long finalSinceTimestamp = sinceTimestamp;
             final long finalUntilTimestamp = untilTimestamp;
 
-            // Stream logs with filtering
-            logs.watch(new io.fabric8.kubernetes.client.dsl.Watch<Pod>() {
-                try {
-                    logs.resource(resource -> {
-                        io.fabric8.kubernetes.client.dsl.LogWatch log = resource;
+            io.fabric8.kubernetes.client.dsl.LogWatch logWatch = logs.watch();
 
-                        String logLine = new String(log.getBytes(), StandardCharsets.UTF_8);
-                        java.time.Instant timestamp = java.time.Instant.ofEpochMilli(
-                                log.getMetadata().getCreationTimestamp() + (log.getLine() * 1000)
-                        );
+            try {
+                InputStream logStream = logWatch.getOutput();
+                byte[] buffer = new byte[8192];
+                int bytesRead;
 
-                        // Apply filters
-                        if (severity != null || severity.isEmpty()) {
+                while ((bytesRead = logStream.read(buffer)) != -1) {
+                    String logLine = new String(buffer, 0, bytesRead, StandardCharsets.UTF_8);
+
+                    if (severity != null && !severity.isEmpty()) {
+                        if (logLine.toLowerCase().contains(severity.toLowerCase())) {
                             emitter.send(SseEmitter.event()
-                                                    .name("log")
-                                                    .data(SseEmitter.event()
-                                                            .name("severity")
-                                                            .value(severity.toLowerCase()))
-                                                            .build())
-                                                    .build());
-                        }
-
-                        if (search != null && !search.isEmpty() && logLine.toLowerCase().contains(search.toLowerCase())) {
-                            emitter.send(SseEmitter.event()
-                                                    .name("log")
-                                                    .data(SseEmitter.event()
-                                                            .name("match")
-                                                            .value(search))
-                                                            .build())
-                                                    .build());
-                        }
-
-                        if (finalSinceTimestamp > 0 && timestamp < finalSinceTimestamp) {
-                            return; // Skip old logs
-                        }
-
-                        if (finalUntilTimestamp > 0 && timestamp > finalUntilTimestamp) {
-                            break; // Stop streaming
-                        }
-
-                        emitter.send(SseEmitter.event()
-                                            .data(SseEmitter.event()
-                                                    .name("log")
-                                                    .data(logLine)
-                                                    .build())
-                                            .build());
-                    });
-                } catch (Exception e) {
-                    emitter.send(SseEmitter.event()
-                                    .data(ApiResponse.error("Failed to read logs: " + e.getMessage()))
+                                    .name("log")
+                                    .data(SseEmitter.event()
+                                            .name("severity")
+                                            .value(severity.toLowerCase())
+                                            .build())
                                     .build());
-                    emitter.completeWithError(e);
-                }
-            });
+                        }
+                    } else {
+                        emitter.send(SseEmitter.event()
+                                .name("log")
+                                .data(logLine)
+                                .build());
+                    }
 
-            // Send completion event
-            emitter.send(SseEmitter.event()
-                            .data(SseEmitter.event().name("done").build())
+                    if (search != null && !search.isEmpty() && !logLine.toLowerCase().contains(search.toLowerCase())) {
+                        continue;
+                    }
+
+                    emitter.send(SseEmitter.event()
+                            .name("log")
+                            .data(logLine)
                             .build());
+                }
+            } catch (Exception e) {
+                emitter.send(SseEmitter.event()
+                        .data(ApiResponse.error("Failed to read logs: " + e.getMessage()))
+                        .build());
+                emitter.completeWithError(e);
+            } finally {
+                logWatch.close();
+            }
 
-            // Keep connection for cleanup
-            emitter.onCompletion(() -> logs.close());
-            emitter.onTimeout(() -> {
-                logs.close();
-            });
+            emitter.onCompletion(() -> logWatch.close());
+            emitter.onTimeout(() -> logWatch.close());
 
         } catch (Exception e) {
             emitter.send(SseEmitter.event()

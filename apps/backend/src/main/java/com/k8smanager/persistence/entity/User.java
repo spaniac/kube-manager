@@ -38,13 +38,13 @@ public class User {
     private Instant lastLoginAt;
 
     @ManyToMany(mappedBy = "user")
-    private Set<UserRole> userRoles = java.util.HashSet<>();
+    private Set<UserRole> userRoles = new java.util.HashSet<>();
 
     @OneToMany(mappedBy = "createdBy")
-    private Set<AuditLog> auditLogs = java.util.HashSet<>();
+    private Set<AuditLog> auditLogs = new java.util.HashSet<>();
 
     @OneToMany(mappedBy = "user")
-    private Set<Session> sessions = java.util.HashSet<>();
+    private Set<Session> sessions = new java.util.HashSet<>();
 
     /**
      * Check if user has a specific role.

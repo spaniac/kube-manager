@@ -1,0 +1,123 @@
+import apiClient from '@api/client';
+import { z } from 'zod';
+import { parseApiResponse, parsePaginationParams } from '@utils/apiResponse';
+import {
+  deploymentSchema,
+  scaleDeploymentRequestSchema,
+  apiResponseSchema,
+  resourceListSchema,
+} from '../types/schemas';
+import type { Deployment, ResourceList, ResourceYaml } from '../types/api';
+
+export async function getDeployments(params?: {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  namespace?: string;
+  search?: string;
+}): Promise<ResourceList<Deployment>> {
+  const queryParams = parsePaginationParams(params || {});
+
+  if (params?.namespace) {
+    queryParams += `&namespace=${encodeURIComponent(params.namespace)}`;
+  }
+
+  if (params?.search) {
+    queryParams += `&search=${encodeURIComponent(params.search)}`;
+  }
+
+  const response = await apiClient.get<ApiResponse<ResourceList<Deployment>>>(
+    `/api/v1/deployments?${queryParams}`,
+  );
+  return parseApiResponse(response.data, resourceListSchema(deploymentSchema));
+}
+
+export async function getDeployment(namespace: string, name: string): Promise<Deployment> {
+  const response = await apiClient.get<ApiResponse<Deployment>>(
+    `/api/v1/deployments/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`,
+  );
+  return parseApiResponse(response.data, deploymentSchema);
+}
+
+export async function scaleDeployment(
+  namespace: string,
+  name: string,
+  replicas: number,
+): Promise<{ message: string }> {
+  const response = await apiClient.put<ApiResponse<{ message: string }>>(
+    `/api/v1/deployments/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/scale`,
+    { replicas },
+  );
+  return parseApiResponse(
+    response.data,
+    apiResponseSchema(z.object({ message: z.string() })),
+  );
+}
+
+export async function restartDeployment(
+  namespace: string,
+  name: string,
+): Promise<{ message: string }> {
+  const response = await apiClient.post<ApiResponse<{ message: string }>>(
+    `/api/v1/deployments/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/restart`,
+  );
+  return parseApiResponse(
+    response.data,
+    apiResponseSchema(z.object({ message: z.string() })),
+  );
+}
+
+export async function updateDeploymentImage(
+  namespace: string,
+  name: string,
+  image: string,
+): Promise<{ message: string }> {
+  const response = await apiClient.put<ApiResponse<{ message: string }>>(
+    `/api/v1/deployments/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/image`,
+    { image },
+  );
+  return parseApiResponse(
+    response.data,
+    apiResponseSchema(z.object({ message: z.string() })),
+  );
+}
+
+export async function rollbackDeployment(
+  namespace: string,
+  name: string,
+  revision?: string,
+): Promise<{ message: string }> {
+  const queryParams = revision ? `?revision=${revision}` : '';
+  const response = await apiClient.post<ApiResponse<{ message: string }>>(
+    `/api/v1/deployments/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/rollback${queryParams}`,
+  );
+  return parseApiResponse(
+    response.data,
+    apiResponseSchema(z.object({ message: z.string() })),
+  );
+}
+
+export async function deleteDeployment(namespace: string, name: string): Promise<void> {
+  const response = await apiClient.delete<ApiResponse<void>>(
+    `/api/v1/deployments/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`,
+  );
+  parseApiResponse(response.data, apiResponseSchema(z.undefined()));
+}
+
+export async function getDeploymentYaml(namespace: string, name: string): Promise<ResourceYaml> {
+  const response = await apiClient.get<ApiResponse<ResourceYaml>>(
+    `/api/v1/deployments/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/yaml`,
+  );
+  return parseApiResponse(
+    response.data,
+    apiResponseSchema(
+      z.object({
+        name: z.string(),
+        kind: z.string(),
+        namespace: z.string().optional(),
+        yaml: z.string(),
+      }),
+    ),
+  ).data;
+}

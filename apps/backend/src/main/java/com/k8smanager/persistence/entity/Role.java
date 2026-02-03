@@ -29,10 +29,10 @@ public class Role {
     private String description;
 
     @ManyToMany(mappedBy = "roles")
-    private Set<Permission> permissions = java.util.HashSet<>();
+    private Set<Permission> permissions = new java.util.HashSet<>();
 
     @OneToMany(mappedBy = "role")
-    private Set<UserRole> userRoles = java.util.HashSet<>();
+    private Set<UserRole> userRoles = new java.util.HashSet<>();
 
     /**
      * Predefined role types.

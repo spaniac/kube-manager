@@ -1,0 +1,624 @@
+/**
+ * YamlEditor Component Styles
+ *
+ * Design concept: Technical, precision-focused dark interface with cyan accents
+ * inspired by Kubernetes' color palette and modern developer tools.
+ *
+ * Aesthetic choices:
+ * - Dark theme (#0f172a) for reduced eye strain during long sessions
+ * - Cyan (#06b6d4) as primary accent - technical, trustworthy
+ * - Subtle grid pattern for texture
+ * - Sharp corners for precision feel
+ * - High contrast for readability
+ */
+
+/* Main container */
+.yamlEditor {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+  border: 1px solid #334155;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.3),
+    0 2px 4px -1px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Subtle grid pattern overlay */
+.yamlEditor::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 16px;
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom: 1px solid #334155;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(8px);
+}
+
+.toolbarGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  border-right: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.toolbarGroup:last-child {
+  border-right: none;
+}
+
+/* Template selector */
+.templateSelect {
+  background: #1e293b;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+  min-width: 180px;
+}
+
+.templateSelect:hover:not(:disabled) {
+  border-color: #06b6d4;
+  background: #263346;
+}
+
+.templateSelect:focus {
+  border-color: #06b6d4;
+  box-shadow:
+    0 0 0 2px rgba(6, 182, 212, 0.1),
+    0 0 0 4px rgba(6, 182, 212, 0.05);
+}
+
+.templateSelect:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.templateSelect option {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 8px;
+}
+
+/* Toolbar buttons */
+.toolbarButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+  user-select: none;
+}
+
+.toolbarButton:hover:not(:disabled) {
+  background: rgba(6, 182, 212, 0.1);
+  color: #06b6d4;
+  border-color: rgba(6, 182, 212, 0.2);
+  transform: translateY(-1px);
+}
+
+.toolbarButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.toolbarButton.active {
+  background: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
+  border-color: rgba(6, 182, 212, 0.3);
+}
+
+.toolbarButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.toolbarButtonPrimary {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  font-weight: 600;
+  box-shadow:
+    0 2px 4px rgba(6, 182, 212, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.toolbarButtonPrimary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+  box-shadow:
+    0 4px 8px rgba(6, 182, 212, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.toolbarButtonPrimary:disabled {
+  background: #334155;
+  box-shadow: none;
+}
+
+.toolbarButtonSecondary {
+  background: rgba(51, 65, 85, 0.5);
+  color: #e2e8f0;
+  border: 1px solid #475569;
+}
+
+.toolbarButtonSecondary:hover:not(:disabled) {
+  background: rgba(71, 85, 105, 0.7);
+  border-color: #64748b;
+}
+
+/* Status indicators */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.statusSuccess {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.statusError {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  animation: pulseError 2s ease-in-out infinite;
+}
+
+.statusWarning {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.statusValidating {
+  background: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.statusSpinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(6, 182, 212, 0.3);
+  border-top-color: #06b6d4;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulseError {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Find and replace panel */
+.findReplacePanel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  position: relative;
+  z-index: 1;
+  flex-wrap: wrap;
+}
+
+.findInput,
+.replaceInput {
+  background: #0f172a;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.2s;
+  min-width: 200px;
+}
+
+.findInput:focus,
+.replaceInput:focus {
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.1);
+}
+
+.findOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #94a3b8;
+  cursor: pointer;
+  user-select: none;
+}
+
+.findOption input[type='checkbox'] {
+  width: 14px;
+  height: 14px;
+  accent-color: #06b6d4;
+  cursor: pointer;
+}
+
+.findMatches {
+  color: #06b6d4;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.findCloseButton {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 16px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: all 0.2s;
+  margin-left: auto;
+}
+
+.findCloseButton:hover {
+  color: #e2e8f0;
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* Line jump dialog */
+.lineJumpDialog {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid #334155;
+  border-radius: 8px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+  backdrop-filter: blur(12px);
+}
+
+.lineJumpLabel {
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.lineJumpInput {
+  width: 80px;
+  background: #0f172a;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.lineJumpInput:focus {
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.1);
+}
+
+.lineJumpCloseButton {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 16px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.lineJumpCloseButton:hover {
+  color: #e2e8f0;
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* Editor container */
+.editorContainer {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* Preview mode */
+.yamlEditor.preview {
+  background: #0f172a;
+}
+
+.previewMode {
+  height: 100%;
+  overflow: auto;
+  padding: 16px;
+}
+
+.previewContent {
+  margin: 0;
+  font-family: 'Fira Code', 'Fira Mono', 'Consolas', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #e2e8f0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Diff mode */
+.yamlEditor.diff {
+  background: #0f172a;
+}
+
+.diffMode {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+.diffPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid #334155;
+}
+
+.diffPanel:last-child {
+  border-right: none;
+}
+
+.diffHeader {
+  padding: 12px 16px;
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom: 1px solid #334155;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.diffContent {
+  flex: 1;
+  overflow: auto;
+  font-family: 'Fira Code', 'Fira Mono', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.diffLine {
+  display: flex;
+  gap: 8px;
+  padding: 4px 8px;
+  transition: background 0.1s;
+}
+
+.diffLine:hover {
+  background: rgba(6, 182, 212, 0.05);
+}
+
+.diffLineNumber {
+  min-width: 40px;
+  color: #475569;
+  text-align: right;
+  user-select: none;
+  cursor: pointer;
+}
+
+.diffLineNumber:hover {
+  color: #06b6d4;
+}
+
+.diffLineContent {
+  flex: 1;
+  white-space: pre;
+}
+
+.diffLine.added {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.diffLine.added .diffLineContent {
+  color: #22c55e;
+}
+
+.diffLine.removed {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.diffLine.removed .diffLineContent {
+  color: #ef4444;
+}
+
+.diffLine.modified {
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.diffLine.modified .diffLineContent {
+  color: #fbbf24;
+}
+
+.diffLine.unchanged {
+  color: #94a3b8;
+}
+
+/* Monaco Editor overrides */
+.yamlEditor
+  :global(.monaco-editor) {
+  background: transparent !important;
+}
+
+.yamlEditor
+  :global(.monaco-editor .margin) {
+  background: rgba(15, 23, 42, 0.5) !important;
+}
+
+.yamlEditor
+  :global(.monaco-editor .line-numbers) {
+  color: #475569 !important;
+}
+
+.yamlEditor
+  :global(.monaco-editor .current-line) {
+  border-left: 2px solid #06b6d4 !important;
+}
+
+.yamlEditor
+  :global(.monaco-editor .current-line .line-numbers) {
+  color: #06b6d4 !important;
+  font-weight: 600;
+}
+
+.yamlEditor
+  :global(.monaco-editor .cursor) {
+  border-left: 2px solid #06b6d4 !important;
+}
+
+.yamlEditor
+  :global(.monaco-editor .selected-text) {
+  background: rgba(6, 182, 212, 0.2) !important;
+}
+
+/* Scrollbar styling */
+.yamlEditor ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.yamlEditor ::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.yamlEditor ::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 5px;
+}
+
+.yamlEditor ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+.yamlEditor ::-webkit-scrollbar-corner {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .toolbar {
+    gap: 2px;
+    padding: 8px 12px;
+  }
+
+  .toolbarGroup {
+    padding: 0 4px;
+  }
+
+  .toolbarButton {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .templateSelect {
+    min-width: 140px;
+    font-size: 12px;
+  }
+
+  .diffMode {
+    flex-direction: column;
+  }
+
+  .diffPanel {
+    border-right: none;
+    border-bottom: 1px solid #334155;
+  }
+}
+
+/* Animation for loading */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.yamlEditor {
+  animation: fadeIn 0.3s ease-out;
+}

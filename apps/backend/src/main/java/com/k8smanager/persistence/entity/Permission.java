@@ -28,7 +28,7 @@ public class Permission {
     private ResourceType resourceType;
 
     @ManyToMany(mappedBy = "permissions")
-    private Set<RolePermission> rolePermissions = java.util.HashSet<>();
+    private Set<RolePermission> rolePermissions = new java.util.HashSet<>();
 
     /**
      * Permission types (actions).
