@@ -1,13 +1,13 @@
 package com.k8smanager.service;
 
-import com.k8smanager.dto.StatusBadgeDTO;
 import com.k8smanager.dto.StatusBadge;
-import com.k8smanager.dto.*;
+import com.k8smanager.dto.StatusBadgeDTO;
 import io.fabric8.kubernetes.api.model.*;
+import io.fabric8.kubernetes.api.model.apps.*;
+import io.fabric8.kubernetes.api.model.batch.v1.*;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Service for determining status badges for Kubernetes resources.
@@ -198,7 +198,7 @@ public class StatusBadgeService {
     /**
      * Get status badge for a Job.
      */
-    public StatusBadgeDTO getJobStatusBadge(io.fabric8.kubernetes.api.model.Job job) {
+    public StatusBadgeDTO getJobStatusBadge(Job job) {
         if (job == null || job.getStatus() == null) {
             return StatusBadge.POD_UNKNOWN.toDTO("Unknown", "Job status is unknown");
         }
@@ -267,7 +267,7 @@ public class StatusBadgeService {
     /**
      * Get status badge for a Service.
      */
-    public StatusBadgeDTO getServiceStatusBadge(Service service) {
+    public StatusBadgeDTO getServiceStatusBadge(io.fabric8.kubernetes.api.model.Service service) {
         if (service == null || service.getSpec() == null) {
             return StatusBadge.POD_UNKNOWN.toDTO("Unknown", "Service status is unknown");
         }
@@ -319,7 +319,7 @@ public class StatusBadgeService {
 
             if (!isReady) {
                 return StatusBadge.NODE_NOT_READY.toDTO("Not Ready",
-                        getConditionMessage(conditions, "Ready"));
+                        getConditionMessageForNode(conditions, "Ready"));
             }
 
             if (hasMemoryPressure) {
@@ -406,14 +406,26 @@ public class StatusBadgeService {
                 .orElse("Failed");
     }
 
-    private String getConditionMessage(List<? extends Condition> conditions, String type) {
+    private String getConditionMessage(List<DeploymentCondition> conditions, String type) {
         if (conditions == null) {
             return null;
         }
 
         return conditions.stream()
                 .filter(c -> type.equals(c.getType()))
-                .map(Condition::getMessage)
+                .map(DeploymentCondition::getMessage)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private String getConditionMessageForNode(List<NodeCondition> conditions, String type) {
+        if (conditions == null) {
+            return null;
+        }
+
+        return conditions.stream()
+                .filter(c -> type.equals(c.getType()))
+                .map(NodeCondition::getMessage)
                 .findFirst()
                 .orElse(null);
     }

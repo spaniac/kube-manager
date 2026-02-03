@@ -14,4 +14,5 @@ public record SessionDTO(
         Instant lastActivityAt,
         Instant expiresAt,
         boolean active
-) {}
+) {
+}

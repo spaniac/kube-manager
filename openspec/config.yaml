@@ -24,6 +24,7 @@ context: |
 
   [핵심 문법 및 기능]
   - Records as DTOs: 데이터 전달 객체는 반드시 Java record를 사용하여 불변성 보장
+  - Jakarta Validation: DTO 레코드 내 컴포넌트에 @NotNull, @NotBlank 등 Jakarta Validation 어노테이션을 사용하여 데이터 무결성 보장
   - Pattern Matching: switch 문이나 instanceof 사용 시 Java 21의 패턴 매칭을 활용하여 가독성 향상, 캐스팅 오류 방지
   - Virtual Threads: Blocking I/O 작업(DB, 외부 API)은 Virtual Threads를 활용 (spring.threads.virtual.enabled: true), 명시적 스레드 풀 생성 지양
   - Sequenced Collections: 순서가 보장되는 컬렉션 처리 시 getFirst(), getLast() 등 Java 21의 신규 API 사용
@@ -31,8 +32,8 @@ context: |
   [Spring Boot 3.5.9 특화]
   - RestClient over RestTemplate: 외부 서비스 호출 시 동기 방식은 RestClient, 비동기 방식은 WebClient 사용
   - Declarative HTTP Clients: 외부 API 정의 시 @HttpExchange 인터페이스를 사용하여 선언적으로 개발
-  - Standardized Error Handling: ProblemDetail (RFC 7807)을 상속받아 표준화된 에러 응답 반환
-    * GlobalExceptionHandler에서 ProblemDetail 생성하여 error 객체에 포함
+  - Standardized Error Handling: ProblemDetail (RFC 7807)을 ApiResponse 객체로 감싸서 일관된 에러 응답 반환
+    * GlobalExceptionHandler에서 ProblemDetail 생성 후 ApiResponse.error(problemDetail)로 래핑하여 반환
     * API 응답 구조 유지하되 내부 상세는 ProblemDetail 사용
   - Observation API: 로그 출력 대신 Micrometer Observation을 활용하여 트래킹과 로깅 통합
 

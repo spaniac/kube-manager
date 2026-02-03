@@ -8,4 +8,5 @@ import java.util.Map;
 public record UpdateContainerEnvRequestDTO(
         String containerName,
         Map<String, String> envVars
-) {}
+) {
+}

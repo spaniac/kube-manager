@@ -355,3 +355,24 @@ export const terminalResizeRequestSchema = z.object({
 export const terminalCommandRequestSchema = z.object({
   command: z.string(),
 });
+
+export const userProfileSchema = z.object({
+  id: z.number(),
+  email: z.string().email(),
+  name: z.string(),
+  avatarUrl: z.string().optional(),
+  createdAt: z.number(),
+  lastLoginAt: z.number().optional(),
+  roles: z.array(z.string()),
+});
+
+export const sessionSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  ipAddress: z.string(),
+  userAgent: z.string(),
+  createdAt: z.number(),
+  lastActivityAt: z.number(),
+  expiresAt: z.number(),
+  active: z.boolean(),
+});

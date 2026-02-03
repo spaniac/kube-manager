@@ -4,7 +4,8 @@ This document describes the rollback strategy for K8s Manager deployments.
 
 ## Overview
 
-The rollback strategy provides multiple levels of recovery options depending on the scope and severity of issues encountered during or after deployment.
+The rollback strategy provides multiple levels of recovery options depending on the scope and severity of issues
+encountered during or after deployment.
 
 ## Rollback Levels
 
@@ -15,6 +16,7 @@ Use when only configuration changes need to be reverted without rebuilding image
 **Scenario**: Recent ConfigMap or Secret changes caused issues
 
 **Steps**:
+
 ```bash
 # View current configuration
 kubectl get configmap k8s-manager-config -o yaml > current-config.yaml
@@ -44,6 +46,7 @@ Use when a new application version needs to be reverted.
 **Scenario**: New backend or frontend release has bugs
 
 **Steps**:
+
 ```bash
 # Check rollout history
 kubectl rollout history deployment/k8s-manager-backend
@@ -75,6 +78,7 @@ Use when database schema or data changes caused issues.
 **Prerequisites**: Database backup is available (automatically created by CronJob)
 
 **Steps**:
+
 ```bash
 # 1. Scale down deployments to prevent further writes
 kubectl scale deployment k8s-manager-backend --replicas=0
@@ -98,7 +102,8 @@ kubectl exec -it <postgres-pod-name> -- psql -U k8smanager -d k8smanager -c "\dt
 kubectl scale deployment k8s-manager-backend --replicas=2
 ```
 
-**Note**: After restoring, you may need to re-run specific Liquibase migrations to bring the schema to the correct state.
+**Note**: After restoring, you may need to re-run specific Liquibase migrations to bring the schema to the correct
+state.
 
 **Time to recover**: 10-30 minutes (depending on database size)
 
@@ -111,6 +116,7 @@ Use when the entire deployment needs to be reverted.
 **Scenario**: Complete deployment failure, incompatible Kubernetes changes, or major infrastructure issues
 
 **Steps**:
+
 ```bash
 # 1. Stop HPA to prevent automatic scaling
 kubectl patch hpa k8s-manager-backend -p '{"spec":{"minReplicas":0,"maxReplicas":0}}'
@@ -223,49 +229,49 @@ After any rollback, perform these verification steps:
    ```
 
 5. **User Access**:
-   - Login to the web interface
-   - Verify key features (cluster view, pod listing, etc.)
+    - Login to the web interface
+    - Verify key features (cluster view, pod listing, etc.)
 
 ## Post-Rollback Actions
 
 1. **Root Cause Analysis**:
-   - Review logs for the failed deployment
-   - Check audit logs for unusual activity
-   - Review recent changes (Git commits, config updates)
+    - Review logs for the failed deployment
+    - Check audit logs for unusual activity
+    - Review recent changes (Git commits, config updates)
 
 2. **Fix Implementation**:
-   - Create a bug fix in a separate branch
-   - Thoroughly test the fix
-   - Follow the deployment process to re-deploy
+    - Create a bug fix in a separate branch
+    - Thoroughly test the fix
+    - Follow the deployment process to re-deploy
 
 3. **Update Documentation**:
-   - Document the root cause and fix
-   - Update rollback procedures if needed
-   - Share lessons learned with the team
+    - Document the root cause and fix
+    - Update rollback procedures if needed
+    - Share lessons learned with the team
 
 ## Best Practices
 
 1. **Always Have Recent Backups**:
-   - Ensure the backup CronJob is running successfully
-   - Verify backup files exist and are valid
+    - Ensure the backup CronJob is running successfully
+    - Verify backup files exist and are valid
 
 2. **Test Rollback Procedures**:
-   - Practice rollback in a staging environment
-   - Document any environment-specific issues
+    - Practice rollback in a staging environment
+    - Document any environment-specific issues
 
 3. **Use Blue-Green Deployments** (Future Enhancement):
-   - Maintain two production environments
-   - Switch traffic between them for instant rollbacks
+    - Maintain two production environments
+    - Switch traffic between them for instant rollbacks
 
 4. **Monitor During Rollback**:
-   - Watch logs in real-time
-   - Monitor resource usage
-   - Check for cascading failures
+    - Watch logs in real-time
+    - Monitor resource usage
+    - Check for cascading failures
 
 5. **Communicate During Rollback**:
-   - Notify stakeholders of the rollback
-   - Provide estimated downtime
-   - Update status when complete
+    - Notify stakeholders of the rollback
+    - Provide estimated downtime
+    - Update status when complete
 
 ## Emergency Contacts
 

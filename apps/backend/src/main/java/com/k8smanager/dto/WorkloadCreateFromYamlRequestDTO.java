@@ -7,4 +7,5 @@ public record WorkloadCreateFromYamlRequestDTO(
         String yaml,
         String namespace,
         boolean dryRun
-) {}
+) {
+}

@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { getConfigMaps, deleteConfigMap } from '@api/configmap';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
 import type { ConfigMap } from '@types/api';
-import { Badge } from '@components/Badge';
 import { ConfirmationDialog } from '@components/ConfirmationDialog';
-import { useToast } from '@components/Toast';
+import { Toast } from '@components/Toast';
 import { Table, TableStyles } from '@components/Table';
 import { Button } from '@components/Button';
 
@@ -55,10 +54,6 @@ export default function ConfigMapList() {
 
   const handleViewData = (configmap: ConfigMap) => {
     setSelectedConfigMap(configmap);
-  };
-
-  const handleFilterChange = (newFilters: Record<string, string>) => {
-    setFilters((prev) => ({ ...prev, ...newFilters }));
   };
 
   const columns = [

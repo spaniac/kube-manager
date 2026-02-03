@@ -1,7 +1,6 @@
 package com.k8smanager.persistence.repository;
 
 import com.k8smanager.persistence.entity.UserRole;
-import com.k8smanager.persistence.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

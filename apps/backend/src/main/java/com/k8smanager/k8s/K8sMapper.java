@@ -2,8 +2,11 @@ package com.k8smanager.k8s;
 
 import com.k8smanager.dto.*;
 import io.fabric8.kubernetes.api.model.*;
+import io.fabric8.kubernetes.api.model.apps.*;
+import io.fabric8.kubernetes.api.model.batch.v1.*;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -72,9 +75,10 @@ public class K8sMapper {
         return new PodContainerDTO(
                 container.getName(),
                 container.getImage(),
-                true, // TODO: Check actual ready status
-                0, // TODO: Get actual restart count
-                "Running" // TODO: Get actual state
+                List.of(), // TODO: Map actual ports
+                List.of(), // TODO: Map actual env vars
+                new ResourceRequirementsDTO(null, null), // TODO: Map actual resources
+                List.of() // TODO: Map actual volume mounts
         );
     }
 
@@ -87,8 +91,7 @@ public class K8sMapper {
                 condition.getStatus(),
                 condition.getReason(),
                 condition.getMessage(),
-                condition.getLastTransitionTime() != null
-                        ? condition.getLastTransitionTime().toEpochMilli() : 0
+                0 // TODO: Parse timestamp properly
         );
     }
 
@@ -176,8 +179,8 @@ public class K8sMapper {
     /**
      * Map ServiceRequestDTO to Kubernetes Service.
      */
-    public Service mapToService(ServiceRequestDTO request) {
-        Service service = new Service();
+    public io.fabric8.kubernetes.api.model.Service mapToService(ServiceRequestDTO request) {
+        io.fabric8.kubernetes.api.model.Service service = new io.fabric8.kubernetes.api.model.Service();
         ObjectMeta metadata = new ObjectMeta();
         metadata.setName(request.name());
         if (request.namespace() != null) {
@@ -207,19 +210,22 @@ public class K8sMapper {
         port.setName(portDto.name());
         port.setProtocol(portDto.protocol());
         port.setPort(portDto.port());
-        if (portDto.targetPort() != null) {
-            port.setTargetPort(new IntOrString(portDto.targetPort()));
-        }
+        port.setTargetPort(new IntOrString(portDto.targetPort()));
         return port;
     }
 
     /**
      * Map Kubernetes Service to ServiceDTO.
      */
-    public ServiceDTO mapToServiceDto(Service service) {
+    public com.k8smanager.dto.ServiceDTO mapToServiceDto(io.fabric8.kubernetes.api.model.Service service) {
         ServiceSpec spec = service.getSpec();
 
-        return new ServiceDTO(
+        String selector = null;
+        if (spec != null && spec.getSelector() != null) {
+            selector = spec.getSelector().toString();
+        }
+
+        return new com.k8smanager.dto.ServiceDTO(
                 service.getMetadata().getName(),
                 service.getMetadata().getNamespace(),
                 spec != null ? spec.getType() : "ClusterIP",
@@ -227,7 +233,7 @@ public class K8sMapper {
                 spec != null ? spec.getPorts().stream()
                         .map(this::mapToServicePortDto)
                         .collect(Collectors.toList()) : List.of(),
-                spec != null ? spec.getSelector() : null,
+                selector,
                 List.of() // TODO: Get actual endpoints
         );
     }
@@ -238,6 +244,42 @@ public class K8sMapper {
                 port.getProtocol(),
                 port.getPort(),
                 port.getTargetPort() != null ? Integer.parseInt(port.getTargetPort().getStrVal()) : port.getPort()
+        );
+    }
+
+    /**
+     * Map ConfigMapRequestDTO to Kubernetes ConfigMap.
+     */
+    public ConfigMap mapToConfigMap(ConfigMapRequestDTO request) {
+        ConfigMap configMap = new ConfigMap();
+        ObjectMeta metadata = new ObjectMeta();
+        metadata.setName(request.name());
+        if (request.namespace() != null) {
+            metadata.setNamespace(request.namespace());
+        }
+        if (request.labels() != null) {
+            metadata.setLabels(request.labels());
+        }
+        configMap.setMetadata(metadata);
+
+        if (request.data() != null) {
+            configMap.setData(request.data());
+        }
+
+        return configMap;
+    }
+
+    /**
+     * Map Kubernetes ConfigMap to ConfigMapDTO.
+     */
+    public ConfigMapDTO mapToConfigMapDto(ConfigMap configMap) {
+        return new ConfigMapDTO(
+                configMap.getMetadata().getName(),
+                configMap.getMetadata().getNamespace(),
+                0, // TODO: Parse timestamp properly
+                configMap.getData() != null ? configMap.getData() : Map.of(),
+                Map.of(),
+                configMap.getMetadata().getLabels() != null ? configMap.getMetadata().getLabels() : Map.of()
         );
     }
 
@@ -265,7 +307,7 @@ public class K8sMapper {
         return new NamespaceDTO(
                 namespace.getMetadata().getName(),
                 namespace.getStatus() != null ? "Active" : "Terminating",
-                namespace.getMetadata().getCreationTimestamp().toEpochMilli(),
+                namespace.getMetadata().getCreationTimestamp() != null ? namespace.getMetadata().getCreationTimestamp() : "",
                 namespace.getMetadata().getLabels(),
                 namespace.getMetadata().getAnnotations()
         );
@@ -274,7 +316,7 @@ public class K8sMapper {
     /**
      * Map JobRequestDTO to Kubernetes Job.
      */
-    public io.fabric8.kubernetes.api.model.Job mapToJob(JobRequestDTO request) {
+    public Job mapToJob(JobRequestDTO request) {
         Job job = new Job();
         ObjectMeta metadata = new ObjectMeta();
         metadata.setName(request.name());
@@ -284,14 +326,9 @@ public class K8sMapper {
         job.setMetadata(metadata);
 
         JobSpec spec = new JobSpec();
-        spec.setTtlSeconds(3600);
-        spec.setBackoffLimit(4);
-
-        JobSpec specWithPod = spec;
 
         if (request.containers() != null && !request.containers().isEmpty()) {
             PodTemplateSpec podTemplate = new PodTemplateSpec();
-            PodTemplate template = new PodTemplate();
             PodSpec podSpec = new PodSpec();
 
             podSpec.setContainers(request.containers().stream()
@@ -306,17 +343,17 @@ public class K8sMapper {
                     .toList());
             podTemplate.setSpec(podSpec);
             podTemplate.setMetadata(metadata);
-            specWithPod.setTemplate(podTemplate);
+            spec.setTemplate(podTemplate);
         }
 
-        job.setSpec(specWithPod);
+        job.setSpec(spec);
         return job;
     }
 
     /**
      * Map CronJobRequestDTO to Kubernetes CronJob.
      */
-    public io.fabric8.kubernetes.api.model.CronJob mapToCronJob(CronJobRequestDTO request) {
+    public CronJob mapToCronJob(CronJobRequestDTO request) {
         CronJob cronJob = new CronJob();
         ObjectMeta metadata = new ObjectMeta();
         metadata.setName(request.name());
@@ -349,7 +386,6 @@ public class K8sMapper {
         podTemplate.setSpec(podSpec);
         podTemplate.setMetadata(metadata);
         jobTemplate.setSpec(new JobSpec());
-        jobTemplate.setTemplate(podTemplate);
         spec.setJobTemplate(jobTemplate);
 
         cronJob.setSpec(spec);
@@ -359,39 +395,82 @@ public class K8sMapper {
     /**
      * Map Kubernetes Job to JobDTO.
      */
-    public JobDTO mapToJobDto(io.fabric8.kubernetes.api.model.Job job) {
+    public JobDTO mapToJobDto(Job job) {
         JobStatus status = job.getStatus();
         return new JobDTO(
                 job.getMetadata().getName(),
                 job.getMetadata().getNamespace(),
-                status != null ? status.getSucceeded() : "",
+                "Active", // TODO: Get actual status
+                0, // TODO: Get actual completions
                 status != null ? status.getActive() : 0,
-                job.getMetadata().getCreationTimestamp().toEpochMilli(),
-                job.getSpec() != null ? job.getSpec().getTtlSeconds() : 0,
-                job.getStatus() != null ? status.getFailed() : 0,
-                job.getStatus() != null ? status.getSucceeded() : 0
+                status != null ? status.getSucceeded() : 0,
+                status != null ? status.getFailed() : 0,
+                null // TODO: Map template
         );
     }
 
     /**
      * Map Kubernetes CronJob to CronJobDTO.
      */
-    public CronJobDTO mapToCronJobDto(io.fabric8.kubernetes.api.model.CronJob cronJob) {
+    public CronJobDTO mapToCronJobDto(CronJob cronJob) {
         CronJobStatus status = cronJob.getStatus();
+        CronJobSpec spec = cronJob.getSpec();
         return new CronJobDTO(
                 cronJob.getMetadata().getName(),
                 cronJob.getMetadata().getNamespace(),
-                cronJob.getSpec() != null ? cronJob.getSpec().getSchedule() : "",
-                cronJob.getStatus() != null ? String.valueOf(status.getSuspend()) : "False",
-                cronJob.getMetadata().getAnnotations() != null
-                        ? cronJob.getMetadata().getAnnotations()
-                                        .getOrDefault("last-schedule", "") : "",
-                cronJob.getMetadata().getAnnotations() != null
-                        ? cronJob.getMetadata().getAnnotations()
-                                        .getOrDefault("next-schedule", "") : "",
-                status != null ? String.valueOf(status.getActive()) : "False",
-                cronJob.getStatus() != null ? status.getSucceeded() : 0,
-                cronJob.getStatus() != null ? status.getFailed() : 0
+                spec != null ? spec.getSchedule() : "",
+                spec != null ? spec.getConcurrencyPolicy() : "",
+                spec != null ? Boolean.TRUE.equals(spec.getSuspend()) : false,
+                spec != null && spec.getSuccessfulJobsHistoryLimit() != null ? spec.getSuccessfulJobsHistoryLimit() : 0,
+                spec != null && spec.getFailedJobsHistoryLimit() != null ? spec.getFailedJobsHistoryLimit() : 0,
+                null, // TODO: Map last schedule
+                null // TODO: Map active job
+        );
+    }
+
+    /**
+     * Map Kubernetes StatefulSet to StatefulSetDTO.
+     */
+    public StatefulSetDTO mapToStatefulSetDto(StatefulSet statefulSet) {
+        StatefulSetSpec spec = statefulSet.getSpec();
+        StatefulSetStatus status = statefulSet.getStatus();
+
+        int replicas = spec != null ? (spec.getReplicas() != null ? spec.getReplicas() : 0) : 0;
+        int readyReplicas = status != null && status.getReadyReplicas() != null ? status.getReadyReplicas() : 0;
+        String serviceName = spec != null && spec.getServiceName() != null ? spec.getServiceName() : null;
+
+        return new StatefulSetDTO(
+                statefulSet.getMetadata().getName(),
+                statefulSet.getMetadata().getNamespace(),
+                replicas,
+                readyReplicas,
+                serviceName,
+                null // TODO: Map pod template
+        );
+    }
+
+    /**
+     * Map Kubernetes DaemonSet to DaemonSetDTO.
+     */
+    public DaemonSetDTO mapToDaemonSetDto(DaemonSet daemonSet) {
+        DaemonSetSpec spec = daemonSet.getSpec();
+        DaemonSetStatus status = daemonSet.getStatus();
+
+        int desiredNumberScheduled = spec != null && spec.getSelector() != null ? 0 : 0;
+        int currentNumberScheduled = status != null && status.getCurrentNumberScheduled() != null
+                ? status.getCurrentNumberScheduled() : 0;
+        int numberReady = status != null && status.getNumberReady() != null ? status.getNumberReady() : 0;
+        String selector = spec != null && spec.getSelector() != null
+                ? spec.getSelector().getMatchLabels().toString() : null;
+
+        return new DaemonSetDTO(
+                daemonSet.getMetadata().getName(),
+                daemonSet.getMetadata().getNamespace(),
+                desiredNumberScheduled,
+                currentNumberScheduled,
+                numberReady,
+                selector,
+                null // TODO: Map pod template
         );
     }
 }

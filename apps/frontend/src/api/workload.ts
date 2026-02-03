@@ -2,8 +2,11 @@ import apiClient from '@api/client';
 import { z } from 'zod';
 import { parseApiResponse } from '@utils/apiResponse';
 import {
-  apiResponseSchema,
+  resourceListSchema,
+  jobSchema,
+  cronJobSchema,
 } from '../types/schemas';
+import type { ApiResponse } from '../types/api';
 import type {
   WorkloadCreateRequest,
   WorkloadCreateResponse,
@@ -11,6 +14,9 @@ import type {
   UpdateContainerEnvRequest,
   UpdateStrategyRequest,
   CloneWorkloadRequest,
+  ResourceList,
+  Job,
+  CronJob,
 } from '../types/api';
 
 export async function createWorkload(
@@ -22,15 +28,13 @@ export async function createWorkload(
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(
-      z.object({
-        name: z.string(),
-        kind: z.string(),
-        namespace: z.string(),
-        message: z.string(),
-      }),
-    ),
-  ).data;
+    z.object({
+      name: z.string(),
+      kind: z.string(),
+      namespace: z.string(),
+      message: z.string(),
+    }),
+  );
 }
 
 export async function pauseDeployment(
@@ -42,7 +46,7 @@ export async function pauseDeployment(
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(z.object({ message: z.string() })),
+    z.object({ message: z.string() }),
   );
 }
 
@@ -55,7 +59,7 @@ export async function resumeDeployment(
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(z.object({ message: z.string() })),
+    z.object({ message: z.string() }),
   );
 }
 
@@ -70,7 +74,7 @@ export async function updateDeploymentStrategy(
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(z.object({ message: z.string() })),
+    z.object({ message: z.string() }),
   );
 }
 
@@ -85,13 +89,11 @@ export async function getDeploymentRevisions(
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(
-      z.array(
-        z.object({
-          revision: z.number(),
-          annotations: z.record(z.string()),
-        }),
-      ),
+    z.array(
+      z.object({
+        revision: z.number(),
+        annotations: z.record(z.string(), z.string()),
+      }),
     ),
   );
 }
@@ -108,7 +110,7 @@ export async function updateContainerResources(
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(z.object({ message: z.string() })),
+    z.object({ message: z.string() }),
   );
 }
 
@@ -124,7 +126,7 @@ export async function updateContainerEnvVars(
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(z.object({ message: z.string() })),
+    z.object({ message: z.string() }),
   );
 }
 
@@ -141,13 +143,11 @@ export async function cloneDeployment(
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(
-      z.object({
-        message: z.string(),
-        name: z.string(),
-        namespace: z.string(),
-      }),
-    ),
+    z.object({
+      message: z.string(),
+      name: z.string(),
+      namespace: z.string(),
+    }),
   );
 }
 
@@ -156,43 +156,19 @@ export async function getJobs(params?: {
   limit?: number;
   namespace?: string;
   search?: string;
-}): Promise<{ items: Array<{ name: string; namespace: string; status: string; active: number; succeeded: number; failed: number }>; total: number }> {
+}): Promise<ResourceList<Job>> {
   const queryParams = new URLSearchParams();
   if (params?.page) queryParams.append('page', params.page.toString());
   if (params?.limit) queryParams.append('limit', params.limit.toString());
   if (params?.namespace) queryParams.append('namespace', params.namespace);
   if (params?.search) queryParams.append('search', params.search);
 
-  const response = await apiClient.get<
-    ApiResponse<{
-      items: Array<{
-        name: string;
-        namespace: string;
-        status: string;
-        active: number;
-        succeeded: number;
-        failed: number;
-      }>;
-      total: number;
-    }>
-  >(`/api/v1/jobs?${queryParams.toString()}`);
+  const response = await apiClient.get<ApiResponse<ResourceList<Job>>>(
+    `/api/v1/jobs?${queryParams.toString()}`
+  );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(
-      z.object({
-        items: z.array(
-          z.object({
-            name: z.string(),
-            namespace: z.string(),
-            status: z.string(),
-            active: z.number(),
-            succeeded: z.number(),
-            failed: z.number(),
-          }),
-        ),
-        total: z.number(),
-      }),
-    ),
+    resourceListSchema(jobSchema)
   );
 }
 
@@ -201,43 +177,19 @@ export async function getCronJobs(params?: {
   limit?: number;
   namespace?: string;
   search?: string;
-}): Promise<{ items: Array<{ name: string; namespace: string; schedule: string; suspend: boolean; succeeded: number; failed: number }>; total: number }> {
+}): Promise<ResourceList<CronJob>> {
   const queryParams = new URLSearchParams();
   if (params?.page) queryParams.append('page', params.page.toString());
   if (params?.limit) queryParams.append('limit', params.limit.toString());
   if (params?.namespace) queryParams.append('namespace', params.namespace);
   if (params?.search) queryParams.append('search', params.search);
 
-  const response = await apiClient.get<
-    ApiResponse<{
-      items: Array<{
-        name: string;
-        namespace: string;
-        schedule: string;
-        suspend: boolean;
-        succeeded: number;
-        failed: number;
-      }>;
-      total: number;
-    }>
-  >(`/api/v1/cronjobs?${queryParams.toString()}`);
+  const response = await apiClient.get<ApiResponse<ResourceList<CronJob>>>(
+    `/api/v1/cronjobs?${queryParams.toString()}`
+  );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(
-      z.object({
-        items: z.array(
-          z.object({
-            name: z.string(),
-            namespace: z.string(),
-            schedule: z.string(),
-            suspend: z.boolean(),
-            succeeded: z.number(),
-            failed: z.number(),
-          }),
-        ),
-        total: z.number(),
-      }),
-    ),
+    resourceListSchema(cronJobSchema)
   );
 }
 
@@ -266,21 +218,19 @@ export async function getPodDisruptionBudgets(params?: {
   >(`/api/v1/poddisruptionbudgets?${queryParams.toString()}`);
   return parseApiResponse(
     response.data,
-    apiResponseSchema(
-      z.object({
-        items: z.array(
-          z.object({
-            name: z.string(),
-            namespace: z.string(),
-            minAvailable: z.number(),
-            maxUnavailable: z.number(),
-            currentHealthy: z.number(),
-            desiredHealthy: z.number(),
-          }),
-        ),
-        total: z.number(),
-      }),
-    ),
+    z.object({
+      items: z.array(
+        z.object({
+          name: z.string(),
+          namespace: z.string(),
+          minAvailable: z.number(),
+          maxUnavailable: z.number(),
+          currentHealthy: z.number(),
+          desiredHealthy: z.number(),
+        }),
+      ),
+      total: z.number(),
+    }),
   );
 }
 
@@ -303,7 +253,7 @@ export async function createPodDisruptionBudget(
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(z.object({ message: z.string() })),
+    z.object({ message: z.string() }),
   );
 }
 
@@ -316,6 +266,6 @@ export async function deletePodDisruptionBudget(
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(z.object({ message: z.string() })),
+    z.object({ message: z.string() }),
   );
 }

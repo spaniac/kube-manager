@@ -83,7 +83,7 @@ The system SHALL support tab completion for commands, file paths, and options wh
 - **THEN** terminal completes to "kubectl" if available
 
 ### Requirement: Copy and paste
-The System SHALL allow copying text from terminal and pasting text into terminal.
+The system SHALL allow copying text from terminal and pasting text into terminal.
 
 #### Scenario: Copy from terminal
 - **WHEN** user selects text and uses Ctrl+C (Cmd+C)
@@ -265,3 +265,15 @@ The system SHALL allow viewing and editing environment variables for the termina
 #### Scenario: Set temporary variable
 - **WHEN** user types "export VAR=value" in terminal
 - **THEN** variable is set for current session only
+
+## 추후 과제 (Future Work)
+
+### 터미널 에뮬레이터 (Terminal Emulator)
+
+*   **세션 녹화 (Session Recording):**
+    *   명령어/출력 파일 저장 미지원.
+    *   보안 감사 및 디버깅 목적으로 터미널 세션의 입력/출력을 서버 측에 기록하고 재생하는 기능이 필요함.
+
+*   **세션 공유 (Session Sharing):**
+    *   동시 접속/공유 미지원.
+    *   하나의 터미널 세션 URL을 생성하여 다른 사용자와 실시간으로 화면을 공유하고 협업(Pair Debugging)하는 기능이 필요함.

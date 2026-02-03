@@ -7,11 +7,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Controller for workload management.
  */
 @RestController
-@RequestMapping("/workloads")
+// @RequestMapping("/workloads") - Removed to allow distinct paths for
+// deployments, jobs, etc.
 public class WorkloadController {
 
     private final WorkloadService workloadService;
@@ -21,11 +25,56 @@ public class WorkloadController {
     }
 
     /**
+     * List deployments.
+     * GET /api/v1/workloads/deployments
+     */
+    @GetMapping("/deployments")
+    @PreAuthorize("hasAnyAuthority('READ', 'DEPLOYMENT')")
+    public ResponseEntity<ApiResponse<ResourceListDTO<DeploymentDTO>>> listDeployments(
+            @RequestParam(required = false) String namespace,
+            @RequestParam(required = false) String search) {
+        ResourceListDTO<DeploymentDTO> deployments = workloadService.listDeployments(namespace, search);
+        return ResponseEntity.ok(ApiResponse.success(deployments));
+    }
+
+    /**
+     * Get deployment details.
+     * GET /api/v1/workloads/deployments/{namespace}/{name}
+     */
+    @GetMapping("/deployments/{namespace}/{name}")
+    @PreAuthorize("hasAnyAuthority('READ', 'DEPLOYMENT')")
+    public ResponseEntity<ApiResponse<DeploymentDTO>> getDeployment(
+            @PathVariable String namespace,
+            @PathVariable String name) {
+        DeploymentDTO deployment = workloadService.getDeployment(namespace, name);
+        if (deployment == null) {
+            return ResponseEntity.status(404).body(ApiResponse.error("Deployment not found"));
+        }
+        return ResponseEntity.ok(ApiResponse.success(deployment));
+    }
+
+    /**
+     * Delete deployment.
+     * DELETE /api/v1/workloads/deployments/{namespace}/{name}
+     */
+    @DeleteMapping("/deployments/{namespace}/{name}")
+    @PreAuthorize("hasAnyAuthority('DELETE', 'DEPLOYMENT')")
+    public ResponseEntity<ApiResponse<Void>> deleteDeployment(
+            @PathVariable String namespace,
+            @PathVariable String name) {
+        boolean deleted = workloadService.deleteDeployment(namespace, name);
+        if (!deleted) {
+            return ResponseEntity.status(404).body(ApiResponse.error("Deployment not found"));
+        }
+        return ResponseEntity.ok(ApiResponse.success(null, "Deployment deleted successfully"));
+    }
+
+    /**
      * Scale deployment.
      * PUT /api/v1/workloads/deployments/{name}/scale
      */
     @PutMapping("/deployments/{namespace}/{name}/scale")
-    @PreAuthorize("hasAuthority('WRITE', 'DEPLOYMENT')")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'DEPLOYMENT')")
     public ResponseEntity<ApiResponse<DeploymentDTO>> scaleDeployment(
             @PathVariable String namespace,
             @PathVariable String name,
@@ -42,7 +91,7 @@ public class WorkloadController {
      * POST /api/v1/workloads/deployments/{namespace}/{name}/restart
      */
     @PostMapping("/deployments/{namespace}/{name}/restart")
-    @PreAuthorize("hasAuthority('WRITE', 'DEPLOYMENT')")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'DEPLOYMENT')")
     public ResponseEntity<ApiResponse<DeploymentDTO>> restartDeployment(
             @PathVariable String namespace,
             @PathVariable String name) {
@@ -58,7 +107,7 @@ public class WorkloadController {
      * PUT /api/v1/workloads/deployments/{namespace}/{name}/image
      */
     @PutMapping("/deployments/{namespace}/{name}/image")
-    @PreAuthorize("hasAuthority('WRITE', 'DEPLOYMENT')")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'DEPLOYMENT')")
     public ResponseEntity<ApiResponse<DeploymentDTO>> updateDeploymentImage(
             @PathVariable String namespace,
             @PathVariable String name,
@@ -79,7 +128,7 @@ public class WorkloadController {
      * POST /api/v1/workloads/deployments/{namespace}/{name}/rollback
      */
     @PostMapping("/deployments/{namespace}/{name}/rollback")
-    @PreAuthorize("hasAuthority('WRITE', 'DEPLOYMENT')")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'DEPLOYMENT')")
     public ResponseEntity<ApiResponse<DeploymentDTO>> rollbackDeployment(
             @PathVariable String namespace,
             @PathVariable String name,
@@ -96,7 +145,7 @@ public class WorkloadController {
      * GET /api/v1/workloads/deployments/{namespace}/{name}/revisions
      */
     @GetMapping("/deployments/{namespace}/{name}/revisions")
-    @PreAuthorize("hasAuthority('READ', 'DEPLOYMENT')")
+    @PreAuthorize("hasAnyAuthority('READ', 'DEPLOYMENT')")
     public ResponseEntity<ApiResponse<List<DeploymentRevisionDTO>>> getDeploymentRevisions(
             @PathVariable String namespace,
             @PathVariable String name) {
@@ -109,7 +158,7 @@ public class WorkloadController {
      * POST /api/v1/workloads/jobs
      */
     @PostMapping("/jobs")
-    @PreAuthorize("hasAuthority('WRITE', 'DEPLOYMENT')")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'DEPLOYMENT')")
     public ResponseEntity<ApiResponse<JobDTO>> createJob(
             @RequestBody JobRequestDTO request) {
         String namespace = request.namespace();
@@ -125,7 +174,7 @@ public class WorkloadController {
      * POST /api/v1/workloads/cronjobs
      */
     @PostMapping("/cronjobs")
-    @PreAuthorize("hasAuthority('WRITE', 'DEPLOYMENT')")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'DEPLOYMENT')")
     public ResponseEntity<ApiResponse<CronJobDTO>> createCronJob(
             @RequestBody CronJobRequestDTO request) {
         String namespace = request.namespace();
@@ -140,16 +189,15 @@ public class WorkloadController {
      * Create workload from YAML.
      * POST /api/v1/workloads
      */
-    @PostMapping
-    @PreAuthorize("hasAuthority('WRITE', 'DEPLOYMENT')")
+    @PostMapping("/workloads")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'DEPLOYMENT')")
     public ResponseEntity<ApiResponse<?>> createWorkloadFromYaml(
             @RequestBody WorkloadCreateFromYamlRequestDTO request) {
         try {
             Object result = workloadService.createWorkloadFromYaml(
                     request.namespace(),
                     request.yaml(),
-                    request.dryRun()
-            );
+                    request.dryRun());
             return ResponseEntity.ok(ApiResponse.success(result));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
@@ -162,7 +210,7 @@ public class WorkloadController {
      * PUT /api/v1/workloads/deployments/{namespace}/{name}/strategy
      */
     @PutMapping("/deployments/{namespace}/{name}/strategy")
-    @PreAuthorize("hasAuthority('WRITE', 'DEPLOYMENT')")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'DEPLOYMENT')")
     public ResponseEntity<ApiResponse<DeploymentDTO>> updateDeploymentStrategy(
             @PathVariable String namespace,
             @PathVariable String name,
@@ -179,7 +227,7 @@ public class WorkloadController {
      * PUT /api/v1/workloads/deployments/{namespace}/{name}/resources
      */
     @PutMapping("/deployments/{namespace}/{name}/resources")
-    @PreAuthorize("hasAuthority('WRITE', 'DEPLOYMENT')")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'DEPLOYMENT')")
     public ResponseEntity<ApiResponse<DeploymentDTO>> updateContainerResources(
             @PathVariable String namespace,
             @PathVariable String name,
@@ -197,7 +245,7 @@ public class WorkloadController {
      * POST /api/v1/workloads/poddisruptionbudgets
      */
     @PostMapping("/poddisruptionbudgets")
-    @PreAuthorize("hasAuthority('WRITE', 'DEPLOYMENT')")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'DEPLOYMENT')")
     public ResponseEntity<ApiResponse<Object>> createPodDisruptionBudget(
             @RequestBody PodDisruptionBudgetRequestDTO request) {
         Object pdb = workloadService.createPodDisruptionBudget(request);
@@ -209,7 +257,7 @@ public class WorkloadController {
      * GET /api/v1/workloads/poddisruptionbudgets/{namespace}/{name}
      */
     @GetMapping("/poddisruptionbudgets/{namespace}/{name}")
-    @PreAuthorize("hasAuthority('READ', 'DEPLOYMENT')")
+    @PreAuthorize("hasAnyAuthority('READ', 'DEPLOYMENT')")
     public ResponseEntity<ApiResponse<Object>> getPodDisruptionBudget(
             @PathVariable String namespace,
             @PathVariable String name) {
@@ -225,7 +273,7 @@ public class WorkloadController {
      * DELETE /api/v1/workloads/poddisruptionbudgets/{namespace}/{name}
      */
     @DeleteMapping("/poddisruptionbudgets/{namespace}/{name}")
-    @PreAuthorize("hasAuthority('DELETE', 'DEPLOYMENT')")
+    @PreAuthorize("hasAnyAuthority('DELETE', 'DEPLOYMENT')")
     public ResponseEntity<ApiResponse<Void>> deletePodDisruptionBudget(
             @PathVariable String namespace,
             @PathVariable String name) {
@@ -241,7 +289,7 @@ public class WorkloadController {
      * PUT /api/v1/workloads/deployments/{namespace}/{name}/env
      */
     @PutMapping("/deployments/{namespace}/{name}/env")
-    @PreAuthorize("hasAuthority('WRITE', 'DEPLOYMENT')")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'DEPLOYMENT')")
     public ResponseEntity<ApiResponse<DeploymentDTO>> updateContainerEnvVars(
             @PathVariable String namespace,
             @PathVariable String name,
@@ -258,8 +306,8 @@ public class WorkloadController {
      * Clone workload.
      * POST /api/v1/workloads/clone
      */
-    @PostMapping("/clone")
-    @PreAuthorize("hasAuthority('WRITE', 'DEPLOYMENT')")
+    @PostMapping("/workloads/clone")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'DEPLOYMENT')")
     public ResponseEntity<ApiResponse<?>> cloneWorkload(@RequestBody CloneWorkloadRequestDTO request) {
         try {
             Object result = workloadService.cloneWorkload(
@@ -280,7 +328,7 @@ public class WorkloadController {
      * POST /api/v1/workloads/deployments/{namespace}/{name}/pause
      */
     @PostMapping("/deployments/{namespace}/{name}/pause")
-    @PreAuthorize("hasAuthority('WRITE', 'DEPLOYMENT')")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'DEPLOYMENT')")
     public ResponseEntity<ApiResponse<DeploymentDTO>> pauseDeployment(
             @PathVariable String namespace,
             @PathVariable String name) {
@@ -296,7 +344,7 @@ public class WorkloadController {
      * POST /api/v1/workloads/deployments/{namespace}/{name}/resume
      */
     @PostMapping("/deployments/{namespace}/{name}/resume")
-    @PreAuthorize("hasAuthority('WRITE', 'DEPLOYMENT')")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'DEPLOYMENT')")
     public ResponseEntity<ApiResponse<DeploymentDTO>> resumeDeployment(
             @PathVariable String namespace,
             @PathVariable String name) {

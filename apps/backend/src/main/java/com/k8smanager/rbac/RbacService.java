@@ -1,7 +1,6 @@
 package com.k8smanager.rbac;
 
 import com.k8smanager.persistence.entity.Permission;
-import com.k8smanager.persistence.entity.Role;
 import com.k8smanager.persistence.entity.User;
 import com.k8smanager.persistence.repository.PermissionRepository;
 import com.k8smanager.persistence.repository.RoleRepository;
@@ -16,7 +15,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,8 +35,8 @@ public class RbacService {
     private final Map<String, Long> permissionTimestamps = new ConcurrentHashMap<>();
 
     public RbacService(UserRepository userRepository,
-                       RoleRepository roleRepository,
-                       PermissionRepository permissionRepository) {
+            RoleRepository roleRepository,
+            PermissionRepository permissionRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.permissionRepository = permissionRepository;
@@ -47,9 +45,9 @@ public class RbacService {
     /**
      * Check if current user has specific permission (cached).
      */
-    @Cacheable(value = CACHE_NAME, key = "'permission:' + #permissionType + ':' + #resourceType + ':' + T(com.k8smanager.rbac.RbacService).getCurrentUserEmail()")
+    @Cacheable(value = CACHE_NAME, key = "'permission:' + T(com.k8smanager.rbac.RbacService).getCurrentUserEmail() + ':' + #permissionType + ':' + #resourceType + ':' + #root.targetObject")
     public boolean hasPermission(Permission.PermissionType permissionType,
-                                  Permission.ResourceType resourceType) {
+            Permission.ResourceType resourceType) {
         String email = getCurrentUserEmail();
         if (email == null) {
             return false;
@@ -66,7 +64,7 @@ public class RbacService {
     /**
      * Get all permissions for current user (cached).
      */
-    @Cacheable(value = CACHE_NAME, key = "'permissions:' + T(com.k8smanager.rbac.RbacService).getCurrentUserEmail()")
+    @Cacheable(value = CACHE_NAME, key = "'permissions:' + #root.targetObject")
     public Set<Permission> getCurrentUserPermissions() {
         String email = getCurrentUserEmail();
         if (email == null) {
@@ -120,5 +118,31 @@ public class RbacService {
      */
     public void updatePermissionTimestamp(String email) {
         permissionTimestamps.put(email, Instant.now().toEpochMilli());
+    }
+
+    /**
+     * Get current user email from security context.
+     */
+    public static String getCurrentUserEmail() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        return authentication.getName();
+    }
+
+    /**
+     * Check if user has specific permission.
+     */
+    private boolean hasPermission(User user, Permission.PermissionType permissionType,
+            Permission.ResourceType resourceType) {
+        Set<Permission> permissions = user.getUserRoles().stream()
+                .flatMap(userRole -> userRole.getRole().getPermissions().stream())
+                .collect(java.util.stream.Collectors.toSet());
+
+        return permissions.stream()
+                .anyMatch(permission -> permission.getPermissionType() == permissionType
+                        && (resourceType == null || permission.getResourceType() == resourceType
+                                || permission.getResourceType() == Permission.ResourceType.ALL));
     }
 }

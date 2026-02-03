@@ -12,7 +12,7 @@ export async function getDaemonSets(params?: {
   namespace?: string;
   search?: string;
 }): Promise<ResourceList<DaemonSet>> {
-  const queryParams = parsePaginationParams(params || {});
+  let queryParams = parsePaginationParams(params || {});
 
   if (params?.namespace) {
     queryParams += `&namespace=${encodeURIComponent(params.namespace)}`;

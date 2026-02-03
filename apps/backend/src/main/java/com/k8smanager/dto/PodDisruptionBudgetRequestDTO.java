@@ -1,5 +1,7 @@
 package com.k8smanager.dto;
 
+import java.util.Map;
+
 /**
  * Request DTO for creating a PodDisruptionBudget.
  */
@@ -11,11 +13,5 @@ public record PodDisruptionBudgetRequestDTO(
         PolicySelectorDTO selector,
         Map<String, String> labels,
         Map<String, String> annotations
-) {}
-
-/**
- * Policy selector DTO.
- */
-public record PolicySelectorDTO(
-        Map<String, String> matchLabels
-) {}
+) {
+}

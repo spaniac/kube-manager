@@ -6,4 +6,5 @@ package com.k8smanager.dto;
 public record UpdateStrategyRequestDTO(
         String type,
         RollingUpdateStrategyDTO rollingUpdate
-) {}
+) {
+}

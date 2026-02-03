@@ -14,12 +14,7 @@ public record PromQLQueryResultDTO(
         String error
 ) {
     public PromQLQueryResultDTO(String query, String range, List<MetricPointDTO> data,
-            MetricSummaryDTO summary) {
+                                MetricSummaryDTO summary) {
         this(query, range, data, summary, null);
-    }
-
-    public PromQLQueryResultDTO(String query, String range, List<MetricPointDTO> data,
-            MetricSummaryDTO summary, String error) {
-        this(query, range, data, summary, error);
     }
 }

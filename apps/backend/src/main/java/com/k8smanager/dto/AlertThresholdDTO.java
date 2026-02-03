@@ -15,4 +15,5 @@ public record AlertThresholdDTO(
         List<String> notificationChannels,
         Boolean enabled,
         String description
-) {}
+) {
+}

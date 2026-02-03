@@ -79,6 +79,13 @@ The system SHALL allow users to set or modify CPU and memory resource limits and
 - **WHEN** user edits a pod specification and adds CPU and memory limits
 - **THEN** system updates the pod with the specified resource limits
 
+### Requirement: Resource quantity parsing
+The system SHALL correctly parse and display Kubernetes resource quantities (e.g., "500m", "1.5Gi", "100Mi") in standard units.
+
+#### Scenario: Parse resource quantities
+- **WHEN** system processes resource strings like "500m", "1.5Gi", "100"
+- **THEN** values are correctly converted to bytes/cores and displayed in UI without NaN or parsing errors
+
 ### Requirement: Pod disruption budget
 The system SHALL allow users to create and manage PodDisruptionBudgets for workloads to ensure availability during node maintenance.
 

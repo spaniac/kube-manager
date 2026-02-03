@@ -3,9 +3,7 @@ package com.k8smanager.aspect;
 import com.k8smanager.persistence.entity.AuditLog;
 import com.k8smanager.persistence.repository.AuditLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
-import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
@@ -38,7 +36,8 @@ public class AuditLogAspect {
      * Pointcut for all public methods in controllers.
      */
     @Pointcut("within(@org.springframework.web.bind.annotation.RestController *)")
-    public void controllerMethods() {}
+    public void controllerMethods() {
+    }
 
     /**
      * Log around all controller methods.
@@ -117,17 +116,29 @@ public class AuditLogAspect {
         try {
             AuditLog auditLog = AuditLog.builder()
                     .action(method + " " + uri)
-                    .resource(uri)
-                    .performedBy(userEmail)
+                    .resourceType(extractResourceType(uri))
+                    .resourceId(extractResourceId(uri))
+                    .createdAt(Instant.now())
                     .ipAddress(ip)
-                    .status(status)
-                    .errorType(errorType)
-                    .timestamp(Instant.now())
+                    .userAgent("k8s-manager")
+                    .result(status + " (" + duration + "ms)")
                     .build();
 
             auditLogRepository.save(auditLog);
         } catch (Exception e) {
             logger.error("Failed to save audit log: {}", e.getMessage());
         }
+    }
+
+    private String extractResourceType(String uri) {
+        if (uri == null) return null;
+        String[] parts = uri.split("/");
+        return parts.length > 1 ? parts[1] : null;
+    }
+
+    private String extractResourceId(String uri) {
+        if (uri == null) return null;
+        String[] parts = uri.split("/");
+        return parts.length > 2 ? parts[2] : null;
     }
 }

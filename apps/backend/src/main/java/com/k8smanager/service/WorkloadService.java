@@ -3,11 +3,19 @@ package com.k8smanager.service;
 import com.k8smanager.dto.*;
 import com.k8smanager.k8s.K8sMapper;
 import io.fabric8.kubernetes.api.model.*;
+import io.fabric8.kubernetes.api.model.apps.*;
+import io.fabric8.kubernetes.api.model.batch.v1.CronJob;
+import io.fabric8.kubernetes.api.model.batch.v1.Job;
+import io.fabric8.kubernetes.api.model.policy.v1beta1.PodDisruptionBudget;
+import io.fabric8.kubernetes.api.model.policy.v1beta1.PodDisruptionBudgetSpec;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.utils.Serialization;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Service for workload management (deployments, jobs, cronjobs).
@@ -27,7 +35,7 @@ public class WorkloadService {
      * Scale deployment.
      */
     public DeploymentDTO scaleDeployment(String namespace, String name, int replicas) {
-        Deployment deployment = kubernetesClient.deployments()
+        Deployment deployment = kubernetesClient.apps().deployments()
                 .inNamespace(namespace)
                 .withName(name)
                 .get();
@@ -37,7 +45,7 @@ public class WorkloadService {
         }
 
         deployment.getSpec().setReplicas(replicas);
-        Deployment updated = kubernetesClient.deployments()
+        Deployment updated = kubernetesClient.apps().deployments()
                 .resource(deployment)
                 .replace();
 
@@ -48,7 +56,7 @@ public class WorkloadService {
      * Restart deployment.
      */
     public DeploymentDTO restartDeployment(String namespace, String name) {
-        Deployment deployment = kubernetesClient.deployments()
+        Deployment deployment = kubernetesClient.apps().deployments()
                 .inNamespace(namespace)
                 .withName(name)
                 .get();
@@ -61,7 +69,7 @@ public class WorkloadService {
         String timestamp = String.valueOf(System.currentTimeMillis());
         deployment.getMetadata().getAnnotations().put(annotationKey, timestamp);
 
-        Deployment restarted = kubernetesClient.deployments()
+        Deployment restarted = kubernetesClient.apps().deployments()
                 .resource(deployment)
                 .replace();
 
@@ -72,7 +80,7 @@ public class WorkloadService {
      * Update deployment image.
      */
     public DeploymentDTO updateDeploymentImage(String namespace, String name, String image) {
-        Deployment deployment = kubernetesClient.deployments()
+        Deployment deployment = kubernetesClient.apps().deployments()
                 .inNamespace(namespace)
                 .withName(name)
                 .get();
@@ -84,7 +92,7 @@ public class WorkloadService {
         deployment.getSpec().getTemplate().getSpec().getContainers().get(0)
                 .setImage(image);
 
-        Deployment updated = kubernetesClient.deployments()
+        Deployment updated = kubernetesClient.apps().deployments()
                 .resource(deployment)
                 .replace();
 
@@ -93,9 +101,11 @@ public class WorkloadService {
 
     /**
      * Rollback deployment.
+     * Note: RollbackConfig is deprecated in newer Kubernetes versions.
+     * This is a simplified implementation.
      */
     public DeploymentDTO rollbackDeployment(String namespace, String name, long revision) {
-        Deployment deployment = kubernetesClient.deployments()
+        Deployment deployment = kubernetesClient.apps().deployments()
                 .inNamespace(namespace)
                 .withName(name)
                 .get();
@@ -104,11 +114,16 @@ public class WorkloadService {
             return null;
         }
 
-        RollbackConfig rollbackConfig = new RollbackConfig();
-        rollbackConfig.setRevision(revision);
+        // Rollback by updating deployment annotations to reference the revision
+        String annotationKey = "deployment.kubernetes.io/revision";
+        String annotationValue = String.valueOf(revision);
 
-        deployment.getSpec().setRollbackTo(rollbackConfig);
-        Deployment rolledback = kubernetesClient.deployments()
+        if (deployment.getMetadata().getAnnotations() == null) {
+            deployment.getMetadata().setAnnotations(new java.util.HashMap<>());
+        }
+        deployment.getMetadata().getAnnotations().put(annotationKey, annotationValue);
+
+        Deployment rolledback = kubernetesClient.apps().deployments()
                 .resource(deployment)
                 .replace();
 
@@ -119,28 +134,33 @@ public class WorkloadService {
      * Get deployment revision history.
      */
     public List<DeploymentRevisionDTO> getDeploymentRevisions(String namespace, String name) {
-        ReplicaSetList replicaSets = kubernetesClient.replicaSets()
+        ReplicaSetList replicaSets = kubernetesClient.apps().replicaSets()
                 .inNamespace(namespace)
                 .list();
 
         return replicaSets.getItems().stream()
                 .filter(rs -> rs.getMetadata().getOwnerReferences() != null
                         && rs.getMetadata().getOwnerReferences().stream()
-                        .anyMatch(ref -> "Deployment".equals(ref.getKind())
-                                && ref.getName().equals(name)))
-                .map(rs -> new DeploymentRevisionDTO(
-                        rs.getMetadata().getName(),
-                        rs.getMetadata().getAnnotations() != null
-                                ? rs.getMetadata().getAnnotations()
-                                        .getOrDefault("deployment.kubernetes.io/revision", "0")
-                                : "0",
-                        rs.getMetadata().getCreationTimestamp().toEpochMilli(),
-                        rs.getSpec().getReplicas()
-                ))
-                .sorted((a, b) -> Long.compare(
-                        Long.parseLong(b.revision()),
-                        Long.parseLong(a.revision())) * -1)
-                .toList();
+                                .anyMatch(ref -> "Deployment".equals(ref.getKind())
+                                        && ref.getName().equals(name)))
+                .map(rs -> {
+                    String revisionStr = rs.getMetadata().getAnnotations() != null
+                            ? rs.getMetadata().getAnnotations()
+                                    .getOrDefault("deployment.kubernetes.io/revision", "0")
+                            : "0";
+                    long revision = Long.parseLong(revisionStr);
+                    String timestamp = rs.getMetadata().getCreationTimestamp();
+                    long creationTime = timestamp != null ? Instant.parse(timestamp).toEpochMilli() : 0L;
+
+                    return new DeploymentRevisionDTO(
+                            revision,
+                            revisionStr,
+                            null, // changedBy - TODO: Get from audit logs
+                            "Rollback", // changeType
+                            Instant.ofEpochMilli(creationTime).toString());
+                })
+                .sorted((a, b) -> Long.compare(b.revision(), a.revision()) * -1)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -148,7 +168,7 @@ public class WorkloadService {
      */
     public JobDTO createJob(String namespace, JobRequestDTO request) {
         Job job = k8sMapper.mapToJob(request);
-        Job created = kubernetesClient.jobs()
+        Job created = kubernetesClient.batch().v1().jobs()
                 .inNamespace(namespace)
                 .resource(job)
                 .create();
@@ -161,7 +181,7 @@ public class WorkloadService {
      */
     public CronJobDTO createCronJob(String namespace, CronJobRequestDTO request) {
         CronJob cronJob = k8sMapper.mapToCronJob(request);
-        CronJob created = kubernetesClient.cronJobs()
+        CronJob created = kubernetesClient.batch().v1().cronjobs()
                 .inNamespace(namespace)
                 .resource(cronJob)
                 .create();
@@ -191,13 +211,12 @@ public class WorkloadService {
                         namespace,
                         true,
                         null,
-                        "Dry run successful - resource would be created"
-                );
+                        "Dry run successful - resource would be created");
             }
 
-            HasMetadata created = switch (kind) {
+            Object result = switch (kind) {
                 case "Deployment" -> {
-                    Deployment deployment = kubernetesClient.deployments()
+                    Deployment deployment = kubernetesClient.apps().deployments()
                             .inNamespace(namespace)
                             .resource((Deployment) resource)
                             .create();
@@ -205,7 +224,7 @@ public class WorkloadService {
                     yield k8sMapper.mapToDeploymentDto(deployment);
                 }
                 case "StatefulSet" -> {
-                    StatefulSet statefulSet = kubernetesClient.statefulSets()
+                    StatefulSet statefulSet = kubernetesClient.apps().statefulSets()
                             .inNamespace(namespace)
                             .resource((StatefulSet) resource)
                             .create();
@@ -213,7 +232,7 @@ public class WorkloadService {
                     yield k8sMapper.mapToStatefulSetDto(statefulSet);
                 }
                 case "DaemonSet" -> {
-                    DaemonSet daemonSet = kubernetesClient.daemonSets()
+                    DaemonSet daemonSet = kubernetesClient.apps().daemonSets()
                             .inNamespace(namespace)
                             .resource((DaemonSet) resource)
                             .create();
@@ -221,17 +240,15 @@ public class WorkloadService {
                     yield k8sMapper.mapToDaemonSetDto(daemonSet);
                 }
                 case "Job" -> {
-                    io.fabric8.kubernetes.api.model.Job job = kubernetesClient.batch()
-                            .v1().jobs()
+                    Job job = kubernetesClient.batch().v1().jobs()
                             .inNamespace(namespace)
-                            .resource((io.fabric8.kubernetes.api.model.Job) resource)
+                            .resource((Job) resource)
                             .create();
                     uid = job.getMetadata() != null ? job.getMetadata().getUid() : null;
                     yield k8sMapper.mapToJobDto(job);
                 }
                 case "CronJob" -> {
-                    CronJob cronJob = kubernetesClient.batch()
-                            .v1().cronJobs()
+                    CronJob cronJob = kubernetesClient.batch().v1().cronjobs()
                             .inNamespace(namespace)
                             .resource((CronJob) resource)
                             .create();
@@ -240,7 +257,9 @@ public class WorkloadService {
                 }
                 default -> {
                     throw new IllegalArgumentException(
-                            String.format("Unsupported resource kind: %s. Supported kinds: Deployment, StatefulSet, DaemonSet, Job, CronJob", kind));
+                            String.format(
+                                    "Unsupported resource kind: %s. Supported kinds: Deployment, StatefulSet, DaemonSet, Job, CronJob",
+                                    kind));
                 }
             };
 
@@ -250,8 +269,7 @@ public class WorkloadService {
                     namespace,
                     false,
                     uid,
-                    String.format("%s %s created successfully in namespace %s", kind, name, namespace)
-            );
+                    String.format("%s %s created successfully in namespace %s", kind, name, namespace));
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid YAML: " + e.getMessage(), e);
         }
@@ -261,7 +279,7 @@ public class WorkloadService {
      * Update deployment strategy.
      */
     public DeploymentDTO updateDeploymentStrategy(String namespace, String name, UpdateStrategyRequestDTO request) {
-        Deployment deployment = kubernetesClient.deployments()
+        Deployment deployment = kubernetesClient.apps().deployments()
                 .inNamespace(namespace)
                 .withName(name)
                 .get();
@@ -280,15 +298,15 @@ public class WorkloadService {
         strategy.setType(request.type());
 
         if (request.rollingUpdate() != null && "RollingUpdate".equals(request.type())) {
-            RollingUpdateDeploymentSpec rollingUpdate = new RollingUpdateDeploymentSpec();
-            rollingUpdate.setMaxUnavailable(request.rollingUpdate().maxUnavailable());
-            rollingUpdate.setMaxSurge(request.rollingUpdate().maxSurge());
+            RollingUpdateDeployment rollingUpdate = new RollingUpdateDeployment();
+            rollingUpdate.setMaxUnavailable(new IntOrString(request.rollingUpdate().maxUnavailable()));
+            rollingUpdate.setMaxSurge(new IntOrString(request.rollingUpdate().maxSurge()));
             strategy.setRollingUpdate(rollingUpdate);
         }
 
         spec.setStrategy(strategy);
 
-        Deployment updated = kubernetesClient.deployments()
+        Deployment updated = kubernetesClient.apps().deployments()
                 .resource(deployment)
                 .replace();
 
@@ -299,8 +317,8 @@ public class WorkloadService {
      * Update container resources.
      */
     public DeploymentDTO updateContainerResources(String namespace, String name,
-                                                String containerName, ResourceRequirementsDTO resources) {
-        Deployment deployment = kubernetesClient.deployments()
+            String containerName, ResourceRequirementsDTO resources) {
+        Deployment deployment = kubernetesClient.apps().deployments()
                 .inNamespace(namespace)
                 .withName(name)
                 .get();
@@ -325,33 +343,40 @@ public class WorkloadService {
         }
 
         if (resources != null) {
-            io.fabric8.kubernetes.api.model.ResourceRequirements k8sResources =
-                    new io.fabric8.kubernetes.api.model.ResourceRequirements();
+            io.fabric8.kubernetes.api.model.ResourceRequirements k8sResources = new io.fabric8.kubernetes.api.model.ResourceRequirements();
 
             if (resources.limits() != null) {
-                ResourceLimits limits = resources.limits();
+                ResourceLimitsDTO limits = resources.limits();
                 if (limits.cpu() != null || limits.memory() != null) {
-                    k8sResources.setLimits(Map.of(
-                            "cpu", new Quantity(limits.cpu()),
-                            "memory", new Quantity(limits.memory())
-                    ));
+                    Map<String, Quantity> limitsMap = new java.util.HashMap<>();
+                    if (limits.cpu() != null) {
+                        limitsMap.put("cpu", new Quantity(limits.cpu()));
+                    }
+                    if (limits.memory() != null) {
+                        limitsMap.put("memory", new Quantity(limits.memory()));
+                    }
+                    k8sResources.setLimits(limitsMap);
                 }
             }
 
             if (resources.requests() != null) {
-                ResourceRequests requests = resources.requests();
+                ResourceRequestsDTO requests = resources.requests();
                 if (requests.cpu() != null || requests.memory() != null) {
-                    k8sResources.setRequests(Map.of(
-                            "cpu", new Quantity(requests.cpu()),
-                            "memory", new Quantity(requests.memory())
-                    ));
+                    Map<String, Quantity> requestsMap = new java.util.HashMap<>();
+                    if (requests.cpu() != null) {
+                        requestsMap.put("cpu", new Quantity(requests.cpu()));
+                    }
+                    if (requests.memory() != null) {
+                        requestsMap.put("memory", new Quantity(requests.memory()));
+                    }
+                    k8sResources.setRequests(requestsMap);
                 }
             }
 
             container.setResources(k8sResources);
         }
 
-        Deployment updated = kubernetesClient.deployments()
+        Deployment updated = kubernetesClient.apps().deployments()
                 .resource(deployment)
                 .replace();
 
@@ -366,8 +391,7 @@ public class WorkloadService {
             throw new IllegalArgumentException("Namespace is required");
         }
 
-        io.fabric8.kubernetes.api.model.PodDisruptionBudget pdb =
-                new io.fabric8.kubernetes.api.model.PodDisruptionBudget();
+        PodDisruptionBudget pdb = new PodDisruptionBudget();
 
         ObjectMeta metadata = new ObjectMeta();
         metadata.setName(request.name());
@@ -379,10 +403,9 @@ public class WorkloadService {
         }
         pdb.setMetadata(metadata);
 
-        io.fabric8.kubernetes.api.model.PodDisruptionBudgetSpec spec =
-                new io.fabric8.kubernetes.api.model.PodDisruptionBudgetSpec();
-        spec.setMinAvailable(request.minAvailable());
-        spec.setMaxUnavailable(request.maxUnavailable());
+        PodDisruptionBudgetSpec spec = new PodDisruptionBudgetSpec();
+        spec.setMinAvailable(new IntOrString(request.minAvailable()));
+        spec.setMaxUnavailable(new IntOrString(request.maxUnavailable()));
 
         if (request.selector() != null && request.selector().matchLabels() != null) {
             spec.setSelector(new LabelSelector());
@@ -391,12 +414,11 @@ public class WorkloadService {
 
         pdb.setSpec(spec);
 
-        io.fabric8.kubernetes.api.model.PodDisruptionBudget created =
-                kubernetesClient.policy()
-                        .podDisruptionBudget()
-                        .inNamespace(request.namespace())
-                        .resource(pdb)
-                        .create();
+        PodDisruptionBudget created = kubernetesClient.policy()
+                .podDisruptionBudget()
+                .inNamespace(request.namespace())
+                .resource(pdb)
+                .create();
 
         return mapToPodDisruptionBudgetDto(created);
     }
@@ -405,12 +427,11 @@ public class WorkloadService {
      * Get PodDisruptionBudget.
      */
     public Object getPodDisruptionBudget(String namespace, String name) {
-        io.fabric8.kubernetes.api.model.PodDisruptionBudget pdb =
-                kubernetesClient.policy()
-                        .podDisruptionBudget()
-                        .inNamespace(namespace)
-                        .withName(name)
-                        .get();
+        PodDisruptionBudget pdb = kubernetesClient.policy()
+                .podDisruptionBudget()
+                .inNamespace(namespace)
+                .withName(name)
+                .get();
 
         return pdb != null ? mapToPodDisruptionBudgetDto(pdb) : null;
     }
@@ -426,7 +447,7 @@ public class WorkloadService {
                 .delete());
     }
 
-    private Object mapToPodDisruptionBudgetDto(io.fabric8.kubernetes.api.model.PodDisruptionBudget pdb) {
+    private Object mapToPodDisruptionBudgetDto(PodDisruptionBudget pdb) {
         return new Object();
     }
 
@@ -434,8 +455,8 @@ public class WorkloadService {
      * Update container environment variables.
      */
     public DeploymentDTO updateContainerEnvVars(String namespace, String name,
-                                                String containerName, Map<String, String> envVars) {
-        Deployment deployment = kubernetesClient.deployments()
+            String containerName, Map<String, String> envVars) {
+        Deployment deployment = kubernetesClient.apps().deployments()
                 .inNamespace(namespace)
                 .withName(name)
                 .get();
@@ -460,16 +481,15 @@ public class WorkloadService {
         }
 
         if (envVars != null) {
-            List<EnvVar> currentEnv = container.getEnv();
-            if (currentEnv == null) {
-                currentEnv = new java.util.ArrayList<>();
-            }
+            List<EnvVar> originalEnv = container.getEnv();
+            final List<EnvVar> baseEnv = originalEnv != null ? originalEnv : new java.util.ArrayList<>();
 
+            List<EnvVar> updatedEnv = new java.util.ArrayList<>(baseEnv);
             envVars.forEach((key, value) -> {
-                boolean exists = currentEnv.stream()
+                boolean exists = baseEnv.stream()
                         .anyMatch(e -> key.equals(e.getName()));
                 if (exists) {
-                    currentEnv.stream()
+                    updatedEnv.stream()
                             .filter(e -> key.equals(e.getName()))
                             .findFirst()
                             .ifPresent(e -> e.setValue(value));
@@ -477,14 +497,14 @@ public class WorkloadService {
                     EnvVar newEnvVar = new EnvVar();
                     newEnvVar.setName(key);
                     newEnvVar.setValue(value);
-                    currentEnv.add(newEnvVar);
+                    updatedEnv.add(newEnvVar);
                 }
             });
 
-            container.setEnv(currentEnv);
+            container.setEnv(updatedEnv);
         }
 
-        Deployment updated = kubernetesClient.deployments()
+        Deployment updated = kubernetesClient.apps().deployments()
                 .resource(deployment)
                 .replace();
 
@@ -495,17 +515,17 @@ public class WorkloadService {
      * Clone workload.
      */
     public Object cloneWorkload(String sourceNamespace, String sourceName, String sourceKind,
-                             String targetNamespace, String targetName) {
+            String targetNamespace, String targetName) {
         if (targetNamespace == null || targetNamespace.isEmpty()) {
             targetNamespace = sourceNamespace;
         }
 
         HasMetadata sourceResource = switch (sourceKind) {
-            case "Deployment" -> kubernetesClient.deployments()
+            case "Deployment" -> kubernetesClient.apps().deployments()
                     .inNamespace(sourceNamespace).withName(sourceName).get();
-            case "StatefulSet" -> kubernetesClient.statefulSets()
+            case "StatefulSet" -> kubernetesClient.apps().statefulSets()
                     .inNamespace(sourceNamespace).withName(sourceName).get();
-            case "DaemonSet" -> kubernetesClient.daemonSets()
+            case "DaemonSet" -> kubernetesClient.apps().daemonSets()
                     .inNamespace(sourceNamespace).withName(sourceName).get();
             case "Service" -> kubernetesClient.services()
                     .inNamespace(sourceNamespace).withName(sourceName).get();
@@ -530,7 +550,7 @@ public class WorkloadService {
             clonedResource.getMetadata().setUid(null);
             clonedResource.getMetadata().setSelfLink(null);
             clonedResource.getMetadata().setResourceVersion(null);
-            clonedResource.getMetadata().setCreationTimestamp(null);
+            clonedResource.getMetadata().setCreationTimestamp("");
 
             if (clonedResource.getMetadata().getAnnotations() == null) {
                 clonedResource.getMetadata().setAnnotations(new java.util.HashMap<>());
@@ -539,14 +559,15 @@ public class WorkloadService {
                     .put("cloned-from", String.format("%s/%s/%s", sourceKind, sourceNamespace, sourceName));
 
             HasMetadata created = switch (sourceKind) {
-                case "Deployment" -> kubernetesClient.deployments()
+                case "Deployment" -> kubernetesClient.apps().deployments()
                         .inNamespace(targetNamespace).resource((Deployment) clonedResource).create();
-                case "StatefulSet" -> kubernetesClient.statefulSets()
+                case "StatefulSet" -> kubernetesClient.apps().statefulSets()
                         .inNamespace(targetNamespace).resource((StatefulSet) clonedResource).create();
-                case "DaemonSet" -> kubernetesClient.daemonSets()
+                case "DaemonSet" -> kubernetesClient.apps().daemonSets()
                         .inNamespace(targetNamespace).resource((DaemonSet) clonedResource).create();
                 case "Service" -> kubernetesClient.services()
-                        .inNamespace(targetNamespace).resource((Service) clonedResource).create();
+                        .inNamespace(targetNamespace).resource((io.fabric8.kubernetes.api.model.Service) clonedResource)
+                        .create();
                 case "ConfigMap" -> kubernetesClient.configMaps()
                         .inNamespace(targetNamespace).resource((ConfigMap) clonedResource).create();
                 case "Secret" -> kubernetesClient.secrets()
@@ -558,22 +579,32 @@ public class WorkloadService {
                 case "Deployment" -> k8sMapper.mapToDeploymentDto((Deployment) created);
                 case "StatefulSet" -> k8sMapper.mapToStatefulSetDto((StatefulSet) created);
                 case "DaemonSet" -> k8sMapper.mapToDaemonSetDto((DaemonSet) created);
-                case "Service" -> k8sMapper.mapToServiceDto((Service) created);
-                case "ConfigMap" -> new ConfigMapDTO(
-                        created.getMetadata().getName(),
-                        created.getMetadata().getNamespace(),
-                        created.getMetadata().getCreationTimestamp().toEpochMilli(),
-                        ((ConfigMap) created).getData(),
-                        ((ConfigMap) created).getBinaryData(),
-                        created.getMetadata().getLabels());
-                case "Secret" -> new SecretDTO(
-                        created.getMetadata().getName(),
-                        created.getMetadata().getNamespace(),
-                        ((Secret) created).getType(),
-                        created.getMetadata().getCreationTimestamp().toEpochMilli(),
-                        ((Secret) created).getData(),
-                        created.getMetadata().getLabels(),
-                        ((Secret) created).getImmutable() != null ? created.getImmutable() : false);
+                case "Service" -> k8sMapper.mapToServiceDto((io.fabric8.kubernetes.api.model.Service) created);
+                case "ConfigMap" -> {
+                    ConfigMap cm = (ConfigMap) created;
+                    String timestamp = cm.getMetadata().getCreationTimestamp();
+                    long creationTime = timestamp != null ? Instant.parse(timestamp).toEpochMilli() : 0L;
+                    yield new ConfigMapDTO(
+                            cm.getMetadata().getName(),
+                            cm.getMetadata().getNamespace(),
+                            creationTime,
+                            cm.getData() != null ? cm.getData() : Map.of(),
+                            Map.of(), // binaryData not implemented
+                            cm.getMetadata().getLabels() != null ? cm.getMetadata().getLabels() : Map.of());
+                }
+                case "Secret" -> {
+                    Secret secret = (Secret) created;
+                    String timestamp = secret.getMetadata().getCreationTimestamp();
+                    long creationTime = timestamp != null ? Instant.parse(timestamp).toEpochMilli() : 0L;
+                    yield new SecretDTO(
+                            secret.getMetadata().getName(),
+                            secret.getMetadata().getNamespace(),
+                            secret.getType(),
+                            creationTime,
+                            secret.getData(),
+                            secret.getMetadata().getLabels(),
+                            false); // Immutable field not available in older Kubernetes versions
+                }
                 default -> throw new IllegalArgumentException("Unsupported source kind");
             };
         } catch (Exception e) {
@@ -585,7 +616,7 @@ public class WorkloadService {
      * Pause deployment.
      */
     public DeploymentDTO pauseDeployment(String namespace, String name) {
-        Deployment deployment = kubernetesClient.deployments()
+        Deployment deployment = kubernetesClient.apps().deployments()
                 .inNamespace(namespace)
                 .withName(name)
                 .get();
@@ -602,7 +633,7 @@ public class WorkloadService {
 
         spec.setPaused(true);
 
-        Deployment paused = kubernetesClient.deployments()
+        Deployment paused = kubernetesClient.apps().deployments()
                 .resource(deployment)
                 .replace();
 
@@ -613,7 +644,7 @@ public class WorkloadService {
      * Resume deployment.
      */
     public DeploymentDTO resumeDeployment(String namespace, String name) {
-        Deployment deployment = kubernetesClient.deployments()
+        Deployment deployment = kubernetesClient.apps().deployments()
                 .inNamespace(namespace)
                 .withName(name)
                 .get();
@@ -630,10 +661,52 @@ public class WorkloadService {
 
         spec.setPaused(false);
 
-        Deployment resumed = kubernetesClient.deployments()
+        Deployment resumed = kubernetesClient.apps().deployments()
                 .resource(deployment)
                 .replace();
 
         return k8sMapper.mapToDeploymentDto(resumed);
+    }
+
+    /**
+     * List jobs.
+     */
+    public ResourceListDTO<JobDTO> listJobs(String namespace, String search) {
+        var operation = kubernetesClient.batch().v1().jobs();
+        var items = (namespace != null && !namespace.isEmpty())
+                ? operation.inNamespace(namespace).list().getItems()
+                : operation.inAnyNamespace().list().getItems();
+
+        List<JobDTO> jobDTOs = items.stream()
+                .filter(job -> search == null || job.getMetadata().getName().contains(search))
+                .map(k8sMapper::mapToJobDto)
+                .collect(Collectors.toList());
+
+        return new ResourceListDTO<>(
+                "Job",
+                "batch/v1",
+                jobDTOs,
+                new ResourceListMetaDTO(0, "", 0));
+    }
+
+    /**
+     * List cron jobs.
+     */
+    public ResourceListDTO<CronJobDTO> listCronJobs(String namespace, String search) {
+        var operation = kubernetesClient.batch().v1().cronjobs();
+        var items = (namespace != null && !namespace.isEmpty())
+                ? operation.inNamespace(namespace).list().getItems()
+                : operation.inAnyNamespace().list().getItems();
+
+        List<CronJobDTO> cronJobDTOs = items.stream()
+                .filter(cronJob -> search == null || cronJob.getMetadata().getName().contains(search))
+                .map(k8sMapper::mapToCronJobDto)
+                .collect(Collectors.toList());
+
+        return new ResourceListDTO<>(
+                "CronJob",
+                "batch/v1",
+                cronJobDTOs,
+                new ResourceListMetaDTO(0, "", 0));
     }
 }

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, ReactNode, KeyboardEvent } from 'react';
+import { useState, useRef, useEffect, KeyboardEvent } from 'react';
 
 interface SelectOption {
   value: string;

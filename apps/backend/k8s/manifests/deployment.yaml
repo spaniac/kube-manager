@@ -29,84 +29,84 @@ spec:
         runAsUser: 1000
         fsGroup: 1000
       containers:
-      - name: backend
-        image: k8s-manager-backend:latest
-        imagePullPolicy: IfNotPresent
-        ports:
-        - name: http
-          containerPort: 8080
-          protocol: TCP
-        env:
-        - name: DB_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: k8s-manager-config
-              key: db.host
-        - name: DB_PORT
-          valueFrom:
-            configMapKeyRef:
-              name: k8s-manager-config
-              key: db.port
-        - name: DB_NAME
-          valueFrom:
-            configMapKeyRef:
-              name: k8s-manager-config
-              key: db.name
-        - name: DB_USERNAME
-          valueFrom:
-            configMapKeyRef:
-              name: k8s-manager-config
-              key: db.username
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: k8s-manager-secrets
-              key: db.password
-        - name: KEYCLOAK_ISSUER_URI
-          valueFrom:
-            configMapKeyRef:
-              name: k8s-manager-config
-              key: keycloak.issuer-uri
-        - name: PROMETHEUS_URL
-          valueFrom:
-            configMapKeyRef:
-              name: k8s-manager-config
-              key: prometheus.url
-        - name: SPRING_PROFILES_ACTIVE
-          value: "production"
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
-            memory: "1Gi"
-            cpu: "1000m"
-        livenessProbe:
-          httpGet:
-            path: /actuator/health
-            port: 8080
-            scheme: HTTP
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 3
-          successThreshold: 1
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /actuator/health/readiness
-            port: 8080
-            scheme: HTTP
-          initialDelaySeconds: 30
-          periodSeconds: 5
-          timeoutSeconds: 3
-          successThreshold: 1
-          failureThreshold: 3
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
+        - name: backend
+          image: k8s-manager-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: k8s-manager-config
+                  key: db.host
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: k8s-manager-config
+                  key: db.port
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: k8s-manager-config
+                  key: db.name
+            - name: DB_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: k8s-manager-config
+                  key: db.username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: k8s-manager-secrets
+                  key: db.password
+            - name: KEYCLOAK_ISSUER_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: k8s-manager-config
+                  key: keycloak.issuer-uri
+            - name: PROMETHEUS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: k8s-manager-config
+                  key: prometheus.url
+            - name: SPRING_PROFILES_ACTIVE
+              value: "production"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
       volumes:
-      - name: tmp
-        emptyDir: {}
+        - name: tmp
+          emptyDir: { }
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -142,51 +142,51 @@ spec:
         runAsUser: 1000
         fsGroup: 1000
       containers:
-      - name: frontend
-        image: k8s-manager-frontend:latest
-        imagePullPolicy: IfNotPresent
-        ports:
-        - name: http
-          containerPort: 5173
-          protocol: TCP
-        env:
-        - name: VITE_API_BASE_URL
-          valueFrom:
-            configMapKeyRef:
-              name: k8s-manager-config
-              key: frontend.api-url
-        - name: NODE_ENV
-          value: "production"
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "256Mi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 5173
-            scheme: HTTP
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          timeoutSeconds: 3
-          successThreshold: 1
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 5173
-            scheme: HTTP
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          successThreshold: 1
-          failureThreshold: 3
-        volumeMounts:
-        - name: cache
-          mountPath: /app/node_modules/.cache
+        - name: frontend
+          image: k8s-manager-frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5173
+              protocol: TCP
+          env:
+            - name: VITE_API_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: k8s-manager-config
+                  key: frontend.api-url
+            - name: NODE_ENV
+              value: "production"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5173
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5173
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+          volumeMounts:
+            - name: cache
+              mountPath: /app/node_modules/.cache
       volumes:
-      - name: cache
-        emptyDir: {}
+        - name: cache
+          emptyDir: { }

@@ -3,11 +3,14 @@ package com.k8smanager.controller;
 import com.k8smanager.common.response.ApiResponse;
 import com.k8smanager.dto.*;
 import com.k8smanager.service.MonitoringService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * Controller for resource monitoring.
@@ -27,7 +30,7 @@ public class MonitoringController {
      * GET /api/v1/metrics/pods/{namespace}/{name}
      */
     @GetMapping("/pods/{namespace}/{name}")
-    @PreAuthorize("hasAuthority('READ', 'POD')")
+    @PreAuthorize("hasAnyAuthority('READ', 'POD')")
     public ResponseEntity<ApiResponse<MetricsResponseDTO>> getPodMetrics(
             @PathVariable String namespace,
             @PathVariable String name,
@@ -44,7 +47,7 @@ public class MonitoringController {
      * GET /api/v1/metrics/nodes/{name}
      */
     @GetMapping("/nodes/{name}")
-    @PreAuthorize("hasAuthority('READ', 'NODE')")
+    @PreAuthorize("hasAnyAuthority('READ', 'NODE')")
     public ResponseEntity<ApiResponse<MetricsResponseDTO>> getNodeMetrics(
             @PathVariable String name,
             @RequestParam(required = false) String metricType) {
@@ -60,7 +63,7 @@ public class MonitoringController {
      * GET /api/v1/metrics/workloads/{kind}/{namespace}/{name}
      */
     @GetMapping("/workloads/{kind}/{namespace}/{name}")
-    @PreAuthorize("hasAuthority('READ', 'DEPLOYMENT')")
+    @PreAuthorize("hasAnyAuthority('READ', 'DEPLOYMENT')")
     public ResponseEntity<ApiResponse<MetricsResponseDTO>> getWorkloadMetrics(
             @PathVariable String kind,
             @PathVariable String namespace,
@@ -78,7 +81,7 @@ public class MonitoringController {
      * GET /api/v1/metrics/network/{namespace}/{name}
      */
     @GetMapping("/network/{namespace}/{name}")
-    @PreAuthorize("hasAuthority('READ', 'POD')")
+    @PreAuthorize("hasAnyAuthority('READ', 'POD')")
     public ResponseEntity<ApiResponse<MetricsResponseDTO>> getNetworkMetrics(
             @PathVariable String namespace,
             @PathVariable String name) {
@@ -94,7 +97,7 @@ public class MonitoringController {
      * GET /api/v1/metrics/storage/{namespace}/{name}
      */
     @GetMapping("/storage/{namespace}/{name}")
-    @PreAuthorize("hasAuthority('READ', 'POD')")
+    @PreAuthorize("hasAnyAuthority('READ', 'POD')")
     public ResponseEntity<ApiResponse<MetricsResponseDTO>> getStorageMetrics(
             @PathVariable String namespace,
             @PathVariable String name) {
@@ -110,14 +113,14 @@ public class MonitoringController {
      * GET /api/v1/metrics/history/{namespace}/{name}
      */
     @GetMapping("/history/{namespace}/{name}")
-    @PreAuthorize("hasAuthority('READ', 'POD')")
+    @PreAuthorize("hasAnyAuthority('READ', 'POD')")
     public ResponseEntity<ApiResponse<TimeSeriesDTO>> getHistoricalMetrics(
             @PathVariable String namespace,
             @PathVariable String name,
             @RequestParam(defaultValue = "1h") String range,
             @RequestParam(required = false) String metricType) {
         TimeSeriesDTO timeSeries = monitoringService.getHistoricalMetrics(namespace, name, range, metricType);
-        if (timeSeries == null || timeSeries.getData().isEmpty()) {
+        if (timeSeries == null || timeSeries.data().isEmpty()) {
             return ResponseEntity.status(404).body(ApiResponse.error("Historical metrics not found"));
         }
         return ResponseEntity.ok(ApiResponse.success(timeSeries));
@@ -128,7 +131,7 @@ public class MonitoringController {
      * POST /api/v1/metrics/promql/query
      */
     @PostMapping("/promql/query")
-    @PreAuthorize("hasAuthority('READ', 'POD')")
+    @PreAuthorize("hasAnyAuthority('READ', 'POD')")
     public ResponseEntity<ApiResponse<PromQLQueryResultDTO>> executePromQLQuery(
             @RequestBody PromQLQueryRequestDTO request,
             @AuthenticationPrincipal Jwt jwt) {
@@ -139,7 +142,7 @@ public class MonitoringController {
 
         if (result.error() != null) {
             return ResponseEntity.status(500)
-                    .body(ApiResponse.error("PROMQL_QUERY_FAILED", result.error()));
+                    .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, result.error()));
         }
 
         return ResponseEntity.ok(ApiResponse.success(result));
@@ -150,14 +153,14 @@ public class MonitoringController {
      * POST /api/v1/metrics/alerts/threshold
      */
     @PostMapping("/alerts/threshold")
-    @PreAuthorize("hasAuthority('WRITE', 'POD')")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'POD')")
     public ResponseEntity<ApiResponse<Void>> configureAlertThreshold(
             @RequestBody AlertThresholdDTO request,
             @AuthenticationPrincipal Jwt jwt) {
         boolean success = monitoringService.configureAlertThreshold(request);
         if (!success) {
             return ResponseEntity.status(500)
-                    .body(ApiResponse.error("ALERT_CONFIG_FAILED", "Failed to configure alert threshold"));
+                    .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to configure alert threshold"));
         }
         return ResponseEntity.ok(ApiResponse.success(null, "Alert threshold configured successfully"));
     }
@@ -167,7 +170,7 @@ public class MonitoringController {
      * GET /api/v1/metrics/alerts/history
      */
     @GetMapping("/alerts/history")
-    @PreAuthorize("hasAuthority('READ', 'POD')")
+    @PreAuthorize("hasAnyAuthority('READ', 'POD')")
     public ResponseEntity<ApiResponse<List<AlertDTO>>> getAlertHistory(
             @RequestParam(required = false) String namespace,
             @RequestParam(required = false) String severity,
@@ -181,7 +184,7 @@ public class MonitoringController {
      * POST /api/v1/metrics/anomalies/detect
      */
     @PostMapping("/anomalies/detect")
-    @PreAuthorize("hasAuthority('READ', 'POD')")
+    @PreAuthorize("hasAnyAuthority('READ', 'POD')")
     public ResponseEntity<ApiResponse<List<AnomalyDetectionDTO>>> detectAnomalies(
             @RequestBody AnomalyDetectionRequestDTO request,
             @AuthenticationPrincipal Jwt jwt) {
@@ -194,14 +197,14 @@ public class MonitoringController {
      * POST /api/v1/metrics/alerts/{alertId}/acknowledge
      */
     @PostMapping("/alerts/{alertId}/acknowledge")
-    @PreAuthorize("hasAuthority('WRITE', 'POD')")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'POD')")
     public ResponseEntity<ApiResponse<Void>> acknowledgeAlert(
             @PathVariable Long alertId,
             @AuthenticationPrincipal Jwt jwt) {
         boolean success = monitoringService.acknowledgeAlert(alertId);
         if (!success) {
             return ResponseEntity.status(404)
-                    .body(ApiResponse.error("ALERT_NOT_FOUND", "Alert not found"));
+                    .body(ApiResponse.error(HttpStatus.NOT_FOUND, "Alert not found"));
         }
         return ResponseEntity.ok(ApiResponse.success(null, "Alert acknowledged successfully"));
     }

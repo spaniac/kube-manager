@@ -225,7 +225,6 @@ function NodeResourceCard({
 }) {
   const cpuCapacity = parseFloat(node.capacity.cpu);
   const cpuAllocated = parseFloat(node.allocated.cpu);
-  const cpuPercentage = cpuCapacity > 0 ? (cpuAllocated / cpuCapacity) * 100 : 0;
 
   const memStr = node.capacity.memory;
   const memVal = parseFloat(memStr.replace(/[^\d.]/g, ''));
@@ -236,7 +235,6 @@ function NodeResourceCard({
   const memAllocatedVal = parseFloat(memAllocatedStr.replace(/[^\d.]/g, ''));
   const memAllocatedUnit = memAllocatedStr.replace(/[\d.]/g, '');
   const memAllocated = memAllocatedUnit === 'Gi' ? memAllocatedVal * 1024**3 : memAllocatedVal * 1024**2;
-  const memPercentage = memCapacity > 0 ? (memAllocated / memCapacity) * 100 : 0;
 
   return (
     <div className="node-resource-card">

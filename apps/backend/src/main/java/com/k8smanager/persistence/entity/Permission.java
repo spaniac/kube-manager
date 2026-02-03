@@ -1,7 +1,12 @@
 package com.k8smanager.persistence.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.Set;
 
 /**
  * Permission entity representing granular RBAC permissions.
@@ -30,17 +35,21 @@ public class Permission {
     @ManyToMany(mappedBy = "permissions")
     private Set<RolePermission> rolePermissions = new java.util.HashSet<>();
 
+    public PermissionType getPermissionType() {
+        return this.type;
+    }
+
     /**
      * Permission types (actions).
      */
     public enum PermissionType {
-        READ, WRITE, DELETE, EXEC, LOGS
+        READ, WRITE, DELETE, EXEC, LOGS, ALL
     }
 
     /**
      * Resource types that permissions can be applied to.
      */
     public enum ResourceType {
-        POD, DEPLOYMENT, STATEFULSET, DAEMONSET, SERVICE, CONFIGMAP, SECRET, NAMESPACE
+        POD, DEPLOYMENT, STATEFULSET, DAEMONSET, SERVICE, CONFIGMAP, SECRET, NAMESPACE, ALL
     }
 }

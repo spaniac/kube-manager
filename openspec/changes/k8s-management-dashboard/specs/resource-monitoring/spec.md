@@ -7,6 +7,11 @@ The system SHALL display real-time CPU usage metrics for pods, nodes, and worklo
 - **WHEN** user views a pod's detail page
 - **THEN** system displays current CPU usage and CPU request/limit values
 
+#### Scenario: Verify real-time metric updates
+- **WHEN** user observes metrics graph for 1 minute
+- **AND** workload generates variable load
+- **THEN** graph updates dynamically to reflect changing values (not static mock data)
+
 #### Scenario: View node CPU usage
 - **WHEN** user views a node's detail page
 - **THEN** system displays current CPU usage as a percentage of node capacity

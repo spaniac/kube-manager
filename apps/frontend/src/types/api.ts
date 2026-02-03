@@ -460,3 +460,24 @@ export interface TerminalTheme {
   cursor: string;
   colors: string[];
 }
+
+export interface UserProfile {
+  id: number;
+  email: string;
+  name: string;
+  avatarUrl?: string;
+  createdAt: number;
+  lastLoginAt?: number;
+  roles: string[];
+}
+
+export interface Session {
+  id: number;
+  userId: number;
+  ipAddress: string;
+  userAgent: string;
+  createdAt: number;
+  lastActivityAt: number;
+  expiresAt: number;
+  active: boolean;
+}

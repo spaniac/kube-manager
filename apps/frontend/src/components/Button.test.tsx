@@ -1,9 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@/test/test-utils';
 import userEvent from '@testing-library/user-event';
 
-import { render } from '@/test/test-utils';
-import Button from '@/components/Button';
+import { Button } from '@/components/Button';
 
 describe('Button Component', () => {
   it('renders button with text', () => {
@@ -30,16 +29,18 @@ describe('Button Component', () => {
   it('shows loading state', () => {
     render(<Button loading>Click me</Button>);
     expect(screen.getByRole('button')).toBeDisabled();
-    expect(screen.getByRole('button')).toHaveClass('loading');
+    expect(screen.getByRole('button')).toHaveClass('button-loading');
   });
 
   it('applies correct variant classes', () => {
     render(<Button variant="danger">Delete</Button>);
-    expect(screen.getByRole('button')).toHaveClass('btn', 'danger');
+    expect(screen.getByRole('button')).toHaveClass('button', 'button-danger');
   });
 
   it('renders with custom data-testid', () => {
     render(<Button data-testid="custom-button">Submit</Button>);
-    expect(screen.getByTestId('custom-button')).toBeInTheDocument();
+    const button = screen.getByRole('button', { name: /submit/i });
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveAttribute('data-testid', 'custom-button');
   });
 });

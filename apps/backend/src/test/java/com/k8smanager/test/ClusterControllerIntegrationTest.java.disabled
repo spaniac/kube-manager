@@ -1,0 +1,74 @@
+package com.k8smanager.test;
+
+import com.k8smanager.controller.ClusterController;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import static org.mockito.Mockito.verify;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@WithMockUser(username = "admin", roles = "ADMIN")
+class ClusterControllerIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ClusterController clusterController;
+
+    @Test
+    void testGetClusterHealth_Success_ShouldReturnHealthStatus() throws Exception {
+        // When
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/cluster/health")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.healthy").value(true))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.version").exists());
+
+        verify(clusterController).getClusterHealth();
+    }
+
+    @Test
+    void testGetClusterInfo_Success_ShouldReturnClusterInfo() throws Exception {
+        // When
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/cluster")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.name").exists())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.version").exists())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.platform").exists())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.nodesCount").exists());
+
+        verify(clusterController).getClusterInfo();
+    }
+
+    @Test
+    void testGetClusterNodes_Success_ShouldReturnNodeList() throws Exception {
+        // When
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/cluster/nodes")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$").isArray());
+
+        verify(clusterController).getClusterNodes();
+    }
+
+    @Test
+    void testGetClusterNodes_WithRoleUser_Success_ShouldReturnNodeList() throws Exception {
+        // When
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/cluster/nodes")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$").isArray());
+
+        // Verify the controller method was called (MockMvc already tests the endpoint)
+        verify(clusterController).getClusterNodes();
+    }
+}

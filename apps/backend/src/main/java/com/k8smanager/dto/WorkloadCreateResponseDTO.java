@@ -10,4 +10,5 @@ public record WorkloadCreateResponseDTO(
         boolean dryRun,
         String uid,
         String message
-) {}
+) {
+}

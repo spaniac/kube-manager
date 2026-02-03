@@ -52,7 +52,9 @@ data:
             "orientation": "auto",
             "reduceOptions": {
               "values": false,
-              "calcs": ["lastNotNull"],
+              "calcs": [
+                "lastNotNull"
+              ],
               "fields": ""
             },
             "showThresholdLabels": false,
@@ -221,7 +223,10 @@ data:
       "refresh": "10s",
       "schemaVersion": 36,
       "style": "dark",
-      "tags": ["k8s-manager", "backend", "monitoring"],
+      "tags": [
+        "k8s-manager",
+        "backend",
+        "monitoring"],
       "templating": {
         "list": []
       },

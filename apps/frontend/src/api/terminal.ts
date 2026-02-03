@@ -4,8 +4,6 @@ import { parseApiResponse } from '@utils/apiResponse';
 import {
   apiResponseSchema,
   terminalSessionInfoSchema,
-  terminalResizeRequestSchema,
-  terminalCommandRequestSchema,
 } from '../types/schemas';
 import type {
   TerminalSessionInfo,

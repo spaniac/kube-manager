@@ -118,7 +118,6 @@ function highlightYaml(code: string): HighlightedToken[] {
       }
 
       const valueIndent = valuePart.search(/\S|$/);
-      const indentDiff = valueIndent - (keyPart.length + 1);
 
       // Check for list items
       if (trimmedLine.startsWith('- ')) {

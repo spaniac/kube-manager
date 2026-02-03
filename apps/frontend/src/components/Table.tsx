@@ -4,7 +4,7 @@ interface Column<T> {
   key: keyof T;
   header: string;
   sortable?: boolean;
-  render?: (value: any, row: T) => ReactNode;
+  render?: (value: unknown, row: T) => ReactNode;
 }
 
 interface TableProps<T> {
@@ -17,7 +17,7 @@ interface TableProps<T> {
   emptyMessage?: string;
 }
 
-export function Table<T extends Record<string, any>>({
+export function Table<T extends Record<string, unknown>>({
   data,
   columns,
   onSort,
@@ -27,7 +27,7 @@ export function Table<T extends Record<string, any>>({
   emptyMessage = 'No data available',
 }: TableProps<T>) {
   const [sort, setSort] = useState<{ key: keyof T; order: 'asc' | 'desc' }>(
-    defaultSort || { key: columns[0].key, order: 'asc' },
+    defaultSort || (columns.length > 0 ? { key: columns[0].key, order: 'asc' } : { key: '' as keyof T, order: 'asc' }),
   );
 
   const sortedData = useMemo(() => {

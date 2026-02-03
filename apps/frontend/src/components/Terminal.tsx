@@ -7,7 +7,6 @@ import {
   connectTerminal,
   closeTerminal,
   resizeTerminal,
-  sendTerminalCommand,
   interruptTerminal,
   createTerminalWebSocket,
 } from '@api/terminal';
@@ -173,12 +172,13 @@ export default function Terminal({
       });
 
       wsRef.current = ws;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to connect to terminal:', error);
       setConnectionStatus('error');
-      Toast.error(`Failed to connect: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      Toast.error(`Failed to connect: ${errorMessage}`);
     }
-  }, [namespace, podName, selectedContainer, resetSessionTimeout]);
+  }, [namespace, podName, selectedContainer, resetSessionTimeout, handleClose]);
 
   // Disconnect from terminal
   const disconnect = useCallback(async () => {
@@ -317,7 +317,6 @@ export default function Terminal({
         // Up arrow
         if (commandHistoryRef.current.length > 0 && historyIndexRef.current < commandHistoryRef.current.length - 1) {
           historyIndexRef.current += 1;
-          const command = commandHistoryRef.current[commandHistoryRef.current.length - 1 - historyIndexRef.current];
           // This is a simplified approach - real implementation needs more complex handling
         }
       } else if (data === '\x1b[B') {
@@ -327,8 +326,6 @@ export default function Terminal({
         }
       } else if (data === '\t') {
         // Tab completion
-        const currentLine = currentInputRef.current;
-        // Send tab to server for completion
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
           wsRef.current.send('\t');
         }

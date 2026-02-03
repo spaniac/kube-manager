@@ -44,6 +44,11 @@ The system SHALL maintain user sessions with configurable timeout and support fo
 - **WHEN** user continues to interact with the application
 - **THEN** session is automatically extended before timeout
 
+#### Scenario: Sequential user login isolation
+- **WHEN** Admin user logs out
+- **AND** Read-only user logs in on the same browser
+- **THEN** Read-only user CANNOT perform any administrative actions (verifying session cleanup)
+
 ### Requirement: Logout functionality
 The system SHALL provide logout functionality that invalidates the user session and tokens.
 

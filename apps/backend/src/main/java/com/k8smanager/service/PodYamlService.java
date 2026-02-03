@@ -2,7 +2,7 @@ package com.k8smanager.service;
 
 import com.k8smanager.dto.PodDTO;
 import com.k8smanager.k8s.K8sMapper;
-import io.fabric8.kubernetes.api.model.*;
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.springframework.stereotype.Service;
 
@@ -49,8 +49,6 @@ public class PodYamlService {
         appendYamlLine(yaml, "metadata:");
         appendYamlIndent(yaml, 2, "name: " + getFieldValue(dto, "name"));
         appendYamlIndent(yaml, 2, "namespace: " + getFieldValue(dto, "namespace"));
-        appendYamlIndent(yaml, 2, "labels:");
-        appendYamlIndent(yaml, 4, formatMap(getFieldValue(dto, "labels")));
         appendYamlLine(yaml, "spec:");
         appendYamlIndent(yaml, 2, "containers:");
         appendListField(yaml, dto, "containers", 4);
@@ -123,6 +121,7 @@ public class PodYamlService {
         } catch (Exception e) {
             return null;
         }
+        return null;
     }
 
     /**
@@ -140,5 +139,6 @@ public class PodYamlService {
         } catch (Exception e) {
             return null;
         }
+        return null;
     }
 }

@@ -7,4 +7,5 @@ package com.k8smanager.dto;
 public record PromQLQueryRequestDTO(
         String query,
         String range
-) {}
+) {
+}

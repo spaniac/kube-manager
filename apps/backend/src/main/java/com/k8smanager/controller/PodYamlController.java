@@ -1,11 +1,13 @@
 package com.k8smanager.controller;
 
 import com.k8smanager.common.response.ApiResponse;
-import com.k8smanager.dto.PodDTO;
 import com.k8smanager.service.PodYamlService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Controller for pod YAML display.
@@ -25,7 +27,7 @@ public class PodYamlController {
      * GET /api/v1/pods/{namespace}/{name}/yaml
      */
     @GetMapping("/{namespace}/{name}/yaml")
-    @PreAuthorize("hasAuthority('READ', 'POD')")
+    @PreAuthorize("hasAnyAuthority('READ', 'POD')")
     public ResponseEntity<ApiResponse<String>> getPodYaml(
             @PathVariable String namespace,
             @PathVariable String name) {

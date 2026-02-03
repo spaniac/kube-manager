@@ -1,8 +1,8 @@
-import { useMemo } from 'react';import { useApiQuery } from '@hooks/useApi';
-import { getClusterMetrics, getNodes } from '@api/cluster';
-import { Spinner } from '@components/Spinner';
-import { Input } from '@components/Input';
-import { Select, SelectStyles } from '@components/Select';
+import { useMemo, useState } from 'react';
+import { useApiQuery } from '../hooks/useApi';
+import { getClusterMetrics, getNodes } from '../api/cluster';
+import { Spinner } from '../components/Spinner';
+import { Select } from '../components/Select';
 import {
   LineChart,
   Line,
@@ -18,11 +18,6 @@ type TimeRange = '1h' | '6h' | '24h' | '7d' | '30d';
 
 type MetricType = 'cpu' | 'memory' | 'network' | 'pods';
 
-interface MetricPoint {
-  timestamp: number;
-  value: number;
-}
-
 export default function ClusterMetricsHistory() {
   const [timeRange, setTimeRange] = useState<TimeRange>('24h');
   const [metricType, setMetricType] = useState<MetricType>('cpu');
@@ -30,7 +25,6 @@ export default function ClusterMetricsHistory() {
     ['cluster', 'metrics'],
     getClusterMetrics,
   );
-  const { data: nodes } = useApiQuery(['nodes'], getNodes);
 
   // Generate mock historical data (to be replaced with real API call once task 11.7 is done)
   const historicalData = useMemo(() => {
@@ -60,7 +54,7 @@ export default function ClusterMetricsHistory() {
   }));
 
   if (isLoading) {
-    return <Spinner message="Loading metrics..." />;
+    return <Spinner size="lg" />;
   }
 
    const getUnit = () => {
@@ -82,7 +76,6 @@ export default function ClusterMetricsHistory() {
       <div className="metrics-header">
         <h1>Cluster Metrics History</h1>
         <div className="metrics-controls">
-          <SelectStyles />
           <Select
             label="Time Range"
             value={timeRange}

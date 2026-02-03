@@ -1,7 +1,6 @@
 package com.k8smanager.dto;
 
 import java.time.Instant;
-import java.util.List;
 
 /**
  * DTO for alert history and triggered alerts.
@@ -20,4 +19,5 @@ public record AlertDTO(
         String message,
         Boolean acknowledged,
         String source
-) {}
+) {
+}

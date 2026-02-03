@@ -14,4 +14,5 @@ public record TimeSeriesDTO(
         Instant endTime,
         List<MetricPointDTO> data,
         MetricSummaryDTO summary
-) {}
+) {
+}

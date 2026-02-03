@@ -9,4 +9,5 @@ public record CloneWorkloadRequestDTO(
         String sourceKind,
         String targetName,
         String targetNamespace
-) {}
+) {
+}

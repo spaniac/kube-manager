@@ -1,0 +1,157 @@
+
+> k8s-manager-frontend@0.0.0 test:coverage
+> vitest run --coverage
+
+
+ RUN  v2.1.9 /home/spaniac/workspace/kube-manager/apps/frontend
+      Coverage enabled with v8
+
+ ❯ src/components/Select.test.tsx (0 test)
+ ❯ e2e/basic.spec.ts (0 test)
+stdout | src/utils/sse.test.ts > SSEClient > connect > should not reconnect if already connected
+SSE connection opened
+
+stdout | src/utils/sse.test.ts > SSEClient > isConnected > should return true when connected
+SSE connection opened
+
+stdout | src/utils/sse.test.ts > SSEClient > isConnected > should return false after disconnect
+SSE connection opened
+
+stdout | src/utils/sse.test.ts > SSEClient > reconnection logic > should attempt reconnection on error
+Reconnecting in 1000ms (attempt 1)
+
+stdout | src/utils/sse.test.ts > SSEClient > reconnection logic > should stop retrying after max attempts
+Reconnecting in 1000ms (attempt 1)
+Reconnecting in 2000ms (attempt 2)
+Reconnecting in 4000ms (attempt 3)
+Reconnecting in 8000ms (attempt 4)
+Reconnecting in 16000ms (attempt 5)
+
+stdout | src/utils/sse.test.ts > SSEClient > reconnection logic > should reset retry count on successful connection
+Reconnecting in 1000ms (attempt 1)
+SSE connection opened
+
+ ✓ src/utils/sse.test.ts (32 tests) 22ms
+ ✓ src/utils/apiResponse.test.ts (36 tests) 37ms
+ ❯ src/components/Modal.test.tsx (12 tests | 12 failed) 8ms
+   × Modal Component > does not render when isOpen is false 5ms
+     → document is not defined
+   × Modal Component > renders when isOpen is true 0ms
+     → document is not defined
+   × Modal Component > renders with default size (md) 0ms
+     → document is not defined
+   × Modal Component > renders with small size 0ms
+     → document is not defined
+   × Modal Component > renders with large size 0ms
+     → document is not defined
+   × Modal Component > renders with extra large size 0ms
+     → document is not defined
+   × Modal Component > calls onClose when close button is clicked 0ms
+     → document is not defined
+   × Modal Component > hides close button when showCloseButton is false 0ms
+     → document is not defined
+   × Modal Component > sets body overflow to hidden when open 0ms
+     → document is not defined
+   × Modal Component > resets body overflow when closed 0ms
+     → document is not defined
+   × Modal Component > calls onClose when overlay is clicked 0ms
+     → document is not defined
+   × Modal Component > prevents event propagation when content is clicked 0ms
+     → document is not defined
+ ❯ src/components/Input.test.tsx (11 tests | 11 failed) 10ms
+   × Input Component > renders input with label 5ms
+     → document is not defined
+   × Input Component > renders input without label 0ms
+     → document is not defined
+   × Input Component > renders with error state 0ms
+     → document is not defined
+   × Input Component > renders with helper text 0ms
+     → document is not defined
+   × Input Component > does not show helper text when error is present 0ms
+     → document is not defined
+   × Input Component > renders with full width 0ms
+     → document is not defined
+   × Input Component > does not render full width by default 0ms
+     → document is not defined
+   × Input Component > renders with custom className 0ms
+     → document is not defined
+   × Input Component > applies additional props to input 0ms
+     → document is not defined
+   × Input Component > does not render footer when no error or helper text 0ms
+     → document is not defined
+   × Input Component > handles user input 3ms
+     → Cannot read properties of undefined (reading 'Symbol(Node prepared with document state workarounds)')
+ ❯ src/hooks/useApi.test.tsx (5 tests | 5 failed) 20ms
+   × useApiQuery Hook > should fetch data successfully 14ms
+     → document is not defined
+   × useApiQuery Hook > should handle loading state 0ms
+     → document is not defined
+   × useApiQuery Hook > should handle errors 1ms
+     → document is not defined
+   × useApiQuery Hook > should retry on failure up to 3 times 1ms
+     → document is not defined
+   × useApiQuery Hook > should not retry after max retries 0ms
+     → document is not defined
+ ❯ src/components/Toast.test.tsx (8 tests | 8 failed) 25ms
+   × Toast Component > useToast hook throws error when used outside provider 22ms
+     → expected [Function] to throw error including 'useToast must be used within ToastPro…' but got 'Cannot read properties of null (readi…'
+   × Toast Component > renders success toast 0ms
+     → Toast is not defined
+   × Toast Component > renders error toast 0ms
+     → Toast is not defined
+   × Toast Component > renders info toast 0ms
+     → Toast is not defined
+   × Toast Component > renders warning toast 0ms
+     → Toast is not defined
+   × Toast Component > auto-dismisses after duration 0ms
+     → Toast is not defined
+   × Toast Component > calls onClose when close button is clicked 1ms
+     → Toast is not defined
+   × Toast Component > renders with custom duration 0ms
+     → Toast is not defined
+ ❯ src/components/Badge.test.tsx (6 tests | 6 failed) 7ms
+   × Badge Component > renders with default size 4ms
+     → document is not defined
+   × Badge Component > renders with small size 0ms
+     → document is not defined
+   × Badge Component > renders with large size 0ms
+     → document is not defined
+   × Badge Component > renders with custom className 0ms
+     → document is not defined
+   × Badge Component > applies correct color for known status 0ms
+     → document is not defined
+   × Badge Component > applies default color for unknown status 0ms
+     → document is not defined
+ ❯ src/components/Button.test.tsx (6 tests | 6 failed) 7ms
+   × Button Component > renders button with text 4ms
+     → document is not defined
+   × Button Component > handles click events 1ms
+     → Cannot read properties of undefined (reading 'Symbol(Node prepared with document state workarounds)')
+   × Button Component > is disabled when disabled prop is true 0ms
+     → document is not defined
+   × Button Component > shows loading state 0ms
+     → document is not defined
+   × Button Component > applies correct variant classes 0ms
+     → document is not defined
+   × Button Component > renders with custom data-testid 0ms
+     → document is not defined
+ ❯ src/components/Spinner.test.tsx (6 tests | 6 failed) 7ms
+   × Spinner Component > renders with default size (md) 5ms
+     → document is not defined
+   × Spinner Component > renders with small size 0ms
+     → document is not defined
+   × Spinner Component > renders with large size 0ms
+     → document is not defined
+   × Loading Component > renders Spinner by default 0ms
+     → document is not defined
+   × Loading Component > renders with message 0ms
+     → document is not defined
+   × Loading Component > does not render message when not provided 1ms
+     → document is not defined
+ ✓ src/api/pod.test.ts (4 tests) 2ms
+
+ Test Files  9 failed | 3 passed (12)
+      Tests  54 failed | 72 passed (126)
+   Start at  22:39:49
+   Duration  1.96s (transform 606ms, setup 0ms, collect 2.71s, tests 146ms, environment 2ms, prepare 1.25s)
+

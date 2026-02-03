@@ -12,7 +12,7 @@ export async function getPods(params?: {
   namespace?: string;
   search?: string;
 }): Promise<ResourceList<Pod>> {
-  const queryParams = parsePaginationParams(params || {});
+  let queryParams = parsePaginationParams(params || {});
 
   if (params?.namespace) {
     queryParams += `&namespace=${encodeURIComponent(params.namespace)}`;
@@ -91,8 +91,8 @@ export async function getPodYaml(namespace: string, name: string): Promise<Resou
   ).data;
 }
 
-export async function getPodEvents(namespace: string, name: string): Promise<any[]> {
-  const response = await apiClient.get<ApiResponse<any[]>>(
+export async function getPodEvents(namespace: string, name: string): Promise<Event[]> {
+  const response = await apiClient.get<ApiResponse<Event[]>>(
     `/api/v1/pods/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/events`,
   );
   return parseApiResponse(response.data, apiResponseSchema(z.array(z.any()))).data;

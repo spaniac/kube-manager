@@ -36,15 +36,10 @@ public class K8sClientConfig {
 
         if (inCluster) {
             logger.info("Configuring Kubernetes client for in-cluster mode");
-            config = new ConfigBuilder()
-                    .withRequestTimeout(30000)
-                    .withConnectionTimeout(10000)
-                    .build();
+            config = new ConfigBuilder().build();
         } else {
             logger.info("Configuring Kubernetes client for local development");
-            config = Config.autoConfigure(null)
-                    .withRequestTimeout(30000)
-                    .withConnectionTimeout(10000);
+            config = Config.autoConfigure(null);
         }
 
         if (loggingEnabled) {

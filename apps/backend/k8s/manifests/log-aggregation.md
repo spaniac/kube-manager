@@ -1,9 +1,11 @@
 # Loki Log Aggregation Configuration
+
 # This document describes the configuration for Loki log aggregation
 
 ## Prerequisites
 
 The following components must be deployed in the cluster:
+
 - Loki (log aggregation system)
 - Promtail (log agent for collecting logs)
 - Grafana (for log visualization - optional if using Grafana dashboard)
@@ -173,12 +175,14 @@ groups:
 ## Troubleshooting
 
 ### Logs not appearing in Loki:
+
 1. Check Promtail/Fluent Bit pod logs
 2. Verify network connectivity to Loki service
 3. Check log file permissions
 4. Verify log format (JSON preferred)
 
 ### High resource usage:
+
 1. Reduce sampling rate
 2. Implement log sampling
 3. Adjust retention period

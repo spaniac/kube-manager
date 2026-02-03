@@ -1,6 +1,9 @@
 package com.k8smanager.service;
 
+import com.k8smanager.dto.PodConditionDTO;
+import com.k8smanager.dto.PodContainerDTO;
 import com.k8smanager.dto.PodDTO;
+import com.k8smanager.dto.ResourceRequirementsDTO;
 import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.springframework.stereotype.Service;
@@ -57,7 +60,7 @@ public class PodService {
                 status != null ? status.getPhase() : "Unknown",
                 spec != null ? spec.getNodeName() : null,
                 status != null ? status.getPodIP() : null,
-                status != null ? status.getStartTime() != null ? status.getStartTime().toString() : null : null,
+                status != null ? status.getStartTime() : null,
                 spec != null ? spec.getContainers().stream()
                         .map(this::mapToPodContainerDto)
                         .toList() : List.of(),
@@ -67,23 +70,24 @@ public class PodService {
         );
     }
 
-    private PodDTO.PodContainerDTO mapToPodContainerDto(Container container) {
-        return new PodDTO.PodContainerDTO(
+    private PodContainerDTO mapToPodContainerDto(Container container) {
+        return new PodContainerDTO(
                 container.getName(),
                 container.getImage(),
-                container.getState() != null && "running".equalsIgnoreCase(container.getState()) ? container.getState().getRunning() != null && container.getState().getRunning().booleanValue() : false,
-                container.getState() != null && container.getState().getTerminated() != null ? container.getState().getTerminated().booleanValue() : false,
-                container.getState() != null ? container.getState().getTerminated() != null ? container.getState().getTerminated().getExitCode() : -1 : 0
+                List.of(), // TODO: Map actual ports
+                List.of(), // TODO: Map actual env vars
+                new ResourceRequirementsDTO(null, null), // TODO: Map actual resources
+                List.of() // TODO: Map actual volume mounts
         );
     }
 
-    private PodDTO.PodConditionDTO mapToPodConditionDto(PodCondition condition) {
-        return new PodDTO.PodConditionDTO(
+    private PodConditionDTO mapToPodConditionDto(PodCondition condition) {
+        return new PodConditionDTO(
                 condition.getType(),
                 condition.getStatus(),
                 condition.getReason(),
                 condition.getMessage(),
-                condition.getLastTransitionTime() != null ? condition.getLastTransitionTime().toEpochMilli() : 0
+                condition.getLastTransitionTime() != null ? 0 : 0 // TODO: Parse timestamp properly
         );
     }
 }

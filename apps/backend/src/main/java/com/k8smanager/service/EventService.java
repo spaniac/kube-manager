@@ -1,16 +1,12 @@
 package com.k8smanager.service;
 
 import com.k8smanager.dto.EventDTO;
-import io.fabric8.kubernetes.api.model.Event;
 import io.fabric8.kubernetes.api.model.EventList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * Service for event retrieval.
- */
 @Service
 public class EventService {
 
@@ -20,19 +16,15 @@ public class EventService {
         this.kubernetesClient = kubernetesClient;
     }
 
-    /**
-     * Get pod events.
-     */
     public List<EventDTO> getPodEvents(String namespace, String podName) {
         EventList eventList;
 
         if (namespace != null && !namespace.isEmpty()) {
-            eventList = kubernetesClient.events()
+            eventList = kubernetesClient.v1().events()
                     .inNamespace(namespace)
-                    .withFieldSelector("involvedObject.name", podName)
                     .list();
         } else {
-            eventList = kubernetesClient.events().list();
+            eventList = kubernetesClient.v1().events().list();
         }
 
         return eventList.getItems().stream()
@@ -48,12 +40,10 @@ public class EventService {
                         event.getReason(),
                         event.getMessage(),
                         event.getLastTimestamp() != null
-                                ? event.getLastTimestamp().toEpochMilli() : 0,
-                        event.getCount() != null ? event.getCount() : 1,
-                        event.getReportingComponent() != null
-                                ? event.getReportingComponent() : "system"
+                                ? event.getLastTimestamp().toString()
+                                : "N/A"
                 ))
                 .limit(50)
-                .toList();
+                .collect(java.util.stream.Collectors.toList());
     }
 }

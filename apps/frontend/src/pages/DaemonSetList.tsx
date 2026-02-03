@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { getDaemonSets, deleteDaemonSet } from '@api/daemonset';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
 import type { DaemonSet } from '@types/api';
-import { Badge } from '@components/Badge';
 import { ConfirmationDialog } from '@components/ConfirmationDialog';
-import { useToast } from '@components/Toast';
+import { Toast } from '@components/Toast';
 import { Table, TableStyles } from '@components/Table';
 import { Button } from '@components/Button';
 

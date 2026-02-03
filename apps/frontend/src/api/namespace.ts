@@ -1,6 +1,6 @@
 import apiClient from '@api/client';
 import { z } from 'zod';
-import { parseApiResponse, parsePaginationParams, parseFilterParams } from '@utils/apiResponse';
+import { parseApiResponse, parsePaginationParams } from '@utils/apiResponse';
 import { namespaceSchema, apiResponseSchema, resourceListSchema } from '../types/schemas';
 import type { Namespace, ResourceList, ApiResponse } from '../types/api';
 
@@ -11,7 +11,7 @@ export async function getNamespaces(params?: {
   sortOrder?: 'asc' | 'desc';
   search?: string;
 }): Promise<ResourceList<Namespace>> {
-  const queryParams = parsePaginationParams(params || {});
+  let queryParams = parsePaginationParams(params || {});
 
   if (params?.search) {
     queryParams += `&search=${encodeURIComponent(params.search)}`;

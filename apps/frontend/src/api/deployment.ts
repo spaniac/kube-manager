@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { parseApiResponse, parsePaginationParams } from '@utils/apiResponse';
 import {
   deploymentSchema,
-  scaleDeploymentRequestSchema,
   apiResponseSchema,
   resourceListSchema,
 } from '../types/schemas';
@@ -17,7 +16,7 @@ export async function getDeployments(params?: {
   namespace?: string;
   search?: string;
 }): Promise<ResourceList<Deployment>> {
-  const queryParams = parsePaginationParams(params || {});
+  let queryParams = parsePaginationParams(params || {});
 
   if (params?.namespace) {
     queryParams += `&namespace=${encodeURIComponent(params.namespace)}`;

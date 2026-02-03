@@ -105,27 +105,10 @@
  - [x] 8.6 Implement PodController with specific /api/v1/pods endpoints
  - [x] 8.7 Implement pod details with containers endpoint
  - [x] 8.8 Implement pod YAML display endpoint
- - [x] 10.8 Implement pod YAML display endpoint
- - [x] 10.1 Create YAML validation controller
- - [x] 10.2 Implement syntax validation endpoint
- - [x] 10.3 Implement K8s schema validation endpoint (dry-run)
- - [x] 10.4 Implement auto-completion suggestions endpoint
- - [x] 10.5 Implement YAML preview endpoint
- - [x] 10.6 Implement resource template endpoints (Pod, Deployment, Service, etc.)
- - [x] 10.7 Implement diff view endpoint
- - [x] 10.8 Implement multi-resource YAML validation
- - [x] 12.3 Implement container selection for multi-container pods
- - [x] 12.4 Implement log filtering by severity endpoint
- - [x] 12.5 Implement log text search endpoint
- - [x] 12.6 Implement log time range filtering endpoint
- - [x] 12.7 Implement previous container logs endpoint
- - [x] 12.8 Implement log download endpoint
- - [x] 12.9 Implement namespace log search endpoint
- - [x] 12.10 Implement log aggregation across multiple pods endpoint
- - [x] 12.11 Configure SSE connection management and timeouts
- - [x] 8.10 Implement related resources endpoint
- - [x] 8.11 Create specific controllers for Deployment, StatefulSet, DaemonSet, Service, ConfigMap, Secret
-- [x] 8.12 Implement status badges logic
+ - [x] 8.9 Implement related resources endpoint
+ - [x] 8.10 Create specific controllers for Deployment, StatefulSet, DaemonSet, Service, ConfigMap, Secret
+ - [x] 8.11 Implement resource action menus
+ - [x] 8.12 Implement status badges logic
 
 ## 9. Workload Management API
 

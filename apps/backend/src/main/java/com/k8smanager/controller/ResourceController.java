@@ -1,7 +1,6 @@
 package com.k8smanager.controller;
 
 import com.k8smanager.common.response.ApiResponse;
-import com.k8smanager.dto.*;
 import com.k8smanager.service.ResourceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,7 +24,7 @@ public class ResourceController {
      * GET /api/v1/resources/{type}
      */
     @GetMapping("/{type}")
-    @PreAuthorize("hasAuthority('READ', 'POD')")
+    @PreAuthorize("hasAnyAuthority('READ', 'POD')")
     public ResponseEntity<ApiResponse<?>> listResources(
             @PathVariable String type,
             @RequestParam(required = false) String namespace,
@@ -41,7 +40,7 @@ public class ResourceController {
      * GET /api/v1/resources/{type}/{name}
      */
     @GetMapping("/{type}/{name}")
-    @PreAuthorize("hasAuthority('READ', 'POD')")
+    @PreAuthorize("hasAnyAuthority('READ', 'POD')")
     public ResponseEntity<ApiResponse<?>> getResource(
             @PathVariable String type,
             @PathVariable String name,
@@ -58,7 +57,7 @@ public class ResourceController {
      * PUT /api/v1/resources/{type}/{name}
      */
     @PutMapping("/{type}/{name}")
-    @PreAuthorize("hasAuthority('WRITE', 'POD')")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'POD')")
     public ResponseEntity<ApiResponse<?>> updateResource(
             @PathVariable String type,
             @PathVariable String name,
@@ -76,7 +75,7 @@ public class ResourceController {
      * DELETE /api/v1/resources/{type}/{name}
      */
     @DeleteMapping("/{type}/{name}")
-    @PreAuthorize("hasAuthority('DELETE', 'POD')")
+    @PreAuthorize("hasAnyAuthority('DELETE', 'POD')")
     public ResponseEntity<ApiResponse<Void>> deleteResource(
             @PathVariable String type,
             @PathVariable String name,
@@ -90,7 +89,7 @@ public class ResourceController {
      * GET /api/v1/resources/{type}/{name}/status-badge
      */
     @GetMapping("/{type}/{name}/status-badge")
-    @PreAuthorize("hasAuthority('READ', 'POD')")
+    @PreAuthorize("hasAnyAuthority('READ', 'POD')")
     public ResponseEntity<ApiResponse<?>> getStatusBadge(
             @PathVariable String type,
             @PathVariable String name,

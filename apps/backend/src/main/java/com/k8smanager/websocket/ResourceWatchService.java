@@ -3,6 +3,7 @@ package com.k8smanager.websocket;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Watcher;
+import io.fabric8.kubernetes.client.WatcherException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -53,16 +54,14 @@ public class ResourceWatchService {
                     }
 
                     @Override
-                    public void onClose() {
+                    public void onClose(WatcherException cause) {
                         logger.info("Watcher closed for watchId: {}", watchId);
-                        emitter.complete();
-                        activeWatchers.remove(watchId);
-                    }
-
-                    @Override
-                    public void onError(Exception e) {
-                        logger.error("Watcher error for watchId: {}", watchId, e);
-                        emitter.completeWithError(e);
+                        if (cause != null) {
+                            logger.warn("Watcher closed with error", cause);
+                            emitter.completeWithError(cause);
+                        } else {
+                            emitter.complete();
+                        }
                         activeWatchers.remove(watchId);
                     }
                 };
@@ -103,11 +102,7 @@ public class ResourceWatchService {
     public void closeWatcher(String watchId) {
         Watcher<?> watcher = activeWatchers.remove(watchId);
         if (watcher != null) {
-            try {
-                watcher.close();
-            } catch (Exception e) {
-                logger.error("Error closing watcher {}: {}", watchId, e.getMessage());
-            }
+            logger.info("Removed watcher for watchId: {}", watchId);
         }
     }
 
@@ -115,13 +110,8 @@ public class ResourceWatchService {
      * Close all active watchers.
      */
     public void closeAllWatchers() {
-        activeWatchers.forEach((id, watcher) -> {
-            try {
-                watcher.close();
-            } catch (Exception e) {
-                logger.error("Error closing watcher {}: {}", id, e.getMessage());
-            }
-        });
+        int count = activeWatchers.size();
         activeWatchers.clear();
+        logger.info("Cleared {} active watchers", count);
     }
 }

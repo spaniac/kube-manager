@@ -1,13 +1,13 @@
-import apiClient from '@api/client';
+import apiClient from '../api/client';
 import { z } from 'zod';
-import { parseApiResponse } from '@utils/apiResponse';
+import { parseApiResponse } from '../utils/apiResponse';
 import { clusterSchema, nodeSchema, apiResponseSchema } from '../types/schemas';
 import type { Cluster, Node, ApiResponse } from '../types/api';
 
 export async function getCluster(): Promise<Cluster> {
   const response = await apiClient.get<ApiResponse<Cluster>>('/api/v1/cluster');
   const parsed = parseApiResponse(response.data, clusterSchema);
-  return parsed.data ?? {
+  return parsed ?? {
     name: 'unknown',
     version: '',
     platform: '',
@@ -70,19 +70,19 @@ export async function getClusterMetrics(): Promise<{
 export async function getClusterNodes(): Promise<Node[]> {
   const response = await apiClient.get<ApiResponse<Node[]>>('/api/v1/cluster/nodes');
   const parsed = parseApiResponse(response.data, nodeSchema);
-  return parsed.data ?? [];
+  return parsed ?? [];
 }
 
 export async function getNode(name: string): Promise<Node | null> {
   const response = await apiClient.get<ApiResponse<Node>>(`/api/v1/cluster/nodes/${name}`);
   const parsed = parseApiResponse(response.data, nodeSchema);
-  return parsed.data ?? null;
+  return parsed ?? null;
 }
 
 export async function getClusterEvents(params?: {
   severity?: 'Normal' | 'Warning' | 'Error';
   limit?: number;
-}): Promise<any[]> {
+}): Promise<Event[]> {
   const queryParams = new URLSearchParams();
 
   if (params?.severity) {
@@ -93,23 +93,23 @@ export async function getClusterEvents(params?: {
     queryParams.set('limit', params.limit.toString());
   }
 
-  const response = await apiClient.get<ApiResponse<any[]>>(
+  const response = await apiClient.get<ApiResponse<Event[]>>(
     `/api/v1/cluster/events?${queryParams.toString()}`,
   );
   const parsed = parseApiResponse(response.data, apiResponseSchema(z.array(z.any())));
-  return parsed.data;
+  return parsed ?? [];
 }
 
 export async function getNodes(): Promise<Node[]> {
   const response = await apiClient.get<ApiResponse<Node[]>>('/api/v1/cluster/nodes');
   const parsed = parseApiResponse(response.data, apiResponseSchema(z.array(nodeSchema)));
-  return parsed.data;
+  return parsed ?? [];
 }
 
 export async function getNodeDetails(name: string): Promise<Node> {
   const response = await apiClient.get<ApiResponse<Node>>(`/api/v1/cluster/nodes/${name}`);
   const parsed = parseApiResponse(response.data, apiResponseSchema(nodeSchema));
-  return parsed.data;
+  return parsed ?? {} as Node;
 }
 
 export async function cordonNode(name: string): Promise<void> {

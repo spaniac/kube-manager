@@ -37,7 +37,7 @@ The system SHALL allow searching log lines by text keyword or regular expression
 - **THEN** system displays log lines matching the pattern
 
 ### Requirement: Log time range filtering
-The System SHALL allow filtering logs by time range with selectable presets and custom ranges.
+The system SHALL allow filtering logs by time range with selectable presets and custom ranges.
 
 #### Scenario: View logs for last hour
 - **WHEN** user selects "Last 1 hour" time range
@@ -167,3 +167,15 @@ The system SHALL respect K8s log retention policies and display warnings when lo
 #### Scenario: Warning for truncated logs
 - **WHEN** pod logs have been rotated and are incomplete
 - **THEN** system displays a warning that logs are truncated
+
+## 추후 과제 (Future Work)
+
+### 로그 탐색기 (Log Explorer)
+
+*   **로그 집계 (Log Aggregation):**
+    *   Deployment 단위 로그 통합 보기 미지원.
+    *   현재 단일 파드의 로그만 스트리밍 가능하며, 여러 파드나 컨테이너의 로그를 한 화면에서 보는 기능이 필요함.
+
+*   **로그 다운로드 (Log Download):**
+    *   파일 다운로드 API 미지원.
+    *   현재 화면에서 보는 로그를 .log 또는 .txt 파일로 내려받는 기능이 구현되어야 함.

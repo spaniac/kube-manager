@@ -2,33 +2,29 @@ package com.k8smanager.controller;
 
 import com.k8smanager.common.response.ApiResponse;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.dsl.ExecListener;
 import io.fabric8.kubernetes.client.dsl.ExecWatch;
-import io.fabric8.kubernetes.client.dsl.NonClosingExecWatch;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Controller for WebSocket-based terminal emulation for pod containers.
  * Implements terminal access via Kubernetes exec API.
  */
 @RestController
-@RequestMapping("/api/v1/terminal")
+@RequestMapping("/terminal")
 public class TerminalController {
 
     private final KubernetesClient kubernetesClient;
-    private final ConcurrentMap<String, NonClosingExecWatch> activeSessions = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, ExecWatch> activeSessions = new ConcurrentHashMap<>();
     private final int MAX_CONCURRENT_SESSIONS = 5;
 
     public TerminalController(KubernetesClient kubernetesClient) {
@@ -38,12 +34,12 @@ public class TerminalController {
     /**
      * Establish WebSocket connection for terminal session.
      * GET /api/v1/terminal/connect/{namespace}/{podName}
-     *
+     * <p>
      * Note: Actual WebSocket upgrade should be handled by WebSocketConfig.
      * This endpoint provides session info and validates RBAC permissions.
      */
     @GetMapping("/connect/{namespace}/{podName}")
-    @PreAuthorize("hasAuthority('EXEC', 'POD')")
+    @PreAuthorize("hasAnyAuthority('EXEC', 'POD')")
     public ResponseEntity<ApiResponse<SessionInfo>> connectTerminal(
             @PathVariable String namespace,
             @PathVariable String podName,
@@ -54,9 +50,9 @@ public class TerminalController {
         String sessionId = generateSessionId(namespace, podName, container);
         if (activeSessions.size() >= MAX_CONCURRENT_SESSIONS) {
             return ResponseEntity.status(429)
-                    .body(ApiResponse.error("TERMINAL_SESSION_LIMIT_EXCEEDED",
+                    .body(ApiResponse.error(HttpStatus.TOO_MANY_REQUESTS,
                             "Maximum concurrent terminal sessions (" + MAX_CONCURRENT_SESSIONS + ") reached. " +
-                            "Please close an existing session."));
+                                    "Please close an existing session."));
         }
 
         return ResponseEntity.ok(ApiResponse.success(new SessionInfo(sessionId, namespace, podName, container)));
@@ -67,9 +63,10 @@ public class TerminalController {
      * GET /api/v1/terminal/sessions
      */
     @GetMapping("/sessions")
-    @PreAuthorize("hasAuthority('EXEC', 'POD')")
+    @PreAuthorize("hasAnyAuthority('EXEC', 'POD')")
     public ResponseEntity<ApiResponse<Map<String, SessionInfo>>> getActiveSessions(@AuthenticationPrincipal Jwt jwt) {
-        // Filter sessions by current user (simplified - in production, track user per session)
+        // Filter sessions by current user (simplified - in production, track user per
+        // session)
         Map<String, SessionInfo> sessions = Map.ofEntries(activeSessions.entrySet().toArray(new Map.Entry[0]));
         return ResponseEntity.ok(ApiResponse.success(sessions));
     }
@@ -79,19 +76,14 @@ public class TerminalController {
      * DELETE /api/v1/terminal/sessions/{sessionId}
      */
     @DeleteMapping("/sessions/{sessionId}")
-    @PreAuthorize("hasAuthority('EXEC', 'POD')")
+    @PreAuthorize("hasAnyAuthority('EXEC', 'POD')")
     public ResponseEntity<ApiResponse<Void>> closeTerminal(
             @PathVariable String sessionId,
             @AuthenticationPrincipal Jwt jwt) {
 
-        NonClosingExecWatch execWatch = activeSessions.remove(sessionId);
+        ExecWatch execWatch = activeSessions.remove(sessionId);
         if (execWatch != null) {
-            try {
-                execWatch.close();
-            } catch (IOException e) {
-                // Log error but don't fail the request
-                System.err.println("Error closing terminal session: " + e.getMessage());
-            }
+            execWatch.close();
         }
 
         return ResponseEntity.ok(ApiResponse.success(null, "Terminal session closed successfully"));
@@ -102,25 +94,24 @@ public class TerminalController {
      * POST /api/v1/terminal/sessions/{sessionId}/resize
      */
     @PostMapping("/sessions/{sessionId}/resize")
-    @PreAuthorize("hasAuthority('EXEC', 'POD')")
+    @PreAuthorize("hasAnyAuthority('EXEC', 'POD')")
     public ResponseEntity<ApiResponse<Void>> resizeTerminal(
             @PathVariable String sessionId,
             @RequestBody ResizeRequest request,
             @AuthenticationPrincipal Jwt jwt) {
 
-        NonClosingExecWatch execWatch = activeSessions.get(sessionId);
+        ExecWatch execWatch = activeSessions.get(sessionId);
         if (execWatch == null) {
             return ResponseEntity.status(404)
-                    .body(ApiResponse.error("SESSION_NOT_FOUND", "Terminal session not found"));
+                    .body(ApiResponse.error(HttpStatus.NOT_FOUND, "Terminal session not found"));
         }
 
         try {
             // Send resize signal to terminal
             byte[] resizeCommand = String.format(
                     "\033[%d;%dt",
-                    request.getRows(),
-                    request.getColumns()
-            ).getBytes();
+                    request.rows(),
+                    request.columns()).getBytes();
 
             execWatch.getInput().write(resizeCommand);
             execWatch.getInput().flush();
@@ -128,7 +119,8 @@ public class TerminalController {
             return ResponseEntity.ok(ApiResponse.success(null, "Terminal resized successfully"));
         } catch (IOException e) {
             return ResponseEntity.status(500)
-                    .body(ApiResponse.error("RESIZE_FAILED", "Failed to resize terminal: " + e.getMessage()));
+                    .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR,
+                            "Failed to resize terminal: " + e.getMessage()));
         }
     }
 
@@ -137,27 +129,28 @@ public class TerminalController {
      * POST /api/v1/terminal/sessions/{sessionId}/command
      */
     @PostMapping("/sessions/{sessionId}/command")
-    @PreAuthorize("hasAuthority('EXEC', 'POD')")
+    @PreAuthorize("hasAnyAuthority('EXEC', 'POD')")
     public ResponseEntity<ApiResponse<Void>> executeCommand(
             @PathVariable String sessionId,
             @RequestBody CommandRequest request,
             @AuthenticationPrincipal Jwt jwt) {
 
-        NonClosingExecWatch execWatch = activeSessions.get(sessionId);
+        ExecWatch execWatch = activeSessions.get(sessionId);
         if (execWatch == null) {
             return ResponseEntity.status(404)
-                    .body(ApiResponse.error("SESSION_NOT_FOUND", "Terminal session not found"));
+                    .body(ApiResponse.error(HttpStatus.NOT_FOUND, "Terminal session not found"));
         }
 
         try {
-            byte[] commandWithNewline = (request.getCommand() + "\n").getBytes();
+            byte[] commandWithNewline = (request.command() + "\n").getBytes();
             execWatch.getInput().write(commandWithNewline);
             execWatch.getInput().flush();
 
             return ResponseEntity.ok(ApiResponse.success(null, "Command executed successfully"));
         } catch (IOException e) {
             return ResponseEntity.status(500)
-                    .body(ApiResponse.error("COMMAND_FAILED", "Failed to execute command: " + e.getMessage()));
+                    .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR,
+                            "Failed to execute command: " + e.getMessage()));
         }
     }
 
@@ -166,26 +159,27 @@ public class TerminalController {
      * POST /api/v1/terminal/sessions/{sessionId}/interrupt
      */
     @PostMapping("/sessions/{sessionId}/interrupt")
-    @PreAuthorize("hasAuthority('EXEC', 'POD')")
+    @PreAuthorize("hasAnyAuthority('EXEC', 'POD')")
     public ResponseEntity<ApiResponse<Void>> interruptTerminal(
             @PathVariable String sessionId,
             @AuthenticationPrincipal Jwt jwt) {
 
-        NonClosingExecWatch execWatch = activeSessions.get(sessionId);
+        ExecWatch execWatch = activeSessions.get(sessionId);
         if (execWatch == null) {
             return ResponseEntity.status(404)
-                    .body(ApiResponse.error("SESSION_NOT_FOUND", "Terminal session not found"));
+                    .body(ApiResponse.error(HttpStatus.NOT_FOUND, "Terminal session not found"));
         }
 
         try {
             // Send interrupt signal (SIGINT, Ctrl+C)
-            execWatch.getInput().write(new byte[]{3}); // ASCII ETX character
+            execWatch.getInput().write(new byte[] { 3 }); // ASCII ETX character
             execWatch.getInput().flush();
 
             return ResponseEntity.ok(ApiResponse.success(null, "Terminal interrupted successfully"));
         } catch (IOException e) {
             return ResponseEntity.status(500)
-                    .body(ApiResponse.error("INTERRUPT_FAILED", "Failed to interrupt terminal: " + e.getMessage()));
+                    .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR,
+                            "Failed to interrupt terminal: " + e.getMessage()));
         }
     }
 
@@ -193,7 +187,7 @@ public class TerminalController {
      * Register an active terminal session.
      * Internal method called by WebSocket handler.
      */
-    public void registerSession(String sessionId, NonClosingExecWatch execWatch) {
+    public void registerSession(String sessionId, ExecWatch execWatch) {
         activeSessions.put(sessionId, execWatch);
     }
 
@@ -201,7 +195,7 @@ public class TerminalController {
      * Get active terminal session.
      * Internal method called by WebSocket handler.
      */
-    public NonClosingExecWatch getSession(String sessionId) {
+    public ExecWatch getSession(String sessionId) {
         return activeSessions.get(sessionId);
     }
 
@@ -234,16 +228,18 @@ public class TerminalController {
             String sessionId,
             String namespace,
             String podName,
-            String container
-    ) {}
+            String container) {
+    }
 
     /**
      * Resize request DTO.
      */
-    public record ResizeRequest(Integer rows, Integer columns) {}
+    public record ResizeRequest(Integer rows, Integer columns) {
+    }
 
     /**
      * Command request DTO.
      */
-    public record CommandRequest(String command) {}
+    public record CommandRequest(String command) {
+    }
 }

@@ -12,7 +12,7 @@ export async function getSecrets(params?: {
   namespace?: string;
   search?: string;
 }): Promise<ResourceList<Secret>> {
-  const queryParams = parsePaginationParams(params || {});
+  let queryParams = parsePaginationParams(params || {});
 
   if (params?.namespace) {
     queryParams += `&namespace=${encodeURIComponent(params.namespace)}`;

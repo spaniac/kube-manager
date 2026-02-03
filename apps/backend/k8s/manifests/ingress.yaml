@@ -17,24 +17,24 @@ metadata:
 spec:
   ingressClassName: nginx
   tls:
-  - hosts:
-    - k8s-manager.example.com
-    secretName: k8s-manager-tls
+    - hosts:
+        - k8s-manager.example.com
+      secretName: k8s-manager-tls
   rules:
-  - host: k8s-manager.example.com
-    http:
-      paths:
-      - path: /api(/|$)(.*)
-        pathType: Prefix
-        backend:
-          service:
-            name: k8s-manager-backend
-            port:
-              number: 8080
-      - path: /()(.*)
-        pathType: Prefix
-        backend:
-          service:
-            name: k8s-manager-frontend
-            port:
-              number: 80
+    - host: k8s-manager.example.com
+      http:
+        paths:
+          - path: /api(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: k8s-manager-backend
+                port:
+                  number: 8080
+          - path: /()(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: k8s-manager-frontend
+                port:
+                  number: 80

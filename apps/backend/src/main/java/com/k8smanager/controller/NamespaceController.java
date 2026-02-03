@@ -1,8 +1,9 @@
 package com.k8smanager.controller;
 
 import com.k8smanager.common.response.ApiResponse;
-import com.k8smanager.dto.*;
-import com.k8smanager.persistence.entity.Permission;
+import com.k8smanager.dto.NamespaceDTO;
+import com.k8smanager.dto.NamespaceRequestDTO;
+import com.k8smanager.dto.ResourceQuotaDTO;
 import com.k8smanager.service.NamespaceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,7 +29,7 @@ public class NamespaceController {
      * GET /api/v1/namespaces
      */
     @GetMapping
-    @PreAuthorize("hasAuthority('READ', 'NAMESPACE')")
+    @PreAuthorize("hasAnyAuthority('READ', 'NAMESPACE')")
     public ResponseEntity<ApiResponse<List<NamespaceDTO>>> listNamespaces(
             @RequestParam(required = false) String query) {
         List<NamespaceDTO> namespaces = namespaceService.searchNamespaces(query);
@@ -40,7 +41,7 @@ public class NamespaceController {
      * GET /api/v1/namespaces/{name}
      */
     @GetMapping("/{name}")
-    @PreAuthorize("hasAuthority('READ', 'NAMESPACE')")
+    @PreAuthorize("hasAnyAuthority('READ', 'NAMESPACE')")
     public ResponseEntity<ApiResponse<NamespaceDTO>> getNamespace(@PathVariable String name) {
         NamespaceDTO namespace = namespaceService.getNamespace(name);
         if (namespace == null) {
@@ -55,7 +56,7 @@ public class NamespaceController {
      * POST /api/v1/namespaces
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('WRITE', 'NAMESPACE')")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'NAMESPACE')")
     public ResponseEntity<ApiResponse<NamespaceDTO>> createNamespace(
             @RequestBody NamespaceRequestDTO request) {
         try {
@@ -72,7 +73,7 @@ public class NamespaceController {
      * PUT /api/v1/namespaces/{name}
      */
     @PutMapping("/{name}")
-    @PreAuthorize("hasAuthority('WRITE', 'NAMESPACE')")
+    @PreAuthorize("hasAnyAuthority('WRITE', 'NAMESPACE')")
     public ResponseEntity<ApiResponse<NamespaceDTO>> updateNamespace(
             @PathVariable String name,
             @RequestBody NamespaceRequestDTO request) {
@@ -94,7 +95,7 @@ public class NamespaceController {
      * DELETE /api/v1/namespaces/{name}
      */
     @DeleteMapping("/{name}")
-    @PreAuthorize("hasAuthority('DELETE', 'NAMESPACE')")
+    @PreAuthorize("hasAnyAuthority('DELETE', 'NAMESPACE')")
     public ResponseEntity<ApiResponse<Void>> deleteNamespace(
             @PathVariable String name,
             @RequestParam(defaultValue = "false") boolean force,
@@ -113,7 +114,7 @@ public class NamespaceController {
      * GET /api/v1/namespaces/{name}/quota
      */
     @GetMapping("/{name}/quota")
-    @PreAuthorize("hasAuthority('READ', 'NAMESPACE')")
+    @PreAuthorize("hasAnyAuthority('READ', 'NAMESPACE')")
     public ResponseEntity<ApiResponse<ResourceQuotaDTO>> getNamespaceQuota(@PathVariable String name) {
         ResourceQuotaDTO quota = namespaceService.getNamespaceQuota(name);
         if (quota == null) {

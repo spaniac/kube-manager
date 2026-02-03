@@ -3,7 +3,7 @@ import { AuthState, User, LoginCredentials, TokenResponse } from '../types/auth'
 import apiClient from '../api/client';
 import { useQueryClient } from '@tanstack/react-query';
 
-type AuthContextType = {
+ type AuthContextType = {
   user: User | null;
   accessToken: string | null;
   refreshToken: string | null;
@@ -11,7 +11,7 @@ type AuthContextType = {
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
-  refreshToken: () => Promise<void>;
+  refreshAccessToken: () => Promise<void>;
   hasPermission: (
     resourceType: string,
     permission: string,
@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return false;
     }
 
-    if (!permissionSet.permissions.includes(permission as any)) {
+    if (!permissionSet.permissions.includes(permission as string)) {
       return false;
     }
 
@@ -151,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     logout,
-    refreshToken: refreshAccessToken,
+    refreshAccessToken,
     hasPermission,
   };
 

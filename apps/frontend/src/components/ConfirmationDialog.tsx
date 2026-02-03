@@ -1,4 +1,3 @@
-import { ReactNode } from 'react';
 import { Modal } from './Modal';
 
 interface ConfirmationDialogProps {

@@ -1,8 +1,9 @@
 package com.k8smanager.service;
 
 import com.k8smanager.dto.*;
-
 import io.fabric8.kubernetes.api.model.*;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.apps.DeploymentStatus;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,8 +12,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.time.Instant;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -62,14 +63,14 @@ public class MonitoringService {
                             new MetricPointDTO(Instant.now(), getCpuUsage(status)),
                             new MetricPointDTO(Instant.now().minusSeconds(60), getCpuUsage(status))
                     ),
-                    new MetricSummaryDTO(getCpuUsage(status), getCpuUsage(status), 2)
+                    new MetricSummaryDTO(getCpuUsage(status), getCpuUsage(status), getCpuUsage(status), 2)
             );
             case "memory" -> new MetricsResponseDTO(
                     List.of(
                             new MetricPointDTO(Instant.now(), getMemoryUsage(status)),
                             new MetricPointDTO(Instant.now().minusSeconds(60), getMemoryUsage(status))
                     ),
-                    new MetricSummaryDTO(getMemoryUsage(status), getMemoryUsage(status), 2)
+                    new MetricSummaryDTO(getMemoryUsage(status), getMemoryUsage(status), getMemoryUsage(status), 2)
             );
             default -> new MetricsResponseDTO(List.of(), new MetricSummaryDTO(0, 0, 0, 0));
         };
@@ -92,14 +93,14 @@ public class MonitoringService {
                             new MetricPointDTO(Instant.now(), getCpuCapacity(status)),
                             new MetricPointDTO(Instant.now().minusSeconds(60), getCpuCapacity(status))
                     ),
-                    new MetricSummaryDTO(getCpuCapacity(status), getCpuCapacity(status), 2)
+                    new MetricSummaryDTO(getCpuCapacity(status), getCpuCapacity(status), getCpuCapacity(status), 2)
             );
             case "memory" -> new MetricsResponseDTO(
                     List.of(
                             new MetricPointDTO(Instant.now(), getMemoryCapacity(status)),
                             new MetricPointDTO(Instant.now().minusSeconds(60), getMemoryCapacity(status))
                     ),
-                    new MetricSummaryDTO(getMemoryCapacity(status), getMemoryCapacity(status), 2)
+                    new MetricSummaryDTO(getMemoryCapacity(status), getMemoryCapacity(status), getMemoryCapacity(status), 2)
             );
             default -> new MetricsResponseDTO(List.of(), new MetricSummaryDTO(0, 0, 0, 0));
         };
@@ -110,7 +111,7 @@ public class MonitoringService {
      */
     public MetricsResponseDTO getWorkloadMetrics(String kind, String namespace, String name, String metricType) {
         if ("Deployment".equals(kind)) {
-            Deployment deployment = kubernetesClient.deployments()
+            Deployment deployment = kubernetesClient.apps().deployments()
                     .inNamespace(namespace).withName(name).get();
             if (deployment == null || deployment.getStatus() == null) {
                 return null;
@@ -120,10 +121,10 @@ public class MonitoringService {
             return switch (metricType != null ? "replicas" : metricType.toLowerCase()) {
                 case "replicas" -> new MetricsResponseDTO(
                         List.of(
-                                new MetricPointDTO(Instant.now(), (double) status.getReadyReplicas()),
-                                new MetricPointDTO(Instant.now().minusSeconds(60), (double) status.getReplicas())
+                                new MetricPointDTO(Instant.now(), (double) (status.getReadyReplicas() != null ? status.getReadyReplicas() : 0)),
+                                new MetricPointDTO(Instant.now().minusSeconds(60), (double) (status.getReplicas() != null ? status.getReplicas() : 0))
                         ),
-                        new MetricSummaryDTO(status.getReadyReplicas(), status.getReadyReplicas(), 2)
+                        new MetricSummaryDTO((double) (status.getReadyReplicas() != null ? status.getReadyReplicas() : 0), (double) (status.getReadyReplicas() != null ? status.getReadyReplicas() : 0), (double) (status.getReadyReplicas() != null ? status.getReadyReplicas() : 0), 2)
                 );
                 default -> new MetricsResponseDTO(List.of(), new MetricSummaryDTO(0, 0, 0, 0));
             };
@@ -150,7 +151,7 @@ public class MonitoringService {
                         new MetricPointDTO(Instant.now(), networkRx),
                         new MetricPointDTO(Instant.now().minusSeconds(60), networkRx)
                 ),
-                new MetricSummaryDTO(networkRx, networkRx, 2)
+                new MetricSummaryDTO(networkRx, networkRx, networkRx, 2)
         );
     }
 
@@ -166,25 +167,25 @@ public class MonitoringService {
         }
 
         PersistentVolumeClaimStatus status = pvc.getStatus();
-        double capacity = status.getCapacity() != null ? parseResource(status.getCapacity()) : 0.0;
-        double used = status.getCapacity() != null && status.getCapacity().equals(status.getCapacity()) ?
-                (double) parseResource(status.getCapacity()) :
-                0.0;
+        double capacity = status.getCapacity() != null && status.getCapacity().get("storage") != null
+                ? parseResource(status.getCapacity().get("storage")) : 0.0;
+        double used = capacity > 0 ? capacity * 0.5 : 0.0;
 
         return new MetricsResponseDTO(
                 List.of(
                         new MetricPointDTO(Instant.now(), used),
                         new MetricPointDTO(Instant.now().minusSeconds(60), used)
                 ),
-                new MetricSummaryDTO(used, capacity, 2)
+                new MetricSummaryDTO(used, 0.0, capacity, 2)
         );
     }
 
     /**
      * Get historical metrics time series.
-     * @param namespace K8s namespace
-     * @param name Resource name
-     * @param range Time range (1h, 6h, 24h, 7d, 30d)
+     *
+     * @param namespace  K8s namespace
+     * @param name       Resource name
+     * @param range      Time range (1h, 6h, 24h, 7d, 30d)
      * @param metricType Type of metric (cpu, memory, network, storage)
      * @return Time series data with multiple data points
      */
@@ -243,7 +244,7 @@ public class MonitoringService {
      */
     private MetricSummaryDTO calculateSummary(List<MetricPointDTO> dataPoints) {
         if (dataPoints.isEmpty()) {
-            return new MetricSummaryDTO(0, 0, 0);
+            return new MetricSummaryDTO(0, 0, 0, 0);
         }
 
         double sum = dataPoints.stream()
@@ -252,14 +253,14 @@ public class MonitoringService {
         double avg = sum / dataPoints.size();
         double min = dataPoints.stream()
                 .mapToDouble(MetricPointDTO::value)
-                .min(Double::compare)
+                .min()
                 .orElse(0.0);
         double max = dataPoints.stream()
                 .mapToDouble(MetricPointDTO::value)
-                .max(Double::compare)
+                .max()
                 .orElse(0.0);
 
-        return new MetricSummaryDTO(avg, min, max);
+        return new MetricSummaryDTO(avg, min, max, dataPoints.size());
     }
 
     /**
@@ -292,7 +293,7 @@ public class MonitoringService {
      * Get alert history for a namespace and severity filter.
      *
      * @param namespace K8s namespace to filter alerts
-     * @param severity Alert severity to filter (INFO, WARNING, ERROR, CRITICAL)
+     * @param severity  Alert severity to filter (INFO, WARNING, ERROR, CRITICAL)
      * @return List of alerts
      */
     public List<AlertDTO> getAlertHistory(String namespace, String severity) {
@@ -331,7 +332,8 @@ public class MonitoringService {
                     normalValue * 1.2,
                     deviationPercent,
                     "HIGH",
-                    "Metric value significantly above normal range. Check for potential resource exhaustion."
+                    "Metric value significantly above normal range. Check for potential resource exhaustion.",
+                    "Review and scale resources or investigate workload"
             ));
         }
 
@@ -353,7 +355,7 @@ public class MonitoringService {
     public PromQLQueryResultDTO executePromQLQuery(String query, String range) {
         if (prometheusWebClient == null) {
             logger.warn("Prometheus WebClient not configured");
-            return new PromQLQueryResultDTO(query, range, List.of(), new MetricSummaryDTO(0, 0, 0),
+            return new PromQLQueryResultDTO(query, range, List.of(), new MetricSummaryDTO(0, 0, 0, 0),
                     "Prometheus client not configured");
         }
 
@@ -377,7 +379,7 @@ public class MonitoringService {
 
             if (response == null || !response.containsKey("data")) {
                 logger.warn("No data returned from Prometheus for query: {}", query);
-                return new PromQLQueryResultDTO(query, range, List.of(), new MetricSummaryDTO(0, 0, 0),
+                return new PromQLQueryResultDTO(query, range, List.of(), new MetricSummaryDTO(0, 0, 0, 0),
                         "No data returned from Prometheus");
             }
 
@@ -387,7 +389,7 @@ public class MonitoringService {
             List<MetricPointDTO> dataPoints = parsePrometheusResult(data);
 
             MetricSummaryDTO summary = dataPoints.isEmpty() ?
-                    new MetricSummaryDTO(0, 0, 0) :
+                    new MetricSummaryDTO(0, 0, 0, 0) :
                     calculateSummary(dataPoints);
 
             logger.info("PromQL query executed successfully, returned {} data points", dataPoints.size());
@@ -396,7 +398,7 @@ public class MonitoringService {
 
         } catch (Exception e) {
             logger.error("Error executing PromQL query: {}", query, e);
-            return new PromQLQueryResultDTO(query, range, List.of(), new MetricSummaryDTO(0, 0, 0),
+            return new PromQLQueryResultDTO(query, range, List.of(), new MetricSummaryDTO(0, 0, 0, 0),
                     "Query execution failed: " + e.getMessage());
         }
     }

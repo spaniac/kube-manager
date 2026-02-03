@@ -18,18 +18,18 @@ public class RetryUtil {
     /**
      * Execute operation with exponential backoff retry.
      *
-     * @param operation  Operation to execute
-     * @param maxRetries Maximum number of retry attempts
+     * @param operation    Operation to execute
+     * @param maxRetries   Maximum number of retry attempts
      * @param initialDelay Initial delay between retries
-     * @param maxDelay Maximum delay between retries
-     * @param <T> Return type
+     * @param maxDelay     Maximum delay between retries
+     * @param <T>          Return type
      * @return Operation result
      * @throws RuntimeException if all retries fail
      */
     public <T> T executeWithRetry(Supplier<T> operation,
-                                     int maxRetries,
-                                     Duration initialDelay,
-                                     Duration maxDelay) {
+                                  int maxRetries,
+                                  Duration initialDelay,
+                                  Duration maxDelay) {
         int attempt = 0;
         Exception lastException = null;
         long delay = initialDelay.toMillis();

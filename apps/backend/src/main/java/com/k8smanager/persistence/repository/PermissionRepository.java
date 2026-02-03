@@ -1,8 +1,6 @@
 package com.k8smanager.persistence.repository;
 
 import com.k8smanager.persistence.entity.Permission;
-import com.k8smanager.persistence.entity.Permission.PermissionType;
-import com.k8smanager.persistence.entity.Permission.ResourceType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

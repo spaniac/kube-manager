@@ -1,19 +1,19 @@
 package com.k8smanager.controller;
 
 import com.k8smanager.common.response.ApiResponse;
-import com.k8smanager.dto.*;
-import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Container;
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import org.springframework.http.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Controller for pod log streaming.
@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/pods")
 public class PodLogController {
 
+    private static final Logger log = LoggerFactory.getLogger(PodLogController.class);
     private final KubernetesClient kubernetesClient;
 
     public PodLogController(KubernetesClient kubernetesClient) {
@@ -33,7 +34,7 @@ public class PodLogController {
      * GET /api/v1/pods/{namespace}/{name}/logs
      */
     @GetMapping("/{namespace}/{name}/logs")
-    @PreAuthorize("hasAuthority('LOGS', 'POD')")
+    @PreAuthorize("hasAnyAuthority('LOGS', 'POD')")
     public SseEmitter streamPodLogs(
             @PathVariable String namespace,
             @PathVariable String name,
@@ -55,8 +56,8 @@ public class PodLogController {
 
             if (pod == null) {
                 emitter.send(SseEmitter.event()
-                                .data(ApiResponse.error("Pod not found"))
-                                .build());
+                        .data(ApiResponse.error("Pod not found"))
+                        .build());
                 emitter.complete();
                 return emitter;
             }
@@ -68,26 +69,22 @@ public class PodLogController {
 
             if (containerName != null && !containerName.isEmpty()) {
                 emitter.send(SseEmitter.event()
-                            .data(SseEmitter.event()
-                                    .name("connected")
-                                    .data(ApiResponse.success("Streaming logs for container: " + containerName + " in pod: " + podName))
-                                    .build())
-                            .build());
+                        .name("connected")
+                        .data(ApiResponse.success("Streaming logs for container: " + containerName + " in pod: " + podName))
+                        .build());
             } else {
                 emitter.send(SseEmitter.event()
-                            .data(SseEmitter.event()
-                                    .name("connected")
-                                    .data(ApiResponse.success("Streaming logs for pod: " + podName))
-                                    .build())
-                            .build());
+                        .name("connected")
+                        .data(ApiResponse.success("Streaming logs for pod: " + podName))
+                        .build());
             }
 
             // Get logs from pod
-            io.fabric8.kubernetes.client.dsl.PodResource<Pod, io.fabric8.kubernetes.client.dsl.LogWatch, io.fabric8.kubernetes.client.dsl.Resource<Pod>> logs =
+            io.fabric8.kubernetes.client.dsl.LogWatch logs =
                     kubernetesClient.pods()
                             .inNamespace(namespace)
                             .withName(name)
-                            .getLog();
+                            .watchLog();
 
             long sinceTimestamp = 0;
             long untilTimestamp = Long.MAX_VALUE;
@@ -111,7 +108,7 @@ public class PodLogController {
             final long finalSinceTimestamp = sinceTimestamp;
             final long finalUntilTimestamp = untilTimestamp;
 
-            io.fabric8.kubernetes.client.dsl.LogWatch logWatch = logs.watch();
+            io.fabric8.kubernetes.client.dsl.LogWatch logWatch = logs;
 
             try {
                 InputStream logStream = logWatch.getOutput();
@@ -121,31 +118,21 @@ public class PodLogController {
                 while ((bytesRead = logStream.read(buffer)) != -1) {
                     String logLine = new String(buffer, 0, bytesRead, StandardCharsets.UTF_8);
 
-                    if (severity != null && !severity.isEmpty()) {
-                        if (logLine.toLowerCase().contains(severity.toLowerCase())) {
-                            emitter.send(SseEmitter.event()
-                                    .name("log")
-                                    .data(SseEmitter.event()
-                                            .name("severity")
-                                            .value(severity.toLowerCase())
-                                            .build())
-                                    .build());
-                        }
-                    } else {
+                    if (search != null && !search.isEmpty() && !logLine.toLowerCase().contains(search.toLowerCase())) {
+                        continue;
+                    }
+
+                    if (severity != null && !severity.isEmpty() && logLine.toLowerCase().contains(severity.toLowerCase())) {
+                        emitter.send(SseEmitter.event()
+                                .name("log")
+                                .data(logLine)
+                                .build());
+                    } else if (severity == null || severity.isEmpty()) {
                         emitter.send(SseEmitter.event()
                                 .name("log")
                                 .data(logLine)
                                 .build());
                     }
-
-                    if (search != null && !search.isEmpty() && !logLine.toLowerCase().contains(search.toLowerCase())) {
-                        continue;
-                    }
-
-                    emitter.send(SseEmitter.event()
-                            .name("log")
-                            .data(logLine)
-                            .build());
                 }
             } catch (Exception e) {
                 emitter.send(SseEmitter.event()
@@ -156,13 +143,30 @@ public class PodLogController {
                 logWatch.close();
             }
 
-            emitter.onCompletion(() -> logWatch.close());
-            emitter.onTimeout(() -> logWatch.close());
+            emitter.onCompletion(() -> {
+                try {
+                    logWatch.close();
+                } catch (Exception e) {
+                    log.error("Error closing log watch", e);
+                }
+            });
+            emitter.onTimeout(() -> {
+                try {
+                    logWatch.close();
+                } catch (Exception e) {
+                    log.error("Error closing log watch on timeout", e);
+                }
+            });
+            return emitter;
 
         } catch (Exception e) {
-            emitter.send(SseEmitter.event()
-                            .data(ApiResponse.error("Failed to stream logs: " + e.getMessage()))
-                            .build());
+            try {
+                emitter.send(SseEmitter.event()
+                        .data(ApiResponse.error("Failed to stream logs: " + e.getMessage()))
+                        .build());
+            } catch (IOException ioException) {
+                log.error("Error sending error event", ioException);
+            }
             emitter.completeWithError(e);
             return emitter;
         }

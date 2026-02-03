@@ -11,6 +11,10 @@ The system SHALL provide navigation to view different K8s resource types includi
 - **WHEN** user clicks "Services" in the navigation menu
 - **THEN** system displays the list of all services across accessible namespaces
 
+#### Scenario: Verify navigation routing
+- **WHEN** user clicks through all items in the main navigation menu
+- **THEN** each link routes to the correct view and active state is updated accordingly
+
 ### Requirement: Resource list filtering
 The system SHALL allow filtering resources by namespace, status, labels, and other resource-specific attributes.
 

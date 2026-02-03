@@ -14,4 +14,5 @@ public record UserProfileDTO(
         Instant createdAt,
         Instant lastLoginAt,
         Set<String> roles
-) {}
+) {
+}

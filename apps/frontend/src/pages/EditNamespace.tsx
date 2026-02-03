@@ -5,7 +5,7 @@ import { useApiQuery, useApiMutation } from '@hooks/useApi';
 import type { Namespace } from '@types/api';
 import { Input } from '@components/Input';
 import { Button } from '@components/Button';
-import { useToast } from '@components/Toast';
+import { Toast } from '@components/Toast';
 
 interface NamespaceFormData {
   labels: Record<string, string>;

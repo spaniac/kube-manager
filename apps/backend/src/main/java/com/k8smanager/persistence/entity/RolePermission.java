@@ -1,7 +1,10 @@
 package com.k8smanager.persistence.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Many-to-many relationship between Role and Permission.

@@ -1,9 +1,12 @@
 import '@testing-library/jest-dom';
+import { configure } from '@testing-library/react';
+import { TextEncoder, TextDecoder } from 'util';
 
-// Configure React Testing Library
+Object.assign(global, { TextEncoder, TextDecoder });
+
 configure({
-  testIdAttribute: 'data-testid', // Default attribute
-  throwSuggestions: true, // Throw errors for deprecated methods
+  testIdAttribute: 'data-testid',
+  throwSuggestions: true,
 });
 
 // Mock window.matchMedia for responsive components

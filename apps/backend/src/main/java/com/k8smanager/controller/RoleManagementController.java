@@ -5,7 +5,6 @@ import com.k8smanager.persistence.entity.Role;
 import com.k8smanager.persistence.entity.User;
 import com.k8smanager.persistence.repository.RoleRepository;
 import com.k8smanager.persistence.repository.UserRepository;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,7 +16,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/admin/roles")
-@PreAuthorize("hasAuthority('ADMIN')")
+@PreAuthorize("hasAnyAuthority('ADMIN')")
 public class RoleManagementController {
 
     private final UserRepository userRepository;
@@ -75,17 +74,15 @@ public class RoleManagementController {
                 .filter(ur -> ur.getRole().getName() == role.getName())
                 .findFirst()
                 .ifPresentOrElse(
-                        () -> {
-                            com.k8smanager.persistence.entity.UserRole userRole =
-                                    new com.k8smanager.persistence.entity.UserRole();
+                        userRole -> {
                             userRole.setUser(user);
                             userRole.setRole(role);
                             user.getUserRoles().add(userRole);
                             userRepository.save(user);
                         },
-                        () -> {}
+                        () -> {
+                        }
                 );
-
         return ApiResponse.success(null, "Role assigned successfully");
     }
 

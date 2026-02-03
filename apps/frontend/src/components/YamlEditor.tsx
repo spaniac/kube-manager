@@ -22,11 +22,8 @@ import React, {
   useState,
   useRef,
   useEffect,
-  useCallback,
 } from 'react';
 import Editor, {
-  OnMount,
-  OnChange,
   Monaco,
   useMonaco,
 } from '@monaco-editor/react';
@@ -37,9 +34,7 @@ import {
   YamlValidationResult,
   ResourceTemplate,
   EditorMode,
-  DiffLine,
   DiffData,
-  YamlValidationError,
 } from '../types/yaml';
 import styles from './YamlEditor.module.css';
 

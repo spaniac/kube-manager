@@ -3,14 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getDeployment, getDeploymentYaml, scaleDeployment, restartDeployment, updateDeploymentImage } from '@api/deployment';
 import { pauseDeployment, resumeDeployment } from '@api/workload';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { Deployment, WorkloadCondition } from '@types/api';
+import type { WorkloadCondition } from '@types/api';
 import { Badge } from '@components/Badge';
 import { Button } from '@components/Button';
 import { Modal } from '@components/Modal';
 import { Input } from '@components/Input';
 import { Spinner } from '@components/Spinner';
 import { Table, TableStyles } from '@components/Table';
-import { useToast } from '@components/Toast';
+import { Toast } from '@components/Toast';
 
 export default function DeploymentDetails() {
   const { namespace, name } = useParams<{ namespace: string; name: string }>();
@@ -242,7 +242,7 @@ export default function DeploymentDetails() {
             <button
               key={tab}
               className={`tab ${selectedTab === tab ? 'active' : ''}`}
-              onClick={() => setSelectedTab(tab as any)}
+              onClick={() => setSelectedTab(tab as 'overview' | 'conditions' | 'yaml')}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>

@@ -3,6 +3,7 @@ package com.k8smanager.service;
 import com.k8smanager.dto.*;
 import com.k8smanager.k8s.K8sMapper;
 import io.fabric8.kubernetes.api.model.*;
+import io.fabric8.kubernetes.api.model.apps.*;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +21,7 @@ public class ResourceService {
     private final StatusBadgeService statusBadgeService;
 
     public ResourceService(KubernetesClient kubernetesClient, K8sMapper k8sMapper,
-                          StatusBadgeService statusBadgeService) {
+                           StatusBadgeService statusBadgeService) {
         this.kubernetesClient = kubernetesClient;
         this.k8sMapper = k8sMapper;
         this.statusBadgeService = statusBadgeService;
@@ -29,8 +30,8 @@ public class ResourceService {
     /**
      * Generic list resources.
      */
-    public <T> ResourceListDTO<T> listResources(String resourceType, String namespace,
-                                                        String labelSelector, String sortField, String sortOrder) {
+    public ResourceListDTO<?> listResources(String resourceType, String namespace,
+                                            String labelSelector, String sortField, String sortOrder) {
         return switch (resourceType.toLowerCase()) {
             case "pods" -> listPods(namespace, labelSelector, sortField, sortOrder);
             case "deployments" -> listDeployments(namespace, labelSelector, sortField, sortOrder);
@@ -46,7 +47,7 @@ public class ResourceService {
     /**
      * Get resource details.
      */
-    public <T> T getResource(String resourceType, String namespace, String name) {
+    public Object getResource(String resourceType, String namespace, String name) {
         return switch (resourceType.toLowerCase()) {
             case "pods" -> getPod(namespace, name);
             case "deployments" -> getDeployment(namespace, name);
@@ -62,15 +63,15 @@ public class ResourceService {
     /**
      * Update resource.
      */
-    public <T> T updateResource(String resourceType, String namespace, String name, Object resource) {
+    public Object updateResource(String resourceType, String namespace, String name, Object resource) {
         return switch (resourceType.toLowerCase()) {
             case "deployments" -> {
-                kubernetesClient.deployments()
+                kubernetesClient.apps().deployments()
                         .inNamespace(namespace)
                         .resource(k8sMapper.mapToDeployment((DeploymentRequestDTO) resource))
                         .replace();
-                return (T) k8sMapper.mapToDeploymentDto(
-                        kubernetesClient.deployments()
+                yield k8sMapper.mapToDeploymentDto(
+                        kubernetesClient.apps().deployments()
                                 .inNamespace(namespace)
                                 .withName(name)
                                 .get());
@@ -80,7 +81,7 @@ public class ResourceService {
                         .inNamespace(namespace)
                         .resource(k8sMapper.mapToService((ServiceRequestDTO) resource))
                         .replace();
-                return (T) k8sMapper.mapToServiceDto(
+                yield k8sMapper.mapToServiceDto(
                         kubernetesClient.services()
                                 .inNamespace(namespace)
                                 .withName(name)
@@ -91,7 +92,7 @@ public class ResourceService {
                         .inNamespace(namespace)
                         .resource(k8sMapper.mapToConfigMap((ConfigMapRequestDTO) resource))
                         .replace();
-                return (T) k8sMapper.mapToConfigMapDto(
+                yield k8sMapper.mapToConfigMapDto(
                         kubernetesClient.configMaps()
                                 .inNamespace(namespace)
                                 .withName(name)
@@ -107,12 +108,13 @@ public class ResourceService {
     public void deleteResource(String resourceType, String namespace, String name) {
         switch (resourceType.toLowerCase()) {
             case "pods" -> kubernetesClient.pods().inNamespace(namespace).withName(name).delete();
-            case "deployments" -> kubernetesClient.deployments().inNamespace(namespace).withName(name).delete();
+            case "deployments" -> kubernetesClient.apps().deployments().inNamespace(namespace).withName(name).delete();
             case "services" -> kubernetesClient.services().inNamespace(namespace).withName(name).delete();
             case "configmaps" -> kubernetesClient.configMaps().inNamespace(namespace).withName(name).delete();
             case "secrets" -> kubernetesClient.secrets().inNamespace(namespace).withName(name).delete();
-            case "statefulsets" -> kubernetesClient.statefulSets().inNamespace(namespace).withName(name).delete();
-            case "daemonsets" -> kubernetesClient.daemonSets().inNamespace(namespace).withName(name).delete();
+            case "statefulsets" ->
+                    kubernetesClient.apps().statefulSets().inNamespace(namespace).withName(name).delete();
+            case "daemonsets" -> kubernetesClient.apps().daemonSets().inNamespace(namespace).withName(name).delete();
         }
     }
 
@@ -135,9 +137,9 @@ public class ResourceService {
     private ResourceListDTO<DeploymentDTO> listDeployments(String namespace, String labelSelector, String sortField, String sortOrder) {
         DeploymentList list;
         if (namespace != null && !namespace.isEmpty()) {
-            list = kubernetesClient.deployments().inNamespace(namespace).list();
+            list = kubernetesClient.apps().deployments().inNamespace(namespace).list();
         } else {
-            list = kubernetesClient.deployments().inAnyNamespace().list();
+            list = kubernetesClient.apps().deployments().inAnyNamespace().list();
         }
 
         List<DeploymentDTO> deployments = list.getItems().stream()
@@ -155,7 +157,7 @@ public class ResourceService {
             list = kubernetesClient.services().inAnyNamespace().list();
         }
 
-        List<ServiceDTO> services = list.getItems().stream()
+        List<com.k8smanager.dto.ServiceDTO> services = list.getItems().stream()
                 .map(k8sMapper::mapToServiceDto)
                 .toList();
 
@@ -171,7 +173,7 @@ public class ResourceService {
         }
 
         List<ConfigMapDTO> configMaps = list.getItems().stream()
-                .map(this::mapToConfigMapDto)
+                .map(k8sMapper::mapToConfigMapDto)
                 .toList();
 
         return new ResourceListDTO<>("ConfigMapList", "v1", configMaps, null);
@@ -195,9 +197,9 @@ public class ResourceService {
     private ResourceListDTO<StatefulSetDTO> listStatefulSets(String namespace, String labelSelector, String sortField, String sortOrder) {
         StatefulSetList list;
         if (namespace != null && !namespace.isEmpty()) {
-            list = kubernetesClient.statefulSets().inNamespace(namespace).list();
+            list = kubernetesClient.apps().statefulSets().inNamespace(namespace).list();
         } else {
-            list = kubernetesClient.statefulSets().inAnyNamespace().list();
+            list = kubernetesClient.apps().statefulSets().inAnyNamespace().list();
         }
 
         List<StatefulSetDTO> statefulSets = list.getItems().stream()
@@ -210,9 +212,9 @@ public class ResourceService {
     private ResourceListDTO<DaemonSetDTO> listDaemonSets(String namespace, String labelSelector, String sortField, String sortOrder) {
         DaemonSetList list;
         if (namespace != null && !namespace.isEmpty()) {
-            list = kubernetesClient.daemonSets().inNamespace(namespace).list();
+            list = kubernetesClient.apps().daemonSets().inNamespace(namespace).list();
         } else {
-            list = kubernetesClient.daemonSets().inAnyNamespace().list();
+            list = kubernetesClient.apps().daemonSets().inAnyNamespace().list();
         }
 
         List<DaemonSetDTO> daemonSets = list.getItems().stream()
@@ -228,53 +230,42 @@ public class ResourceService {
     }
 
     private DeploymentDTO getDeployment(String namespace, String name) {
-        Deployment deployment = kubernetesClient.deployments().inNamespace(namespace).withName(name).get();
+        Deployment deployment = kubernetesClient.apps().deployments().inNamespace(namespace).withName(name).get();
         return deployment != null ? k8sMapper.mapToDeploymentDto(deployment) : null;
     }
 
-    private ServiceDTO getService(String namespace, String name) {
-        Service service = kubernetesClient.services().inNamespace(namespace).withName(name).get();
+    private com.k8smanager.dto.ServiceDTO getService(String namespace, String name) {
+        io.fabric8.kubernetes.api.model.Service service = kubernetesClient.services().inNamespace(namespace).withName(name).get();
         return service != null ? k8sMapper.mapToServiceDto(service) : null;
     }
 
     private ConfigMapDTO getConfigMap(String namespace, String name) {
         ConfigMap configMap = kubernetesClient.configMaps().inNamespace(namespace).withName(name).get();
-        return configMap != null ? mapToConfigMapDto(configMap) : null;
+        return configMap != null ? k8sMapper.mapToConfigMapDto(configMap) : null;
     }
 
     private SecretDTO getSecret(String namespace, String name) {
-        Secret secret = kubernetesClient.secrets().inNamespace(namespace).withName(name).get();
+        io.fabric8.kubernetes.api.model.Secret secret = kubernetesClient.secrets().inNamespace(namespace).withName(name).get();
         return secret != null ? mapToSecretDto(secret) : null;
     }
 
     private StatefulSetDTO getStatefulSet(String namespace, String name) {
-        StatefulSet statefulSet = kubernetesClient.statefulSets().inNamespace(namespace).withName(name).get();
+        StatefulSet statefulSet = kubernetesClient.apps().statefulSets().inNamespace(namespace).withName(name).get();
         return statefulSet != null ? mapToStatefulSetDto(statefulSet) : null;
     }
 
     private DaemonSetDTO getDaemonSet(String namespace, String name) {
-        DaemonSet daemonSet = kubernetesClient.daemonSets().inNamespace(namespace).withName(name).get();
+        DaemonSet daemonSet = kubernetesClient.apps().daemonSets().inNamespace(namespace).withName(name).get();
         return daemonSet != null ? mapToDaemonSetDto(daemonSet) : null;
     }
 
-    private ConfigMapDTO mapToConfigMapDto(ConfigMap configMap) {
-        return new ConfigMapDTO(
-                configMap.getMetadata().getName(),
-                configMap.getMetadata().getNamespace(),
-                configMap.getMetadata().getCreationTimestamp().toEpochMilli(),
-                configMap.getData(),
-                configMap.getBinaryData(),
-                configMap.getMetadata().getLabels()
-        );
-    }
-
-    private SecretDTO mapToSecretDto(Secret secret) {
+    private SecretDTO mapToSecretDto(io.fabric8.kubernetes.api.model.Secret secret) {
         Map<String, String> data = secret.getData();
         return new SecretDTO(
                 secret.getMetadata().getName(),
                 secret.getMetadata().getNamespace(),
                 secret.getType(),
-                secret.getMetadata().getCreationTimestamp().toEpochMilli(),
+                secret.getMetadata().getCreationTimestamp() != null ? 0 : 0,
                 data != null ? data : Map.of(),
                 secret.getMetadata().getLabels(),
                 secret.getImmutable() != null ? secret.getImmutable() : false
@@ -286,8 +277,9 @@ public class ResourceService {
                 statefulSet.getMetadata().getName(),
                 statefulSet.getMetadata().getNamespace(),
                 statefulSet.getSpec() != null ? statefulSet.getSpec().getReplicas() : 0,
-                0, // TODO: Get actual ready replicas
-                statefulSet.getStatus() != null ? statefulSet.getStatus().getCurrentReplicas() : 0
+                statefulSet.getStatus() != null ? statefulSet.getStatus().getReadyReplicas() : 0,
+                statefulSet.getSpec() != null ? statefulSet.getSpec().getServiceName() : "",
+                null // TODO: Map template properly
         );
     }
 
@@ -295,10 +287,11 @@ public class ResourceService {
         return new DaemonSetDTO(
                 daemonSet.getMetadata().getName(),
                 daemonSet.getMetadata().getNamespace(),
-                daemonSet.getSpec() != null ? daemonSet.getSpec().getSelector().toString() : null,
-                daemonSet.getSpec() != null ? daemonSet.getSpec().getReplicas() : 0,
+                daemonSet.getStatus() != null ? daemonSet.getStatus().getDesiredNumberScheduled() : 0,
+                daemonSet.getStatus() != null ? daemonSet.getStatus().getCurrentNumberScheduled() : 0,
                 daemonSet.getStatus() != null ? daemonSet.getStatus().getNumberReady() : 0,
-                daemonSet.getStatus() != null ? daemonSet.getStatus().getNumberAvailable() : 0
+                daemonSet.getSpec() != null ? daemonSet.getSpec().getSelector().toString() : null,
+                null // TODO: Map template properly
         );
     }
 
@@ -312,32 +305,32 @@ public class ResourceService {
                 yield pod != null ? statusBadgeService.getPodStatusBadge(pod) : null;
             }
             case "deployments" -> {
-                Deployment deployment = kubernetesClient.deployments()
+                Deployment deployment = kubernetesClient.apps().deployments()
                         .inNamespace(namespace).withName(name).get();
                 yield deployment != null ? statusBadgeService.getDeploymentStatusBadge(deployment) : null;
             }
             case "statefulsets" -> {
-                StatefulSet statefulSet = kubernetesClient.statefulSets()
+                StatefulSet statefulSet = kubernetesClient.apps().statefulSets()
                         .inNamespace(namespace).withName(name).get();
                 yield statefulSet != null ? statusBadgeService.getStatefulSetStatusBadge(statefulSet) : null;
             }
             case "daemonsets" -> {
-                DaemonSet daemonSet = kubernetesClient.daemonSets()
+                DaemonSet daemonSet = kubernetesClient.apps().daemonSets()
                         .inNamespace(namespace).withName(name).get();
                 yield daemonSet != null ? statusBadgeService.getDaemonSetStatusBadge(daemonSet) : null;
             }
             case "jobs" -> {
-                io.fabric8.kubernetes.api.model.Job job = kubernetesClient.batch()
+                io.fabric8.kubernetes.api.model.batch.v1.Job job = kubernetesClient.batch()
                         .v1().jobs().inNamespace(namespace).withName(name).get();
                 yield job != null ? statusBadgeService.getJobStatusBadge(job) : null;
             }
             case "cronjobs" -> {
-                CronJob cronJob = kubernetesClient.batch()
-                        .v1().cronJobs().inNamespace(namespace).withName(name).get();
+                io.fabric8.kubernetes.api.model.batch.v1.CronJob cronJob = kubernetesClient.batch()
+                        .v1().cronjobs().inNamespace(namespace).withName(name).get();
                 yield cronJob != null ? statusBadgeService.getCronJobStatusBadge(cronJob) : null;
             }
             case "services" -> {
-                Service service = kubernetesClient.services()
+                io.fabric8.kubernetes.api.model.Service service = kubernetesClient.services()
                         .inNamespace(namespace).withName(name).get();
                 yield service != null ? statusBadgeService.getServiceStatusBadge(service) : null;
             }

@@ -19,8 +19,8 @@ public class RbacPermissionEvaluator implements PermissionEvaluator {
 
     @Override
     public boolean hasPermission(Authentication authentication,
-                                   Object targetDomainObject,
-                                   Object permission) {
+                                 Object targetDomainObject,
+                                 Object permission) {
         if (!(permission instanceof String[])) {
             return false;
         }
@@ -38,9 +38,19 @@ public class RbacPermissionEvaluator implements PermissionEvaluator {
 
     @Override
     public boolean hasPermission(Authentication authentication,
-                                   Serializable targetId,
-                                   String permissionType,
-                                   Object permission) {
-        return hasPermission(authentication, targetId, new String[]{permissionType, permission});
+                                 Serializable targetId,
+                                 String permissionType,
+                                 Object permission) {
+        if (!(permission instanceof String)) {
+            return false;
+        }
+        String resourceType = (String) permission;
+        try {
+            Permission.PermissionType permType = Permission.PermissionType.valueOf(permissionType);
+            Permission.ResourceType resType = Permission.ResourceType.valueOf(resourceType);
+            return rbacService.hasPermission(permType, resType);
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 }

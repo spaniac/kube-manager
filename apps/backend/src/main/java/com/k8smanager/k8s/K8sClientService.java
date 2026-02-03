@@ -1,6 +1,7 @@
 package com.k8smanager.k8s;
 
-import com.k8smanager.common.exception.BaseException;
+import com.k8smanager.common.exception.K8sException;
+import com.k8smanager.common.exception.InternalServerException;
 import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -61,36 +62,13 @@ public class K8sClientService {
             } catch (KubernetesClientException e) {
                 k8sApiErrorCounter.increment();
                 logger.error("Kubernetes operation failed: {}", e.getMessage(), e);
-                throw new BaseException("KUBERNETES_ERROR",
-                        "Kubernetes operation failed: " + e.getMessage(),
-                        e.getCode(),
-                        e.getStatus());
+                throw new K8sException("Kubernetes operation failed: " + e.getMessage(), e);
             } catch (Exception e) {
                 k8sApiErrorCounter.increment();
                 logger.error("Unexpected error: {}", e.getMessage(), e);
-                throw new BaseException("INTERNAL_ERROR",
-                        "Unexpected error: " + e.getMessage());
+                throw new InternalServerException("Unexpected error: " + e.getMessage(), e);
             }
         });
-    }
-
-    /**
-     * Execute a Kubernetes operation with error handling in a specific namespace.
-     */
-    public <T> T executeInNamespace(String namespace, K8sOperation<T> operation) {
-        try {
-            return operation.execute(kubernetesClient.inNamespace(namespace));
-        } catch (KubernetesClientException e) {
-            logger.error("Kubernetes operation failed in namespace {}: {}", namespace, e.getMessage(), e);
-            throw new BaseException("KUBERNETES_ERROR",
-                    "Kubernetes operation failed: " + e.getMessage(),
-                    e.getCode(),
-                    e.getStatus());
-        } catch (Exception e) {
-            logger.error("Unexpected error in namespace {}: {}", namespace, e.getMessage(), e);
-            throw new BaseException("INTERNAL_ERROR",
-                    "Unexpected error: " + e.getMessage());
-        }
     }
 
     /**
@@ -104,36 +82,10 @@ public class K8sClientService {
                 return Optional.empty();
             }
             logger.error("Kubernetes operation failed: {}", e.getMessage(), e);
-            throw new BaseException("KUBERNETES_ERROR",
-                    "Kubernetes operation failed: " + e.getMessage(),
-                    e.getCode(),
-                    e.getStatus());
+            throw new K8sException("Kubernetes operation failed: " + e.getMessage(), e);
         } catch (Exception e) {
             logger.error("Unexpected error: {}", e.getMessage(), e);
-            throw new BaseException("INTERNAL_ERROR",
-                    "Unexpected error: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Execute a Kubernetes operation and return Optional in a specific namespace.
-     */
-    public <T> Optional<T> executeOptionalInNamespace(String namespace, K8sOperation<T> operation) {
-        try {
-            return Optional.ofNullable(operation.execute(kubernetesClient.inNamespace(namespace)));
-        } catch (KubernetesClientException e) {
-            if (e.getCode() == 404) {
-                return Optional.empty();
-            }
-            logger.error("Kubernetes operation failed in namespace {}: {}", namespace, e.getMessage(), e);
-            throw new BaseException("KUBERNETES_ERROR",
-                    "Kubernetes operation failed: " + e.getMessage(),
-                    e.getCode(),
-                    e.getStatus());
-        } catch (Exception e) {
-            logger.error("Unexpected error in namespace {}: {}", namespace, e.getMessage(), e);
-            throw new BaseException("INTERNAL_ERROR",
-                    "Unexpected error: " + e.getMessage());
+            throw new InternalServerException("Unexpected error: " + e.getMessage(), e);
         }
     }
 

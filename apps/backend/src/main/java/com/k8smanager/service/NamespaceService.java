@@ -1,14 +1,18 @@
 package com.k8smanager.service;
 
-import com.k8smanager.dto.*;
-import com.k8smanager.persistence.entity.Permission;
+import com.k8smanager.dto.NamespaceDTO;
+import com.k8smanager.dto.NamespaceRequestDTO;
+import com.k8smanager.dto.ResourceQuotaDTO;
 import com.k8smanager.rbac.RbacService;
 import io.fabric8.kubernetes.api.model.Namespace;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Service for namespace management.
@@ -28,8 +32,7 @@ public class NamespaceService {
      * Get all namespaces.
      */
     public List<NamespaceDTO> getNamespaces() {
-        NamespaceList list = kubernetesClient.namespaces().list();
-        return list.getItems().stream()
+        return kubernetesClient.namespaces().list().getItems().stream()
                 .map(this::mapToNamespaceDto)
                 .toList();
     }
@@ -51,16 +54,16 @@ public class NamespaceService {
      * Create namespace.
      */
     public NamespaceDTO createNamespace(NamespaceRequestDTO request) {
-        Namespace namespace = kubernetesClient.namespaces()
-                .resource(new Namespace());
-
-        namespace.getMetadata().setName(request.name());
+        Namespace namespace = new Namespace();
+        ObjectMeta metadata = new ObjectMeta();
+        metadata.setName(request.name());
         if (request.labels() != null) {
-            namespace.getMetadata().setLabels(request.labels());
+            metadata.setLabels(request.labels());
         }
         if (request.annotations() != null) {
-            namespace.getMetadata().setAnnotations(request.annotations());
+            metadata.setAnnotations(request.annotations());
         }
+        namespace.setMetadata(metadata);
 
         Namespace created = kubernetesClient.namespaces().resource(namespace).create();
         return mapToNamespaceDto(created);
@@ -117,20 +120,24 @@ public class NamespaceService {
             return null;
         }
 
-        Map<String, String> used = quota.getStatus() != null
+        Map<String, Quantity> usedMap = quota.getStatus() != null
                 ? quota.getStatus().getUsed()
                 : Map.of();
-        Map<String, String> hard = quota.getSpec() != null
+        Map<String, Quantity> hardMap = quota.getSpec() != null
                 ? quota.getSpec().getHard()
                 : Map.of();
 
+        // Convert Map<String, Quantity> to Map<String, String>
+        Map<String, String> used = usedMap.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getAmount()));
+        Map<String, String> hard = hardMap.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getAmount()));
+
         return new ResourceQuotaDTO(
-                used.get("cpu"),
-                hard.get("cpu"),
-                used.get("memory"),
-                hard.get("memory"),
-                used.get("pods"),
-                hard.get("pods")
+                quota.getMetadata().getName(),
+                quota.getMetadata().getNamespace(),
+                hard,
+                used
         );
     }
 
@@ -145,10 +152,13 @@ public class NamespaceService {
     }
 
     private NamespaceDTO mapToNamespaceDto(Namespace namespace) {
+        String timestamp = namespace.getMetadata().getCreationTimestamp();
+        String creationTimestamp = timestamp != null ? timestamp : "";
+
         return new NamespaceDTO(
                 namespace.getMetadata().getName(),
                 namespace.getStatus() != null ? namespace.getStatus().getPhase() : "Active",
-                namespace.getMetadata().getCreationTimestamp().toEpochMilli(),
+                creationTimestamp,
                 namespace.getMetadata().getLabels(),
                 namespace.getMetadata().getAnnotations()
         );

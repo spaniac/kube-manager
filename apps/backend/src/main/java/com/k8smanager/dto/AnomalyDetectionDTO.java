@@ -1,6 +1,6 @@
 package com.k8smanager.dto;
 
-import java.util.List;
+import java.time.Instant;
 
 /**
  * DTO for anomaly detection result.
@@ -18,4 +18,5 @@ public record AnomalyDetectionDTO(
         String severity,
         String description,
         String suggestedAction
-) {}
+) {
+}

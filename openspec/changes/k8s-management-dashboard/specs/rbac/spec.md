@@ -95,6 +95,11 @@ The system SHALL cache user permissions for performance while supporting cache i
 - **WHEN** administrator modifies user's role assignments
 - **THEN** permission cache is invalidated and user permissions are reloaded on next request
 
+#### Scenario: Verify permission isolation (Anti-Caching)
+- **WHEN** User A accesses a resource and permissions are cached
+- **AND** User B (with different permissions) accesses the same resource
+- **THEN** User B's access check is independent of User A's cached permissions and no leakage occurs
+
 ### Requirement: RBAC audit logging
 The system SHALL log all permission checks, role assignments, and access control decisions for compliance auditing.
 
