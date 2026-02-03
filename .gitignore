@@ -155,4 +155,8 @@ psd
 thumb
 sketch
 
+.agent
+.gemini
+.github
+.opencode
 # End of https://www.toptal.com/developers/gitignore/api/java,react,intelij
