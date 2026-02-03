@@ -1,0 +1,47 @@
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+/**
+ * Sample JUnit 5 test for ClusterController
+ *
+ * This test demonstrates basic JUnit 5 setup with Spring Boot testing.
+ */
+@SpringBootTest
+@AutoConfigureMockMvc
+class ClusterControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    void testGetClusterOverview() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/cluster")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.success").value(true));
+    }
+
+    @Test
+    void testGetNodes() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/cluster/nodes")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.success").value(true));
+    }
+
+    @Test
+    void testGetClusterHealth() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/cluster/health"))
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.success").value(true));
+    }
+}

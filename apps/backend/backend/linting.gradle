@@ -1,0 +1,65 @@
+plugins {
+    id 'java'
+    id 'checkstyle'
+    id 'spotbugs'
+    id 'pmd'
+    id 'jacoco'
+}
+
+java {
+    toolchainLanguageVersion = JavaLanguageVersion.of(21)
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    checkstyle 'com.puppycrawl.tools:checkstyle:10.12.5'
+    spotbugsPlugins 'com.github.spotbugs:spotbugs-gradle-plugin:5.1.3'
+    pmd 'com.puppycrawl.tools:pmd:6.55.0'
+}
+
+checkstyle {
+    toolVersion = '10.12.5'
+    configFile = rootProject.file('config/checkstyle/google_checks.xml')
+    ignoreFailures = false
+    maxWarnings = 0
+}
+
+spotbugsMain {
+    ignoreFailures = false
+    showProgress = true
+    effort = 'max'
+    reportLevel = 'low'
+}
+
+spotbugsTest {
+    enabled = false
+}
+
+pmd {
+    toolVersion = '6.55.0'
+    consoleOutput = true
+    ignoreFailures = false
+}
+
+pmdMain {
+    ruleSetFiles = rootProject.files('config/pmd/ruleset.xml')
+}
+
+pmdTest {
+    enabled = false
+}
+
+tasks.withType(Checkstyle).configureEach {
+    reports.required = false
+}
+
+tasks.withType(SpotBugsTask).configureEach {
+    reports.required = false
+}
+
+tasks.withType(Pmd).configureEach {
+    reports.required = false
+}

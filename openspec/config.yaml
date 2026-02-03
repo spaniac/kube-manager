@@ -1,0 +1,146 @@
+schema: spec-driven
+
+# Project context
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+context: |
+  Tech Stack:
+    - Frontend: React 18.2+, TypeScript 5.3+, Vite 5.0+
+    - Backend: Spring Boot 3.5.9, Java 21
+    - Database: PostgreSQL 15+
+    - Authentication: OAuth2/OIDC (Keycloak)
+    - K8s Client: Fabric8 Kubernetes Java Client 6.x
+    - Monitoring: Prometheus + Grafana
+    - Real-time: Server-Sent Events (SSE), WebSocket
+
+  # ============ SDD (Spec-Driven Development) 기본 원칙 ============
+  Spec-Driven Development (SDD) 통합 코딩 규칙을 준수합니다.
+
+  1. Spec-First: 모든 코드는 OpenSpec 명세를 기반으로 작성. 명세에 없는 기능/필드는 임의로 추가 금지
+  2. Fail Fast: 문법/참조/타입 오류는 런타임이 아닌 빌드/정적 분석 단계에서 발견해야 함
+  3. Consistency: Java와 TypeScript 간 데이터 모델 이름, 에러 코드, API 경로를 1:1로 동기화
+
+  # ============ Java 21 & Spring Boot 3.5.9 가이드라인 ============
+
+  [핵심 문법 및 기능]
+  - Records as DTOs: 데이터 전달 객체는 반드시 Java record를 사용하여 불변성 보장
+  - Pattern Matching: switch 문이나 instanceof 사용 시 Java 21의 패턴 매칭을 활용하여 가독성 향상, 캐스팅 오류 방지
+  - Virtual Threads: Blocking I/O 작업(DB, 외부 API)은 Virtual Threads를 활용 (spring.threads.virtual.enabled: true), 명시적 스레드 풀 생성 지양
+  - Sequenced Collections: 순서가 보장되는 컬렉션 처리 시 getFirst(), getLast() 등 Java 21의 신규 API 사용
+
+  [Spring Boot 3.5.9 특화]
+  - RestClient over RestTemplate: 외부 서비스 호출 시 동기 방식은 RestClient, 비동기 방식은 WebClient 사용
+  - Declarative HTTP Clients: 외부 API 정의 시 @HttpExchange 인터페이스를 사용하여 선언적으로 개발
+  - Standardized Error Handling: ProblemDetail (RFC 7807)을 상속받아 표준화된 에러 응답 반환
+    * GlobalExceptionHandler에서 ProblemDetail 생성하여 error 객체에 포함
+    * API 응답 구조 유지하되 내부 상세는 ProblemDetail 사용
+  - Observation API: 로그 출력 대신 Micrometer Observation을 활용하여 트래킹과 로깅 통합
+
+  # ============ TypeScript 5.3 & React 18.2 가이드라인 ============
+
+  [TypeScript 5.3 엄격 모드]
+  - Strict Configuration: tsconfig.json에서 strict: true, noUncheckedIndexedAccess: true를 강제
+  - Import Attributes: JSON이나 모듈 로드 시 TS 5.3의 import ... with { type: 'json' } 구문 사용하여 런타임 에러 방지
+  - Satisfies Operator: 객체가 특정 타입을 만족하는지 확인하면서도 구체적인 타입을 유지하기 위해 satisfies 적극 활용
+
+  [React 18.2 / Vite 5.0]
+  - Functional & Hooks: 모든 컴포넌트는 함수형으로 작성하며, 비즈니스 로직은 Custom Hooks로 100% 격리
+  - Zod Schema Validation: API 응답 데이터는 Zod를 사용하여 런타임에 한 번 더 검증하며, 여기서 추출된 타입을 TS 타입으로 사용
+  - TanStack Query (v5): 모든 서버 상태는 useQuery, useMutation으로 관리하며, staleTime과 gcTime을 명시적으로 설정
+  - Vite Path Aliases: 모든 참조는 @/ (src), @common/ 등의 Alias를 사용하며 상대 경로(../../) 사용 금지
+
+  # ============ 모노레포 및 참조 무결성 규칙 ============
+
+  Mono-repo consistency rules:
+    - API Sync: Java의 @RestController 경로와 TS의 Axios/Fetch 기본 경로 자동 동기화 (OpenSpec 기준)
+    - Type Mapping: Java UserDto ↔ TS interface UserDto (필드명/타입 100% 일치, 스네이크/카멜 케이스 주의)
+    - Error Code: ErrorCode Enum을 공유하여 백엔드 에러 발생 시 프런트엔드에서 즉시 매핑 (공통 에러 객체 정의)
+    - Port Management: 모노레포 내 포트 충돌 방지 (예: Java: 8080, Vite: 5173, DB: 5432, .env 파일 관리)
+
+  # ============ 기존 코딩 컨벤션 (호환 유지) ============
+
+  Coding Conventions:
+    - Java: Follow Google Java Style Guide (https://google.github.io/styleguide/javaguide.html)
+    - TypeScript: Follow Google TypeScript Style Guide (https://google.github.io/styleguide/tsguide.html)
+    - Use Google Java Style Guide for Spring Boot code (controllers, services, repositories)
+    - Use Google TypeScript Style Guide for React components and utility functions
+
+  API Conventions:
+    - All API endpoints must follow RESTful design principles
+    - Use appropriate HTTP methods: GET (read), POST (create), PUT/PATCH (update), DELETE (delete)
+    - Resource-based URL paths: /api/v1/{resource} or /api/v1/{namespace}/{resource}
+    - Use plural nouns for collections: /api/v1/pods, /api/v1/namespaces
+    - Use kebab-case for query parameters and path variables
+    - API versioning via URL path: /api/v1/, /api/v2/
+
+  Frontend-Backend Communication:
+    - DTO-based communication is mandatory (no raw K8s objects from backend to frontend)
+    - All data transferred between frontend and backend must use dedicated DTO classes
+    - Backend: Create separate DTO package for request/response objects
+    - Frontend: Define TypeScript interfaces matching backend DTOs
+    - Example: PodDTO, DeploymentDTO, NamespaceDTO instead of returning K8s Pod/Deployment objects
+
+  API Response Standardization:
+    - All API responses must follow consistent structure
+    - Success response: { "success": true, "data": {...}, "message": "optional message" }
+    - Error response: { "success": false, "error": {...}, "message": "error description" }
+      * error 객체 내부에 ProblemDetail (RFC 7807) 포함하여 상세 정보 제공
+    - Use HTTP status codes appropriately (200, 201, 400, 401, 403, 404, 409, 500, etc.)
+
+  Exception Handling:
+    - All API responses must go through GlobalExceptionHandler
+    - Define specific exception classes for each error type
+    - Exception hierarchy: BaseException → specific exceptions (ResourceNotFoundException, AuthenticationException, AuthorizationException, ValidationException, etc.)
+    - Each exception must have unique error code and user-friendly message
+    - GlobalExceptionHandler maps exceptions to appropriate HTTP status codes and response formats
+    - Log all exceptions with sufficient context for debugging
+
+  # ============ AI(GLM-4.7) 지시 프로세스 (Best Practice) ============
+
+  오류를 수정하고 단위 테스트로 넘어가기 위해 AI에게 내리는 단계별 명령입니다.
+
+  1단계: 명세 대조
+    > "현재 작성된 UserResponse.java와 userTypes.ts를 user.spec 파일과 비교해줘. 필드 이름이 다르거나 타입이 누락된 부분을 먼저 리스트업해."
+
+  2단계: 정적 분석 기반 수정
+    > "Java 21의 Record 문법과 TS 5.3의 Strict 모드를 적용해서 위 오류를 수정해줘. 특히 null 가능성이 있는 필드는 Java의 Optional과 TS의 ?를 매핑시켜줘."
+
+  3단계: 참조 무결성 검사
+    > "수정된 코드들이 모노레포 내의 다른 모듈(예: common-utils)을 참조할 때 경로 오류가 없는지 확인해줘."
+
+  4단계: 단위 테스트 준비
+    > "이제 모든 문법/참조 오류가 해결되었어. JUnit 5와 Vitest를 사용하여 각 서브 프로젝트의 핵심 로직에 대한 단위 테스트 코드를 생성해줘."
+
+  # ============ 추가 권장 사항 (Tips) ============
+
+  - Dry Run: 실제 코드를 수정하기 전, AI에게 "예상되는 컴파일 에러 목록"을 먼저 뽑아달라고 하세요.
+  - Comment Policy: 모든 public 메서드와 컴포넌트에는 JSDoc 또는 JavaDoc을 작성하도록 규칙을 추가하면 AI의 코드 이해도가 비약적으로 상승합니다.
+  - Security: Java의 Spring Security 설정 시 Lambda DSL 방식을 사용하여 설정의 가독성을 높이도록 지시하세요.
+
+  Domain: Kubernetes management platform for company infrastructure
+
+# Per-artifact rules
+# Add custom rules for specific artifacts.
+rules:
+  design:
+    - Specify exact versions for all dependencies
+    - Verify compatibility between technology stack versions
+    - Include DTO design (use Java records) in API layer decisions
+    - Define exception hierarchy with ProblemDetail in security/error handling sections
+    - Specify virtual threads configuration for blocking I/O operations
+    - Include TanStack Query configuration for server state management
+    - Include Zod schema validation setup for API responses
+  specs:
+    - Use SHALL/MUST for requirements (no should/may)
+    - Every requirement MUST have at least one testable scenario
+    - Scenarios MUST use exactly 4 hashtags (#### Scenario:)
+  tasks:
+    - Include setting up linting for Java (Google Style Guide) and TypeScript
+    - Include implementing GlobalExceptionHandler with specific exception classes and ProblemDetail
+    - Include creating DTO packages using Java records
+    - Include setting up TanStack Query with staleTime and gcTime
+    - Include implementing Zod schema validation for API responses
+    - Include configuring virtual threads (spring.threads.virtual.enabled: true)
+    - Include setting up Vite path aliases (@/, @common/, etc.)
+    - Include TypeScript strict configuration (strict true, noUncheckedIndexedAccess true)
+    - Break tasks into chunks of max 2 hours
