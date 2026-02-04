@@ -6,9 +6,12 @@ import org.springframework.security.core.Authentication;
 
 import java.io.Serializable;
 
+import org.springframework.stereotype.Component;
+
 /**
  * Custom permission evaluator for RBAC.
  */
+@Component
 public class RbacPermissionEvaluator implements PermissionEvaluator {
 
     private final RbacService rbacService;
@@ -19,8 +22,8 @@ public class RbacPermissionEvaluator implements PermissionEvaluator {
 
     @Override
     public boolean hasPermission(Authentication authentication,
-                                 Object targetDomainObject,
-                                 Object permission) {
+            Object targetDomainObject,
+            Object permission) {
         if (!(permission instanceof String[])) {
             return false;
         }
@@ -38,9 +41,9 @@ public class RbacPermissionEvaluator implements PermissionEvaluator {
 
     @Override
     public boolean hasPermission(Authentication authentication,
-                                 Serializable targetId,
-                                 String permissionType,
-                                 Object permission) {
+            Serializable targetId,
+            String permissionType,
+            Object permission) {
         if (!(permission instanceof String)) {
             return false;
         }

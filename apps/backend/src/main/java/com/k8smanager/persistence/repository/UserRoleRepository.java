@@ -13,9 +13,9 @@ public interface UserRoleRepository extends JpaRepository<UserRole, Long> {
 
     List<UserRole> findByUser_Email(String userEmail);
 
-    List<UserRole> findByUserAndRole_Name(String userEmail, String roleName);
+    List<UserRole> findByUser_EmailAndRole_Name(String userEmail, String roleName);
 
-    Optional<UserRole> findByUserAndRole_NameAndNamespace(String userEmail, String roleName, String namespace);
+    Optional<UserRole> findByUser_EmailAndRole_NameAndNamespace(String userEmail, String roleName, String namespace);
 
     void deleteByUser_Email(String userEmail);
 }

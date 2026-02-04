@@ -4,7 +4,7 @@
 - [x] 1.2 Configure OpenAPI metadata (title "K8s Manager API", version "v1.0", description)
 - [x] 1.3 Configure OAuth2 Bearer token security scheme with type HTTP, scheme bearer, format JWT
 - [x] 1.4 Add security requirements to OpenAPI spec using @SecurityRequirement annotation
-- [ ] 1.5 Test Swagger UI at http://localhost:8080/swagger-ui.html to verify basic configuration
+- [x] 1.5 Test Swagger UI at http://localhost:8080/swagger-ui.html to verify basic configuration
 
 ## 2. Common DTO Annotation
 
@@ -17,7 +17,7 @@
 - [x] 2.7 Annotate PodContainerDTO record with @Schema on name, image, ready, restartCount, state fields
 - [x] 2.8 Add @Schema(required = true) annotations for mandatory fields across common DTOs
 - [x] 2.9 Add @Schema(example = "...") annotations with example values for common fields
-- [ ] 2.10 Verify Swagger UI displays schema details for annotated DTOs
+- [x] 2.10 Verify Swagger UI displays schema details for annotated DTOs
 
 ## 3. Cluster Management DTO Annotation
 

@@ -40,10 +40,10 @@ public class User {
     @Column(nullable = false)
     private Instant lastLoginAt;
 
-    @ManyToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserRole> userRoles = new java.util.HashSet<>();
 
-    @OneToMany(mappedBy = "createdBy")
+    @OneToMany(mappedBy = "user")
     private Set<AuditLog> auditLogs = new java.util.HashSet<>();
 
     @OneToMany(mappedBy = "user")

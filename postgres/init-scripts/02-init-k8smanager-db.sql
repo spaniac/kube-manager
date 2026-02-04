@@ -30,7 +30,8 @@ CREATE TABLE IF NOT EXISTS role_permissions (
     id BIGSERIAL PRIMARY KEY,
     role_id BIGINT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
     permission_id BIGINT NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
-    UNIQUE (role_id, permission_id)
+    namespace VARCHAR(255),
+    UNIQUE (role_id, permission_id, namespace)
 );
 
 -- Create user_roles join table
@@ -133,7 +134,7 @@ SELECT r.id, p.id
 FROM roles r
 CROSS JOIN permissions p
 WHERE r.name = 'ADMIN'
-ON CONFLICT (role_id, permission_id) DO NOTHING;
+ON CONFLICT (role_id, permission_id, namespace) DO NOTHING;
 
 -- Insert initial admin user (loginable via OAuth2)
 INSERT INTO users (email, name, created_at)

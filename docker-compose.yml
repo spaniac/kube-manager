@@ -44,7 +44,7 @@ services:
         condition: service_healthy
     command: start-dev
     healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'HTTP/1.1 200 OK\\r\\nOK' | nc -l 8080 || exit 1"]
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -58,7 +58,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus:/etc/prometheus:ro
       - prometheus-data:/prometheus
     networks:
       - k8s-network
@@ -80,7 +80,7 @@ services:
     build:
       context: ./apps/backend
       dockerfile: Dockerfile
-    image: k8s-manager-backend:latest
+    # image: k8s-manager-backend:latest
     container_name: k8s-manager-backend
     ports:
       - "8080:8080"
@@ -92,7 +92,7 @@ services:
       - DB_NAME=k8smanager
       - DB_USERNAME=k8smanager
       - DB_PASSWORD=changeit
-      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms
+      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/k8smanager
       - PROMETHEUS_URL=http://prometheus:9090
     networks:
       - k8s-network
@@ -116,7 +116,7 @@ services:
     build:
       context: ./apps/frontend
       dockerfile: Dockerfile
-    image: k8s-manager-frontend:latest
+    # image: k8s-manager-frontend:latest
     container_name: k8s-manager-frontend
     ports:
       - "5173:5173"

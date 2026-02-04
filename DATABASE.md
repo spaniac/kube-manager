@@ -31,25 +31,25 @@ K8s Manager uses PostgreSQL 15+ as its primary database for storing user managem
 ## Entity Relationship Diagram
 
 ```
-┌─────────────┐
-│   users     │
-└──────┬──────┘
-       │
-       ├─────────────┐
-       │user_roles   │
+       ┌─────────────┐
+       │   users     │
        └──────┬──────┘
               │
-       ┌─────┴─────┐
-       │   roles      │
+       ┌──────┴──────┐
+       │ user_roles  │
        └──────┬──────┘
               │
-       ┌───────────┴──────────┐
-       │   role_permissions      │
-       └──────┬─────────────────┘
+       ┌──────┴──────┐
+       │    roles    │
+       └──────┬──────┘
               │
-       ┌─────┴─────┐
-       │ permissions   │
-       └──────────────┘
+       ┌──────┴───────────┐
+       │ role_permissions │
+       └──────┬───────────┘
+              │
+       ┌──────┴──────┐
+       │ permissions │
+       └─────────────┘
               
        ┌─────────────┐
        │ audit_logs  │
@@ -61,8 +61,8 @@ K8s Manager uses PostgreSQL 15+ as its primary database for storing user managem
 ```
 
 **Relationship Types**:
-- **One-to-Many**: User → UserRole (1:N)
-- **Many-to-Many**: Role ↔ Permission (N:M via role_permissions)
+- **Many-to-Many**: User ↔ Role (N:M via user_roles, implemented as explicit One-to-Many join)
+- **Many-to-Many**: Role ↔ Permission (N:M via role_permissions, implemented as explicit One-to-Many join)
 - **One-to-Many**: User → Session (1:N)
 - **One-to-Many**: User → AuditLog (1:N)
 - **Many-to-One**: Role → UserRole (N:1)

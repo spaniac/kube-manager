@@ -32,7 +32,7 @@ public class Permission {
     @Column(nullable = false)
     private ResourceType resourceType;
 
-    @ManyToMany(mappedBy = "permissions")
+    @OneToMany(mappedBy = "permission", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<RolePermission> rolePermissions = new java.util.HashSet<>();
 
     public PermissionType getPermissionType() {

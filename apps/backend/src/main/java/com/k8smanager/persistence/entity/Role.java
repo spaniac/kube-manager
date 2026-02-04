@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Role entity representing RBAC roles.
@@ -31,8 +32,17 @@ public class Role {
     @Column(length = 255)
     private String description;
 
-    @ManyToMany(mappedBy = "roles")
-    private Set<Permission> permissions = new java.util.HashSet<>();
+    @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<RolePermission> rolePermissions = new java.util.HashSet<>();
+
+    /**
+     * Helper to get permissions derived from rolePermissions.
+     */
+    public Set<Permission> getPermissions() {
+        return rolePermissions.stream()
+                .map(RolePermission::getPermission)
+                .collect(Collectors.toSet());
+    }
 
     @OneToMany(mappedBy = "role")
     private Set<UserRole> userRoles = new java.util.HashSet<>();
