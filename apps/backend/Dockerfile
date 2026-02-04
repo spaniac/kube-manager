@@ -1,12 +1,17 @@
 # Stage 1: Build
-FROM maven:3.9-eclipse-temurin AS builder
+FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
 
-COPY pom.xml .
+COPY build.gradle .
+COPY settings.gradle .
+COPY gradlew .
+COPY gradle ./gradle
 COPY src ./src
 
+RUN chmod +x gradlew
+
 # Build the application
-RUN mvn clean package -DskipTests
+RUN ./gradlew build -x test
 
 # Stage 2: Run
 FROM eclipse-temurin:21-jre-alpine
@@ -14,11 +19,11 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Copy the built jar from the builder stage
-COPY --from=builder /app/target/*.jar app.jar
+COPY --from=builder /app/build/libs/*.jar app.jar
 
 # Create a non-root user
-RUN addgroup -g spring && useradd -g spring spring
-USER spring:spring
+# RUN addgroup -g spring && useradd -g spring spring
+# USER spring:spring
 
 # Expose the port
 EXPOSE 8080

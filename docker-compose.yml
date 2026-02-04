@@ -1,0 +1,151 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: k8s-manager-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=k8smanager
+      - POSTGRES_USER=k8smanager
+      - POSTGRES_PASSWORD=changeit
+      - POSTGRES_INITDB_ARGS=--encoding=UTF8
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - k8s-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U k8smanager"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Keycloak Authentication Server
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: k8s-manager-keycloak
+    ports:
+      - "8081:8080"
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://postgres:5432/keycloak
+      - KC_DB_USERNAME=k8smanager
+      - KC_DB_PASSWORD=changeit
+    networks:
+      - k8s-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: start-dev
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'HTTP/1.1 200 OK\\r\\nOK' | nc -l 8080 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    container_name: k8s-manager-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - k8s-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Backend Service (Spring Boot with Swagger UI)
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    image: k8s-manager-backend:latest
+    container_name: k8s-manager-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=8080
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=k8smanager
+      - DB_USERNAME=k8smanager
+      - DB_PASSWORD=changeit
+      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms
+      - PROMETHEUS_URL=http://prometheus:9090
+    networks:
+      - k8s-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Frontend Service (Node.js)
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    image: k8s-manager-frontend:latest
+    container_name: k8s-manager-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      # Backend API URL (connecting to backend on the same network)
+      - VITE_API_BASE_URL=http://backend:8080/api/v1
+      - NODE_ENV=development
+    networks:
+      - k8s-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+# Shared network for service communication
+networks:
+  k8s-network:
+    driver: bridge
+
+# Volumes for development (optional)
+volumes:
+  # Backend maven repository cache for faster builds
+  backend-maven-cache:
+    driver: local
+  # Frontend node_modules cache for faster builds
+  frontend-node-modules:
+    driver: local
+  # PostgreSQL data persistence
+  postgres-data:
+    driver: local
+  # Prometheus data persistence
+  prometheus-data:
+    driver: local

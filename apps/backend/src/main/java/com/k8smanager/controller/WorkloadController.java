@@ -3,6 +3,11 @@ package com.k8smanager.controller;
 import com.k8smanager.common.response.ApiResponse;
 import com.k8smanager.dto.*;
 import com.k8smanager.service.WorkloadService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -14,8 +19,8 @@ import java.util.Map;
  * Controller for workload management.
  */
 @RestController
-// @RequestMapping("/workloads") - Removed to allow distinct paths for
-// deployments, jobs, etc.
+@Tag(name = "Workload Management", description = "Deployments, StatefulSets, DaemonSets, Jobs, and CronJobs")
+@SecurityRequirement(name = "Bearer Token")
 public class WorkloadController {
 
     private final WorkloadService workloadService;

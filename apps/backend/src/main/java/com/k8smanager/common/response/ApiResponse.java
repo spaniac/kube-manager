@@ -1,5 +1,6 @@
 package com.k8smanager.common.response;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -9,6 +10,7 @@ import org.springframework.http.ProblemDetail;
  * Standard API response wrapper.
  * Provides consistent structure for all API responses.
  */
+@Schema(description = "Standard API response wrapper with success status, data payload, optional error details, and HTTP status code")
 @Data
 @NoArgsConstructor
 public class ApiResponse<T> {
@@ -80,6 +82,7 @@ public class ApiResponse<T> {
     /**
      * Error details from ProblemDetail.
      */
+    @Schema(description = "Error details extracted from RFC 7807 ProblemDetail", subTypes = {ApiError.class})
     @Data
     @NoArgsConstructor
     public static class ApiError {

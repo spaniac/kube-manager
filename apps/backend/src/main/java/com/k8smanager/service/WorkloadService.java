@@ -32,6 +32,58 @@ public class WorkloadService {
     }
 
     /**
+     * List deployments.
+     */
+    public ResourceListDTO<DeploymentDTO> listDeployments(String namespace, String search) {
+        var operation = kubernetesClient.apps().deployments();
+        var items = (namespace != null && !namespace.isEmpty())
+                ? operation.inNamespace(namespace).list().getItems()
+                : operation.inAnyNamespace().list().getItems();
+
+        List<DeploymentDTO> deploymentDTOs = items.stream()
+                .filter(deployment -> search == null || deployment.getMetadata().getName().contains(search))
+                .map(k8sMapper::mapToDeploymentDto)
+                .collect(Collectors.toList());
+
+        return new ResourceListDTO<>(
+                "Deployment",
+                "apps/v1",
+                deploymentDTOs,
+                new ResourceListMetaDTO(0, "", 0));
+    }
+
+    /**
+     * Get deployment.
+     */
+    public DeploymentDTO getDeployment(String namespace, String name) {
+        Deployment deployment = kubernetesClient.apps().deployments()
+                .inNamespace(namespace)
+                .withName(name)
+                .get();
+
+        return deployment != null ? k8sMapper.mapToDeploymentDto(deployment) : null;
+    }
+
+    /**
+     * Delete deployment.
+     */
+    public boolean deleteDeployment(String namespace, String name) {
+        Deployment deployment = kubernetesClient.apps().deployments()
+                .inNamespace(namespace)
+                .withName(name)
+                .get();
+
+        if (deployment == null) {
+            return false;
+        }
+
+        return Boolean.TRUE.equals(kubernetesClient.apps().deployments()
+                .inNamespace(namespace)
+                .withName(name)
+                .delete());
+    }
+
+    /**
      * Scale deployment.
      */
     public DeploymentDTO scaleDeployment(String namespace, String name, int replicas) {
