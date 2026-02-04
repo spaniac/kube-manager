@@ -21,11 +21,13 @@ kube-manager/
 
 ## Documentation
 
+- [API Documentation](API.md) - Complete RESTful API reference with all endpoints
+- [Database Schema](DATABASE.md) - Database schema, entities, and migration strategy
 - [Deployment Guide](DEPLOYMENT.md) - Complete guide for deploying to Kubernetes
 - [Troubleshooting Guide](TROUBLESHOOTING.md) - Common issues and solutions
 - [Contribution Guidelines](CONTRIBUTING.md) - How to contribute to the project
 - [Production Checklist](PRODUCTION_CHECKLIST.md) - Pre-production readiness checklist
-- [API Documentation](https://k8s-manager.example.com/api-docs) - Interactive API docs (Swagger)
+- [Interactive API Docs] - Interactive API docs (Swagger)
 - [K8s Manifests](apps/backend/k8s/manifests/) - All Kubernetes resource definitions
 - [Rollback Strategy](apps/backend/k8s/ROLLBACK_STRATEGY.md) - Deployment rollback procedures
 

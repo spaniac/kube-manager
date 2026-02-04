@@ -70,7 +70,8 @@ public class PodLogController {
             if (containerName != null && !containerName.isEmpty()) {
                 emitter.send(SseEmitter.event()
                         .name("connected")
-                        .data(ApiResponse.success("Streaming logs for container: " + containerName + " in pod: " + podName))
+                        .data(ApiResponse
+                                .success("Streaming logs for container: " + containerName + " in pod: " + podName))
                         .build());
             } else {
                 emitter.send(SseEmitter.event()
@@ -80,11 +81,10 @@ public class PodLogController {
             }
 
             // Get logs from pod
-            io.fabric8.kubernetes.client.dsl.LogWatch logs =
-                    kubernetesClient.pods()
-                            .inNamespace(namespace)
-                            .withName(name)
-                            .watchLog();
+            io.fabric8.kubernetes.client.dsl.LogWatch logs = kubernetesClient.pods()
+                    .inNamespace(namespace)
+                    .withName(name)
+                    .watchLog();
 
             long sinceTimestamp = 0;
             long untilTimestamp = Long.MAX_VALUE;
@@ -122,7 +122,8 @@ public class PodLogController {
                         continue;
                     }
 
-                    if (severity != null && !severity.isEmpty() && logLine.toLowerCase().contains(severity.toLowerCase())) {
+                    if (severity != null && !severity.isEmpty()
+                            && logLine.toLowerCase().contains(severity.toLowerCase())) {
                         emitter.send(SseEmitter.event()
                                 .name("log")
                                 .data(logLine)
