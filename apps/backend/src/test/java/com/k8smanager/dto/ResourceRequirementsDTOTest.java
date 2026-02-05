@@ -2,18 +2,16 @@ package com.k8smanager.dto;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ResourceRequirementsDTOTest {
 
     @Test
     void testResourceRequirementsDTOCreation() {
-        ResourceRequestsDTO requests = new ResourceRequestsDTO("100m", "100Mi");
         ResourceLimitsDTO limits = new ResourceLimitsDTO("200m", "200Mi");
+        ResourceRequestsDTO requests = new ResourceRequestsDTO("100m", "100Mi");
 
-        ResourceRequirementsDTO dto = new ResourceRequirementsDTO(requests, limits);
+        ResourceRequirementsDTO dto = new ResourceRequirementsDTO(limits, requests);
 
         assertThat(dto.requests()).isNotNull();
         assertThat(dto.requests().cpu()).isEqualTo("100m");

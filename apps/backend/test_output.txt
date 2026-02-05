@@ -1,0 +1,141 @@
+Initialized native services in: /home/spaniac/.gradle/native
+Initialized jansi services in: /home/spaniac/.gradle/native
+Found daemon DaemonInfo{pid=212971, address=[a2011b81-ba2f-4798-a7fb-9aaeee41a37c port:33749, addresses:[/127.0.0.1]], state=Idle, lastBusy=1770130044950, context=DefaultDaemonContext[uid=1cc5b6a3-195d-4bbd-9fd0-2ae68eb5ca71,javaHome=/home/spaniac/.jdks/temurin-21.0.10,javaVersion=21,javaVendor=Eclipse Adoptium,daemonRegistryDir=/home/spaniac/.gradle/daemon,pid=212971,idleTimeout=10800000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-XX:MaxMetaspaceSize=384m,-XX:+HeapDumpOnOutOfMemoryError,-Xms256m,-Xmx512m,-Dfile.encoding=UTF-8,-Duser.country,-Duser.language=en,-Duser.variant]} however its context does not match the desired criteria.
+JVM is incompatible.
+Wanted: DaemonRequestContext{jvmCriteria=/home/spaniac/.sdkman/candidates/java/21.0.2-tem (no JDK specified, using current Java home), daemonOpts=[-XX:MaxMetaspaceSize=384m, -XX:+HeapDumpOnOutOfMemoryError, -Xms256m, -Xmx512m, -Dfile.encoding=UTF-8, -Duser.country, -Duser.language=en, -Duser.variant], applyInstrumentationAgent=true, nativeServicesMode=ENABLED, priority=NORMAL}
+Actual: DefaultDaemonContext[uid=1cc5b6a3-195d-4bbd-9fd0-2ae68eb5ca71,javaHome=/home/spaniac/.jdks/temurin-21.0.10,javaVersion=21,javaVendor=Eclipse Adoptium,daemonRegistryDir=/home/spaniac/.gradle/daemon,pid=212971,idleTimeout=10800000,priority=NORMAL,applyInstrumentationAgent=true,nativeServicesMode=ENABLED,daemonOpts=-XX:MaxMetaspaceSize=384m,-XX:+HeapDumpOnOutOfMemoryError,-Xms256m,-Xmx512m,-Dfile.encoding=UTF-8,-Duser.country,-Duser.language=en,-Duser.variant]
+
+  Looking for a different daemon...
+The client will now receive all logging from the daemon (pid: 1882). The daemon log file: /home/spaniac/.gradle/daemon/8.14.4/daemon-1882.out.log
+Starting 70th build in daemon [uptime: 1 hrs 44 mins 21.897 secs, performance: 99%, GC rate: 0.00/s, heap usage: 2% of 512 MiB, non-heap usage: 34% of 384 MiB]
+Using 8 worker leases.
+Now considering [/home/spaniac/workspace/kube-manager/apps/backend] as hierarchies to watch
+Watching the file system is configured to be enabled if available
+File system watching is active
+Starting Build
+Settings evaluated using settings file '/home/spaniac/workspace/kube-manager/apps/backend/settings.gradle'.
+Projects loaded. Root project using build file '/home/spaniac/workspace/kube-manager/apps/backend/build.gradle'.
+Included projects: [root project 'k8s-manager-backend']
+
+> Configure project :
+Evaluating root project 'k8s-manager-backend' using build file '/home/spaniac/workspace/kube-manager/apps/backend/build.gradle'.
+Resolved plugin [id: 'java']
+Resolved plugin [id: 'org.springframework.boot', version: '3.5.9']
+Resolved plugin [id: 'io.spring.dependency-management', version: '1.1.6']
+Resolved plugin [id: 'jacoco']
+Applying dependency management to configuration 'annotationProcessor' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'apiElements' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'archives' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'bootArchives' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'compileClasspath' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'compileOnly' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'default' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'developmentOnly' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'implementation' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'mainSourceElements' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'productionRuntimeClasspath' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'runtimeClasspath' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'runtimeElements' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'runtimeOnly' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'testAndDevelopmentOnly' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'testAnnotationProcessor' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'testCompileClasspath' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'testCompileOnly' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'testImplementation' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'testResultsElementsForTest' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'testRuntimeClasspath' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'testRuntimeOnly' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'jacocoAgent' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'jacocoAnt' in project 'k8s-manager-backend'
+Applying dependency management to configuration 'coverageDataElementsForTest' in project 'k8s-manager-backend'
+All projects evaluated.
+Task name matched 'test'
+Selected primary task 'test' from project :
+Resolving global dependency management for project 'k8s-manager-backend'
+Excluding []
+Excluding []
+Excluding []
+Excluding []
+Excluding []
+Excluding []
+Excluding []
+Excluding []
+Tasks to be executed: [task ':compileJava', task ':processResources', task ':classes', task ':compileTestJava', task ':processTestResources', task ':testClasses', task ':test', task ':jacocoTestReport']
+Tasks that were excluded: []
+Resolve mutations for :compileJava (Thread[#7996,Execution worker,5,main]) started.
+:compileJava (Thread[#7996,Execution worker,5,main]) started.
+
+> Task :compileJava UP-TO-DATE
+Custom actions are attached to task ':compileJava'.
+Caching disabled for task ':compileJava' because:
+  Build cache is disabled
+Skipping task ':compileJava' as it is up-to-date.
+Resolve mutations for :processResources (Thread[#7996,Execution worker,5,main]) started.
+:processResources (Thread[#7996,Execution worker,5,main]) started.
+
+> Task :processResources UP-TO-DATE
+Caching disabled for task ':processResources' because:
+  Build cache is disabled
+  Not worth caching
+Skipping task ':processResources' as it is up-to-date.
+Resolve mutations for :classes (Thread[#7996,Execution worker,5,main]) started.
+:classes (Thread[#7996,Execution worker,5,main]) started.
+
+> Task :classes UP-TO-DATE
+Skipping task ':classes' as it has no actions.
+Resolve mutations for :compileTestJava (Thread[#7996,Execution worker,5,main]) started.
+:compileTestJava (Thread[#7996,Execution worker,5,main]) started.
+
+> Task :compileTestJava UP-TO-DATE
+Custom actions are attached to task ':compileTestJava'.
+Caching disabled for task ':compileTestJava' because:
+  Build cache is disabled
+Skipping task ':compileTestJava' as it is up-to-date.
+Resolve mutations for :processTestResources (Thread[#7996,Execution worker,5,main]) started.
+:processTestResources (Thread[#7996,Execution worker,5,main]) started.
+
+> Task :processTestResources NO-SOURCE
+Skipping task ':processTestResources' as it has no source files and no previous output files.
+Resolve mutations for :testClasses (Thread[#7996,Execution worker,5,main]) started.
+:testClasses (Thread[#7996,Execution worker,5,main]) started.
+
+> Task :testClasses UP-TO-DATE
+Skipping task ':testClasses' as it has no actions.
+Resolve mutations for :test (Thread[#7996,Execution worker,5,main]) started.
+:test (Thread[#7996,Execution worker,5,main]) started.
+Gradle Test Executor 52 started executing tests.
+Gradle Test Executor 52 finished executing tests.
+
+> Task :test FAILED
+Custom actions are attached to task ':test'.
+Caching disabled for task ':test' because:
+  Build cache is disabled
+Task ':test' is not up-to-date because:
+  Task has failed previously.
+Starting process 'Gradle Test Executor 52'. Working directory: /home/spaniac/workspace/kube-manager/apps/backend Command: /home/spaniac/.sdkman/candidates/java/21.0.2-tem/bin/java -Dorg.gradle.internal.worker.tmpdir=/home/spaniac/workspace/kube-manager/apps/backend/build/tmp/test/work -javaagent:/home/spaniac/workspace/kube-manager/apps/backend/build/tmp/.cache/expanded/zip_ff7bf8f04f99dc306508d1c81e47a68b/jacocoagent.jar=destfile=build/jacoco/test.exec,append=true,inclnolocationclasses=false,dumponexit=true,output=file,jmx=false @/home/spaniac/.gradle/.tmp/gradle-worker-classpath17314761649310421930txt -Xmx512m -Dfile.encoding=UTF-8 -Duser.country -Duser.language=en -Duser.variant -ea worker.org.gradle.process.internal.worker.GradleWorkerMain 'Gradle Test Executor 52'
+Successfully started process 'Gradle Test Executor 52'
+
+K8sMapperTest > testMapToDeployment() STANDARD_OUT
+    Deployment: Deployment(apiVersion=apps/v1, kind=Deployment, metadata=ObjectMeta(annotations={}, creationTimestamp=null, deletionGracePeriodSeconds=null, deletionTimestamp=null, finalizers=[], generateName=null, generation=null, labels={app=test}, managedFields=[], name=test-deploy, namespace=default, ownerReferences=[], resourceVersion=null, selfLink=null, uid=null, additionalProperties={}), spec=null, status=null, additionalProperties={})
+    Spec: null
+
+K8sMapperTest > testMapToDeployment() FAILED
+    java.lang.NullPointerException: Cannot invoke "io.fabric8.kubernetes.api.model.apps.DeploymentSpec.getReplicas()" because the return value of "io.fabric8.kubernetes.api.model.apps.Deployment.getSpec()" is null
+        at com.k8smanager.k8s.K8sMapperTest.testMapToDeployment(K8sMapperTest.java:73)
+
+10 tests completed, 1 failed
+Finished generating test XML results (0.0 secs) into: /home/spaniac/workspace/kube-manager/apps/backend/build/test-results/test
+Generating HTML test report...
+Finished generating test html results (0.001 secs) into: /home/spaniac/workspace/kube-manager/apps/backend/build/reports/tests/test
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':test'.
+> There were failing tests. See the report at: file:///home/spaniac/workspace/kube-manager/apps/backend/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 1s
+4 actionable tasks: 1 executed, 3 up-to-date

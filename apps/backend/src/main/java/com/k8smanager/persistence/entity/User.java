@@ -41,12 +41,18 @@ public class User {
     private Instant lastLoginAt;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
     private Set<UserRole> userRoles = new java.util.HashSet<>();
 
     @OneToMany(mappedBy = "user")
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
     private Set<AuditLog> auditLogs = new java.util.HashSet<>();
 
     @OneToMany(mappedBy = "user")
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
     private Set<Session> sessions = new java.util.HashSet<>();
 
     /**

@@ -77,10 +77,12 @@ public class WorkloadService {
             return false;
         }
 
-        return Boolean.TRUE.equals(kubernetesClient.apps().deployments()
+        List<StatusDetails> result = kubernetesClient.apps().deployments()
                 .inNamespace(namespace)
                 .withName(name)
-                .delete());
+                .delete();
+        
+        return result != null && !result.isEmpty();
     }
 
     /**

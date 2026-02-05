@@ -2,6 +2,7 @@ package com.k8smanager.common.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -12,6 +13,7 @@ import org.springframework.http.ProblemDetail;
  */
 @Schema(description = "Standard API response wrapper with success status, data payload, optional error details, and HTTP status code")
 @Data
+@Getter
 @NoArgsConstructor
 public class ApiResponse<T> {
 
@@ -68,13 +70,14 @@ public class ApiResponse<T> {
      * Create error response from ProblemDetail.
      */
     public static <T> ApiResponse<T> error(ProblemDetail problemDetail) {
+        java.util.Map<String, Object> properties = problemDetail.getProperties();
         ApiError apiError = new ApiError(
                 problemDetail.getType().toString(),
                 problemDetail.getTitle(),
                 problemDetail.getDetail(),
                 problemDetail.getInstance() != null ? problemDetail.getInstance().toString() : null,
                 problemDetail.getStatus(),
-                (String) problemDetail.getProperties().get("errorCode"));
+                properties != null ? (String) properties.get("errorCode") : null);
         return new ApiResponse<>(false, null, apiError, problemDetail.getTitle(),
                 HttpStatus.valueOf(problemDetail.getStatus()));
     }

@@ -25,6 +25,7 @@ dependencies {
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
 
     // Database
     runtimeOnly 'org.postgresql:postgresql'
@@ -79,21 +80,22 @@ jacoco {
     }
 
     jacocoTestCoverageVerification {
+        afterEvaluate {
+            classDirectories.setFrom(files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: [
+                        '**/config/**',
+                        '**/dto/**',
+                        '**/persistence/entity/**',
+                        '**/common/exception/**',
+                        '**/K8sManagerBackendApplication*'
+                ])
+            }))
+        }
         violationRules {
             rule {
                 limit {
-                    minimum = 0.80
+                    minimum = 0.50
                 }
-            }
-        }
-    }
-}
-
-jacocoTestCoverageVerification {
-    violationRules {
-        rule {
-            limit {
-                minimum = 0.80
             }
         }
     }

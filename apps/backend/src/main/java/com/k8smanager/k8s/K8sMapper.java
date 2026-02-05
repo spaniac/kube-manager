@@ -99,6 +99,7 @@ public class K8sMapper {
      * Map DeploymentRequestDTO to Kubernetes Deployment.
      */
     public Deployment mapToDeployment(DeploymentRequestDTO request) {
+        if (request == null) System.out.println("Request is null");
         Deployment deployment = new Deployment();
         ObjectMeta metadata = new ObjectMeta();
         metadata.setName(request.name());
@@ -116,26 +117,33 @@ public class K8sMapper {
         DeploymentSpec spec = new DeploymentSpec();
         spec.setReplicas(request.replicas());
         spec.setSelector(new LabelSelector());
-        spec.getSelector().setMatchLabels(request.labels());
+        if (request.labels() != null) {
+             spec.getSelector().setMatchLabels(request.labels());
+        }
         spec.setTemplate(new PodTemplateSpec());
 
         PodTemplateSpec templateSpec = spec.getTemplate();
         ObjectMeta templateMeta = new ObjectMeta();
-        templateMeta.setLabels(request.labels());
+        if (request.labels() != null) {
+            templateMeta.setLabels(request.labels());
+        }
         templateSpec.setMetadata(templateMeta);
 
         PodSpec podSpec = new PodSpec();
-        podSpec.setContainers(request.containers().stream()
-                .map(c -> mapToContainer(new PodContainerDTO(
-                        c.name(),
-                        c.image(),
-                        c.ports(),
-                        c.env(),
-                        c.resources(),
-                        c.volumeMounts()
-                )))
-                .collect(Collectors.toList()));
+        if (request.containers() != null) {
+            podSpec.setContainers(request.containers().stream()
+                    .map(c -> mapToContainer(new PodContainerDTO(
+                            c.name(),
+                            c.image(),
+                            c.ports(),
+                            c.env(),
+                            c.resources(),
+                            c.volumeMounts()
+                    )))
+                    .collect(Collectors.toList()));
+        }
         templateSpec.setSpec(podSpec);
+        deployment.setSpec(spec);
 
         return deployment;
     }
@@ -239,11 +247,23 @@ public class K8sMapper {
     }
 
     private ServicePortDTO mapToServicePortDto(ServicePort port) {
+        Integer targetPort = port.getPort();
+        if (port.getTargetPort() != null) {
+            if (port.getTargetPort().getIntVal() != null) {
+                targetPort = port.getTargetPort().getIntVal();
+            } else if (port.getTargetPort().getStrVal() != null) {
+                try {
+                    targetPort = Integer.parseInt(port.getTargetPort().getStrVal());
+                } catch (NumberFormatException e) {
+                    // Ignore string target ports for now
+                }
+            }
+        }
         return new ServicePortDTO(
                 port.getName(),
                 port.getProtocol(),
                 port.getPort(),
-                port.getTargetPort() != null ? Integer.parseInt(port.getTargetPort().getStrVal()) : port.getPort()
+                targetPort
         );
     }
 

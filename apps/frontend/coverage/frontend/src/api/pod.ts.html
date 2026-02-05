@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">1.44% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>1/69</span>
+                <span class='fraction'>0/69</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/0</span>
+                <span class='fraction'>0/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>0/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">1.44% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>1/69</span>
+                <span class='fraction'>0/69</span>
             </div>
         
             
@@ -162,7 +162,7 @@
 <a name='L97'></a><a href='#L97'>97</a>
 <a name='L98'></a><a href='#L98'>98</a>
 <a name='L99'></a><a href='#L99'>99</a>
-<a name='L100'></a><a href='#L100'>100</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L100'></a><a href='#L100'>100</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -261,13 +261,13 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import apiClient from '@api/client';
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >import apiClient from '@api/client';</span></span></span>
 import { z } from 'zod';
 import { parseApiResponse, parsePaginationParams } from '@utils/apiResponse';
 import { podSchema, podLogsSchema, apiResponseSchema, resourceListSchema } from '../types/schemas';
 import type { Pod, PodLogs, ResourceList, ResourceYaml } from '../types/api';
 &nbsp;
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >export async function getPods(params?: {</span></span>
+<span class="cstat-no" title="statement not covered" >export async function getPods(params?: {</span>
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -291,21 +291,21 @@ import type { Pod, PodLogs, ResourceList, ResourceYaml } from '../types/api';
 <span class="cstat-no" title="statement not covered" >  return parseApiResponse(response.data, resourceListSchema(podSchema));</span>
 <span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >export async function getPod(namespace: string, name: string): Promise&lt;Pod&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >export async function getPod(namespace: string, name: string): Promise&lt;Pod&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  const response = await apiClient.get&lt;ApiResponse&lt;Pod&gt;&gt;(</span>
 <span class="cstat-no" title="statement not covered" >    `/api/v1/pods/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`,</span>
 <span class="cstat-no" title="statement not covered" >  );</span>
 <span class="cstat-no" title="statement not covered" >  return parseApiResponse(response.data, podSchema);</span>
 <span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >export async function deletePod(namespace: string, name: string): Promise&lt;void&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >export async function deletePod(namespace: string, name: string): Promise&lt;void&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  const response = await apiClient.delete&lt;ApiResponse&lt;void&gt;&gt;(</span>
 <span class="cstat-no" title="statement not covered" >    `/api/v1/pods/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`,</span>
 <span class="cstat-no" title="statement not covered" >  );</span>
 <span class="cstat-no" title="statement not covered" >  parseApiResponse(response.data, apiResponseSchema(z.undefined()));</span>
 <span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >export async function getPodLogs(params: {</span></span>
+<span class="cstat-no" title="statement not covered" >export async function getPodLogs(params: {</span>
   namespace: string;
   podName: string;
   container?: string;
@@ -337,7 +337,7 @@ import type { Pod, PodLogs, ResourceList, ResourceYaml } from '../types/api';
 <span class="cstat-no" title="statement not covered" >  return parseApiResponse(response.data, podLogsSchema);</span>
 <span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >export async function getPodYaml(namespace: string, name: string): Promise&lt;ResourceYaml&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >export async function getPodYaml(namespace: string, name: string): Promise&lt;ResourceYaml&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  const response = await apiClient.get&lt;ApiResponse&lt;ResourceYaml&gt;&gt;(</span>
 <span class="cstat-no" title="statement not covered" >    `/api/v1/pods/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/yaml`,</span>
 <span class="cstat-no" title="statement not covered" >  );</span>
@@ -354,7 +354,7 @@ import type { Pod, PodLogs, ResourceList, ResourceYaml } from '../types/api';
 <span class="cstat-no" title="statement not covered" >  ).data;</span>
 <span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >export async function getPodEvents(namespace: string, name: string): Promise&lt;Event[]&gt; {</span></span>
+<span class="cstat-no" title="statement not covered" >export async function getPodEvents(namespace: string, name: string): Promise&lt;Event[]&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  const response = await apiClient.get&lt;ApiResponse&lt;Event[]&gt;&gt;(</span>
 <span class="cstat-no" title="statement not covered" >    `/api/v1/pods/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/events`,</span>
 <span class="cstat-no" title="statement not covered" >  );</span>
@@ -367,7 +367,7 @@ import type { Pod, PodLogs, ResourceList, ResourceYaml } from '../types/api';
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-03T14:46:48.425Z
+                at 2026-02-05T15:37:34.188Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

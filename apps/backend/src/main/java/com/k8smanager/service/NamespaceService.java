@@ -129,9 +129,9 @@ public class NamespaceService {
 
         // Convert Map<String, Quantity> to Map<String, String>
         Map<String, String> used = usedMap.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getAmount()));
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
         Map<String, String> hard = hardMap.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getAmount()));
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
 
         return new ResourceQuotaDTO(
                 quota.getMetadata().getName(),

@@ -33,6 +33,8 @@ public class Role {
     private String description;
 
     @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, orphanRemoval = true)
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
     private Set<RolePermission> rolePermissions = new java.util.HashSet<>();
 
     /**
@@ -45,6 +47,8 @@ public class Role {
     }
 
     @OneToMany(mappedBy = "role")
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
     private Set<UserRole> userRoles = new java.util.HashSet<>();
 
     /**

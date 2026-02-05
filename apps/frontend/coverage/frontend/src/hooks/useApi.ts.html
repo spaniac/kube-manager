@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">37.83% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>14/37</span>
+                <span class='fraction'>0/37</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>1/1</span>
+                <span class='fraction'>0/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">33.33% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/3</span>
+                <span class='fraction'>0/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">37.83% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>14/37</span>
+                <span class='fraction'>0/37</span>
             </div>
         
             
@@ -116,25 +116,7 @@
 <a name='L51'></a><a href='#L51'>51</a>
 <a name='L52'></a><a href='#L52'>52</a>
 <a name='L53'></a><a href='#L53'>53</a>
-<a name='L54'></a><a href='#L54'>54</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L54'></a><a href='#L54'>54</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -149,7 +131,25 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -169,22 +169,22 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useQuery, useMutation, type UseQueryOptions, type UseMutationOptions } from '@tanstack/react-query';
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { useQuery, useMutation, type UseQueryOptions, type UseMutationOptions } from '@tanstack/react-query';<span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span>
 import { handleApiError } from '@utils/apiResponse';
 &nbsp;
-export function useApiQuery&lt;T&gt;(
-  queryKey: unknown[],
-  queryFn: () =&gt; Promise&lt;T&gt;,
-  options?: Omit&lt;UseQueryOptions&lt;T&gt;, 'queryKey' | 'queryFn'&gt;,
-) {
-  return useQuery({
-    queryKey,
-    queryFn,
-    ...options,
-  });
-}
+<span class="cstat-no" title="statement not covered" >export function useApiQuery&lt;T&gt;(</span>
+<span class="cstat-no" title="statement not covered" >  queryKey: unknown[],</span>
+<span class="cstat-no" title="statement not covered" >  queryFn: () =&gt; Promise&lt;T&gt;,</span>
+<span class="cstat-no" title="statement not covered" >  options?: Omit&lt;UseQueryOptions&lt;T&gt;, 'queryKey' | 'queryFn'&gt;,</span>
+<span class="cstat-no" title="statement not covered" >) {</span>
+<span class="cstat-no" title="statement not covered" >  return useQuery({</span>
+<span class="cstat-no" title="statement not covered" >    queryKey,</span>
+<span class="cstat-no" title="statement not covered" >    queryFn,</span>
+<span class="cstat-no" title="statement not covered" >    ...options,</span>
+<span class="cstat-no" title="statement not covered" >  });</span>
+<span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;
-export <span class="fstat-no" title="function not covered" >function useApiMutation&lt;TData, TVariables, TContext = unknown&gt;(</span>
+<span class="cstat-no" title="statement not covered" >export function useApiMutation&lt;TData, TVariables, TContext = unknown&gt;(</span>
 <span class="cstat-no" title="statement not covered" >  mutationFn: (variables: TVariables) =&gt; Promise&lt;TData&gt;,</span>
 <span class="cstat-no" title="statement not covered" >  options?: Omit&lt;</span>
     UseMutationOptions&lt;TData, Error, TVariables, TContext&gt;,
@@ -202,7 +202,7 @@ export <span class="fstat-no" title="function not covered" >function useApiMutat
 <span class="cstat-no" title="statement not covered" >  });</span>
 <span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;
-export <span class="fstat-no" title="function not covered" >function useApiInfiniteQuery&lt;T&gt;(</span>
+<span class="cstat-no" title="statement not covered" >export function useApiInfiniteQuery&lt;T&gt;(</span>
 <span class="cstat-no" title="statement not covered" >  queryKey: unknown[],</span>
 <span class="cstat-no" title="statement not covered" >  queryFn: ({ pageParam }: { pageParam?: number }) =&gt; Promise&lt;{</span>
     data: T[];
@@ -229,7 +229,7 @@ export <span class="fstat-no" title="function not covered" >function useApiInfin
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-03T14:46:48.425Z
+                at 2026-02-05T15:37:34.188Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
