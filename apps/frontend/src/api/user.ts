@@ -12,31 +12,24 @@ import type { UserProfile, Session } from '../types/api';
 
 export async function getUserProfile(): Promise<UserProfile> {
     const response = await apiClient.get<ApiResponse<UserProfile>>('/api/v1/users/profile');
-    const result = parseApiResponse(response.data, apiResponseSchema(userProfileSchema));
-    if (!result.data) {
-        throw new Error('User profile not found');
-    }
-    return result.data;
+    return parseApiResponse(response.data, userProfileSchema);
 }
 
 export async function getUserSessions(): Promise<Session[]> {
     const response = await apiClient.get<ApiResponse<Session[]>>('/api/v1/users/sessions');
-    return parseApiResponse(
-        response.data,
-        apiResponseSchema(z.array(sessionSchema))
-    ).data ?? [];
+    return parseApiResponse(response.data, z.array(sessionSchema));
 }
 
 export async function revokeSession(sessionId: number): Promise<void> {
     const response = await apiClient.delete<ApiResponse<void>>(
         `/api/v1/users/sessions/${sessionId}`
     );
-    parseApiResponse(response.data, apiResponseSchema(z.undefined()));
+    parseApiResponse(response.data, z.undefined());
 }
 
 export async function revokeAllSessions(): Promise<void> {
     const response = await apiClient.delete<ApiResponse<void>>(
         '/api/v1/users/sessions/revoke-all'
     );
-    parseApiResponse(response.data, apiResponseSchema(z.undefined()));
+    parseApiResponse(response.data, z.undefined());
 }

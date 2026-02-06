@@ -2,12 +2,19 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getPod, getPodLogs, getPodYaml, getPodEvents } from '@api/pod';
 import { useApiQuery } from '@hooks/useApi';
-import type { Pod, PodLogs, Event } from '@types/api';
+import type { Pod, PodLogs, Event as ApiEvent } from '@/types/api';
 import { Badge } from '@components/Badge';
 import { Button } from '@components/Button';
 import { Modal } from '@components/Modal';
 import { Spinner } from '@components/Spinner';
 import { Table, TableStyles } from '@components/Table';
+
+type Column<T> = {
+  key: keyof T;
+  header: string;
+  sortable?: boolean;
+  render?: (value: unknown, row: T) => React.ReactNode;
+};
 
 export default function PodDetails() {
   const { namespace, name } = useParams<{ namespace: string; name: string }>();
@@ -66,11 +73,11 @@ export default function PodDetails() {
     return <div className="pod-details">Pod not found</div>;
   }
 
-  const columns = [
-    { key: 'timestamp' as keyof Event, header: 'Time', render: (v: number) => new Date(v * 1000).toLocaleString() },
-    { key: 'type' as keyof Event, header: 'Type' },
-    { key: 'reason' as keyof Event, header: 'Reason' },
-    { key: 'message' as keyof Event, header: 'Message' },
+  const columns: Column<ApiEvent>[] = [
+    { key: 'lastTimestamp' as keyof ApiEvent, header: 'Time', render: (v: unknown) => <span>{new Date((v as number) * 1000).toLocaleString()}</span> },
+    { key: 'type' as keyof ApiEvent, header: 'Type' },
+    { key: 'reason' as keyof ApiEvent, header: 'Reason' },
+    { key: 'message' as keyof ApiEvent, header: 'Message' },
   ];
 
   return (
@@ -207,7 +214,7 @@ export default function PodDetails() {
             <TableStyles />
             <Table
               data={events || []}
-              columns={columns}
+              columns={columns as Column<ApiEvent>[]}
               emptyMessage="No events found"
             />
           </div>

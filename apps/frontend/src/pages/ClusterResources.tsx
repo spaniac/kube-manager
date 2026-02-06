@@ -1,6 +1,6 @@
 import { useApiQuery } from '@hooks/useApi';
 import { getClusterMetrics, getNodes } from '@api/cluster';
-import { Spinner } from '@components/Spinner';
+import { Loading } from '@components/Spinner';
 
 export default function ClusterResources() {
   const { data: metrics, isLoading: metricsLoading } = useApiQuery(
@@ -10,7 +10,7 @@ export default function ClusterResources() {
   const { data: nodes, isLoading: nodesLoading } = useApiQuery(['nodes'], getNodes);
 
   if (metricsLoading || nodesLoading) {
-    return <Spinner message="Loading cluster resources..." />;
+    return <Loading message="Loading cluster resources..." />;
   }
 
   const totalCpu = nodes?.reduce((sum, node) => sum + parseFloat(node.capacity.cpu), 0) || 0;

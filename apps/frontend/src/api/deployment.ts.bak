@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { parseApiResponse, parsePaginationParams } from '@utils/apiResponse';
 import {
   deploymentSchema,
+  apiResponseSchema,
   resourceListSchema,
 } from '../types/schemas';
 import type { Deployment, ResourceList, ResourceYaml, ApiResponse } from '../types/api';
@@ -49,7 +50,7 @@ export async function scaleDeployment(
   );
   return parseApiResponse(
     response.data,
-    z.object({ message: z.string() }),
+    apiResponseSchema(z.object({ message: z.string() })),
   );
 }
 
@@ -62,7 +63,7 @@ export async function restartDeployment(
   );
   return parseApiResponse(
     response.data,
-    z.object({ message: z.string() }),
+    apiResponseSchema(z.object({ message: z.string() })),
   );
 }
 
@@ -77,7 +78,7 @@ export async function updateDeploymentImage(
   );
   return parseApiResponse(
     response.data,
-    z.object({ message: z.string() }),
+    apiResponseSchema(z.object({ message: z.string() })),
   );
 }
 
@@ -92,7 +93,7 @@ export async function rollbackDeployment(
   );
   return parseApiResponse(
     response.data,
-    z.object({ message: z.string() }),
+    apiResponseSchema(z.object({ message: z.string() })),
   );
 }
 
@@ -100,7 +101,7 @@ export async function deleteDeployment(namespace: string, name: string): Promise
   const response = await apiClient.delete<ApiResponse<void>>(
     `/api/v1/deployments/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`,
   );
-  parseApiResponse(response.data, z.undefined());
+  parseApiResponse(response.data, z.undefined()));
 }
 
 export async function getDeploymentYaml(namespace: string, name: string): Promise<ResourceYaml> {
@@ -109,11 +110,13 @@ export async function getDeploymentYaml(namespace: string, name: string): Promis
   );
   return parseApiResponse(
     response.data,
-    z.object({
-      name: z.string(),
-      kind: z.string(),
-      namespace: z.string().optional(),
-      yaml: z.string(),
-    }),
-  );
+    apiResponseSchema(
+      z.object({
+        name: z.string(),
+        kind: z.string(),
+        namespace: z.string().optional(),
+        yaml: z.string(),
+      }),
+    ),
+  ).data;
 }

@@ -1,8 +1,7 @@
-import { useNavigate, useParams } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getNamespace, updateNamespace } from '@api/namespace';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { Namespace } from '../types/api';
 import { Input } from '@components/Input';
 import { Button } from '@components/Button';
 import { useToast } from '@components/Toast';
@@ -30,7 +29,7 @@ export default function EditNamespace() {
   );
 
   // Initialize form data when namespace loads
-  useState(() => {
+  useEffect(() => {
     if (namespace) {
       setFormData({
         labels: namespace.labels || {},
@@ -48,7 +47,7 @@ export default function EditNamespace() {
     },
     {
       onSuccess: () => {
-        showToast('Namespace updated successfully', 'success');
+        showToast({ message: 'Namespace updated successfully', type: 'success' });
         refetch();
         navigate(`/namespaces/${name}`);
       },
@@ -142,7 +141,7 @@ export default function EditNamespace() {
                   />
                   <Button
                     variant="danger"
-                    size="small"
+                    size="sm"
                     onClick={() => removeLabel(key)}
                   >
                     Remove
@@ -163,7 +162,7 @@ export default function EditNamespace() {
               />
               <Button
                 variant="secondary"
-                size="small"
+                size="sm"
                 onClick={addLabel}
                 disabled={!newLabel.key || !newLabel.value}
               >
@@ -199,7 +198,7 @@ export default function EditNamespace() {
                   />
                   <Button
                     variant="danger"
-                    size="small"
+                    size="sm"
                     onClick={() => removeAnnotation(key)}
                   >
                     Remove
@@ -220,7 +219,7 @@ export default function EditNamespace() {
               />
               <Button
                 variant="secondary"
-                size="small"
+                size="sm"
                 onClick={addAnnotation}
                 disabled={!newAnnotation.key || !newAnnotation.value}
               >

@@ -355,6 +355,44 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
     }
   };
 
+  const handleLoadTemplate = (template: ResourceTemplate) => {
+    if (editorRef.current) {
+      editorRef.current.setValue(template.template);
+    }
+  };
+
+  const getCompletionSuggestions = (model: MonacoTypes.editor.ITextModel, position: MonacoTypes.Position) => {
+    return [];
+  };
+
+  const calculateDiff = (original: string, current: string) => {
+    setDiffData({ originalLines: [], modifiedLines: [], changesCount: 0 });
+  };
+
+  const handleFormat = () => {};
+  const handleBeautify = () => {};
+  const handleMinify = () => {};
+  const handleUndo = () => {};
+  const handleRedo = () => {};
+  const handleSave = () => {};
+  const handleDryRun = () => {};
+
+  const handleJumpToLine = (lineNumber: number) => {
+    if (editorRef.current) {
+      editorRef.current.revealLineInCenter(lineNumber);
+    }
+  };
+
+  const handleEditorDidMount = (editor: MonacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => {
+    editorRef.current = editor;
+  };
+
+  const handleEditorChange = (value: string | undefined) => {
+    if (value !== undefined) {
+      onChange?.(value);
+    }
+  };
+
   /**
    * Toggle editor mode
    */

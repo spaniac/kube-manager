@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getConfigMaps, deleteConfigMap } from '@api/configmap';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { ConfigMap } from '@types/api';
+import type { ConfigMap } from '@/types/api';
 import { ConfirmationDialog } from '@components/ConfirmationDialog';
 import { useToast } from '@components/Toast';
  import { Table, TableStyles } from '@components/Table';
@@ -62,7 +62,7 @@ import { useToast } from '@components/Toast';
       key: 'name' as keyof ConfigMap,
       header: 'Name',
       sortable: true,
-      render: (value: string, row: ConfigMap) => (
+      render: (value: unknown, row: ConfigMap) => (
         <a
           href={`/configmaps/${row.namespace}/${row.name}`}
           className="resource-link"
@@ -71,7 +71,7 @@ import { useToast } from '@components/Toast';
             navigate(`/configmaps/${row.namespace}/${row.name}`);
           }}
         >
-          {value}
+          {(value as string)}
         </a>
       ),
     },
@@ -84,11 +84,12 @@ import { useToast } from '@components/Toast';
       key: 'data' as keyof ConfigMap,
       header: 'Keys',
       sortable: true,
-      render: (value: Record<string, string>) => {
-        if (!value || Object.keys(value).length === 0) {
+      render: (value: unknown, _row: ConfigMap) => {
+        const typedValue = value as Record<string, string>;
+        if (!typedValue || Object.keys(typedValue).length === 0) {
           return '-';
         }
-        const keys = Object.keys(value);
+        const keys = Object.keys(typedValue);
         return (
           <div className="keys-cell">
             {keys.slice(0, 3).map((key) => (
@@ -105,7 +106,7 @@ import { useToast } from '@components/Toast';
       key: 'creationTimestamp' as keyof ConfigMap,
       header: 'Created',
       sortable: true,
-      render: (value: number) => new Date(value).toLocaleDateString(),
+      render: (value: unknown, _row: ConfigMap) => <span>{new Date(value as number).toLocaleDateString()}</span>,
     },
     {
       key: 'actions' as keyof ConfigMap,

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPods, deletePod } from '@api/pod';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { Pod } from '@types/api';
+import type { Pod } from '../types/api';
 import { ResourceListPage } from '@pages/ResourceList';
 import { Badge } from '@components/Badge';
 import { ConfirmationDialog } from '@components/ConfirmationDialog';
@@ -32,7 +32,7 @@ export default function PodList() {
     await deletePod(pod.namespace, pod.name);
   }, {
     onSuccess: () => {
-      showToast('Pod deleted successfully', 'success');
+      showToast({ message: 'Pod deleted successfully', type: 'success' });
       refetch();
       setDeleteTarget(null);
     },
@@ -59,7 +59,7 @@ export default function PodList() {
       key: 'name' as keyof Pod,
       header: 'Name',
       sortable: true,
-      render: (value: string, row: Pod) => (
+      render: (value: unknown, row: Pod) => (
         <a
           href={`/pods/${row.namespace}/${row.name}`}
           className="resource-link"
@@ -68,7 +68,7 @@ export default function PodList() {
             navigate(`/pods/${row.namespace}/${row.name}`);
           }}
         >
-          {value}
+          <span>{(value as string)}</span>
         </a>
       ),
     },
@@ -81,27 +81,27 @@ export default function PodList() {
       key: 'status' as keyof Pod,
       header: 'Status',
       sortable: true,
-      render: (value: string) => <Badge status={value} />,
+      render: (value: unknown, row: Pod) => typeof value === 'string' ? <Badge status={value} /> : <span>-</span>,
     },
     {
       key: 'nodeName' as keyof Pod,
       header: 'Node',
       sortable: true,
-      render: (value: string) => value || '-',
+      render: (value: unknown, _row: Pod) => (typeof value === 'string' ? <span>{value || '-'}</span> : <span>-</span>),
     },
     {
       key: 'podIP' as keyof Pod,
       header: 'IP',
       sortable: true,
-      render: (value: string) => value || '-',
+      render: (value: unknown, _row: Pod) => (typeof value === 'string' ? <span>{value || '-'}</span> : <span>-</span>),
     },
     {
       key: 'containers' as keyof Pod,
       header: 'Containers',
       sortable: true,
-      render: (value: any[]) => (
+      render: (value: unknown, _row: Pod) => Array.isArray(value) && (
         <div className="containers-cell">
-          {value.map((container) => (
+          {(value as Array<{ name: string; ready: boolean }>).map((container) => (
             <span key={container.name} className="container-badge">
               {container.name} {container.ready ? '✓' : '✗'}
             </span>
@@ -113,12 +113,12 @@ export default function PodList() {
       key: 'startTime' as keyof Pod,
       header: 'Age',
       sortable: true,
-      render: (value: string) => {
-        if (!value) return '-';
+      render: (value: unknown, _row: Pod) => {
+        if (typeof value !== 'string' || !value) return <span>-</span>;
         const age = Math.floor((Date.now() - new Date(value).getTime()) / 1000);
-        if (age < 60) return `${age}s`;
-        if (age < 3600) return `${Math.floor(age / 60)}m`;
-        return `${Math.floor(age / 3600)}h`;
+        if (age < 60) return <span>{`${age}s`}</span>;
+        if (age < 3600) return <span>{`${Math.floor(age / 60)}m`}</span>;
+        return <span>{`${Math.floor(age / 3600)}h`}</span>;
       },
     },
     {

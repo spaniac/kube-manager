@@ -1,7 +1,7 @@
 import apiClient from '@api/client';
 import { z } from 'zod';
 import { parseApiResponse, parsePaginationParams } from '@utils/apiResponse';
-import { statefulSetSchema, apiResponseSchema, resourceListSchema } from '../types/schemas';
+import { resourceListSchema, statefulSetSchema } from '../types/schemas';
 import type { StatefulSet, ResourceList, ResourceYaml, ApiResponse } from '../types/api';
 
 export async function getStatefulSets(params?: {
@@ -46,7 +46,7 @@ export async function scaleStatefulSet(
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(z.object({ message: z.string() })),
+    z.object({ message: z.string() }),
   );
 }
 
@@ -54,7 +54,7 @@ export async function deleteStatefulSet(namespace: string, name: string): Promis
   const response = await apiClient.delete<ApiResponse<void>>(
     `/api/v1/statefulsets/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`,
   );
-  parseApiResponse(response.data, apiResponseSchema(z.undefined()));
+  parseApiResponse(response.data, z.undefined());
 }
 
 export async function getStatefulSetYaml(namespace: string, name: string): Promise<ResourceYaml> {
@@ -63,13 +63,11 @@ export async function getStatefulSetYaml(namespace: string, name: string): Promi
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(
-      z.object({
+    z.object({
         name: z.string(),
         kind: z.string(),
         namespace: z.string().optional(),
         yaml: z.string(),
       }),
-    ),
-  ).data;
+  );
 }

@@ -1,7 +1,7 @@
 import apiClient from '@api/client';
 import { z } from 'zod';
 import { parseApiResponse, parsePaginationParams } from '@utils/apiResponse';
-import { secretSchema, apiResponseSchema, resourceListSchema } from '../types/schemas';
+import { apiResponseSchema, resourceListSchema, secretSchema } from '../types/schemas';
 import type { Secret, ResourceList, ResourceYaml, ApiResponse } from '../types/api';
 
 export async function getSecrets(params?: {
@@ -39,7 +39,7 @@ export async function deleteSecret(namespace: string, name: string): Promise<voi
   const response = await apiClient.delete<ApiResponse<void>>(
     `/api/v1/secrets/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`,
   );
-  parseApiResponse(response.data, apiResponseSchema(z.undefined()));
+  parseApiResponse(response.data, z.undefined());
 }
 
 export async function getSecretYaml(namespace: string, name: string): Promise<ResourceYaml> {
@@ -48,13 +48,11 @@ export async function getSecretYaml(namespace: string, name: string): Promise<Re
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(
-      z.object({
-        name: z.string(),
-        kind: z.string(),
-        namespace: z.string().optional(),
-        yaml: z.string(),
-      }),
-    ),
-  ).data;
+    z.object({
+      name: z.string(),
+      kind: z.string(),
+      namespace: z.string().optional(),
+      yaml: z.string(),
+    }),
+  );
 }

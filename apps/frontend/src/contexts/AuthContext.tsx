@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { AuthState, User, LoginCredentials, TokenResponse } from '../types/auth';
+import { AuthState, User, LoginCredentials, TokenResponse, Permission } from '../types/auth';
 import apiClient from '../api/client';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return false;
     }
 
-    if (!permissionSet.permissions.includes(permission as string)) {
+    if (!permissionSet.permissions.includes(permission as Permission)) {
       return false;
     }
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getDeployments, deleteDeployment, scaleDeployment, restartDeployment } from '@api/deployment';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { Deployment } from '@types/api';
+import type { Deployment } from '@/types/api';
 import { Button } from '@components/Button';
 import { ConfirmationDialog } from '@components/ConfirmationDialog';
 import { useToast } from '@components/Toast';
@@ -104,7 +104,7 @@ import { useToast } from '@components/Toast';
       key: 'name' as keyof Deployment,
       header: 'Name',
       sortable: true,
-      render: (value: string, row: Deployment) => (
+      render: (value: unknown, row: Deployment) => (
         <a
           href={`/deployments/${row.namespace}/${row.name}`}
           className="resource-link"
@@ -113,7 +113,7 @@ import { useToast } from '@components/Toast';
             navigate(`/deployments/${row.namespace}/${row.name}`);
           }}
         >
-          {value}
+          {(value as string)}
         </a>
       ),
     },
@@ -126,7 +126,7 @@ import { useToast } from '@components/Toast';
       key: 'replicas' as keyof Deployment,
       header: 'Replicas',
       sortable: true,
-      render: (value: number, row: Deployment) => `${row.readyReplicas}/${row.replicas}`,
+      render: (value: unknown, row: Deployment) => <span>{`${row.readyReplicas}/${row.replicas}`}</span>,
     },
     {
       key: 'updatedReplicas' as keyof Deployment,
@@ -142,7 +142,7 @@ import { useToast } from '@components/Toast';
       key: 'strategy' as keyof Deployment,
       header: 'Strategy',
       sortable: true,
-      render: (value: string) => value || 'RollingUpdate',
+      render: (value: unknown) => <span>{(value as string) || 'RollingUpdate'}</span>,
     },
     {
       key: 'actions' as keyof Deployment,

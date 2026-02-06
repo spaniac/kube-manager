@@ -1,8 +1,8 @@
-export { default as Button, ButtonStyles } from './Button';
-export { default as Input, InputStyles } from './Input';
-export { default as Table, TableStyles } from './Table';
-export { default as Modal, ModalStyles } from './Modal';
-export { default as Select, SelectStyles } from './Select';
+export { Button, ButtonStyles } from './Button';
+export { Input, InputStyles } from './Input';
+export { Table, TableStyles } from './Table';
+export { Modal, ModalStyles } from './Modal';
+export { Select, SelectStyles } from './Select';
 export { Badge, BadgeStyles } from './Badge';
 export { Spinner, Loading } from './Spinner';
 export { ErrorBoundary, ErrorBoundaryStyles } from './ErrorBoundary';

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getDeployment, updateDeploymentStrategy } from '@api/deployment';
+import { getDeployment, updateDeploymentImage } from '@api/deployment';
 import { updateDeploymentStrategy as updateWorkloadStrategy } from '@api/workload';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { Deployment } from '@types/api';
+import type { Deployment } from '@/types/api';
 import { Button } from '@components/Button';
 import { Select } from '@components/Select';
 import { Input } from '@components/Input';

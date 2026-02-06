@@ -26,40 +26,39 @@ export default function JobList() {
   const { data: jobsData, isLoading, error } = useApiQuery(
     ['jobs', page, limit, namespace, search],
     () => getJobs({ page, limit, namespace: namespace || undefined, search: search || undefined }),
-    {
-      keepPreviousData: true,
-    },
+    {},
   );
 
   const jobs = jobsData?.items || [];
   const total = jobsData?.total || 0;
 
   const columns = [
-    { key: 'name' as keyof Job, header: 'Name' },
+    { key: 'name' as keyof Job, header: 'Name', render: (value: unknown) => <span>{(value as string)}</span> },
     {
       key: 'namespace' as keyof Job,
       header: 'Namespace',
-      render: (value: string) => (
-        <span className="namespace-badge">{value}</span>
+      render: (value: unknown) => (
+        <span className="namespace-badge">{value as string}</span>
       ),
     },
     {
       key: 'status' as keyof Job,
       header: 'Status',
-      render: (value: string) => {
+      render: (value: unknown) => {
+        const typedValue = value as string;
         const statusMap: Record<string, 'Running' | 'Succeeded' | 'Failed' | 'Pending'> = {
           'Active': 'Running',
           'Complete': 'Succeeded',
           'Failed': 'Failed',
           'Pending': 'Pending',
         };
-        const status = statusMap[value] || 'Pending';
-        return <Badge status={status} label={value} />;
+        const status = statusMap[typedValue] || 'Pending';
+        return <Badge status={status} label={typedValue} />;
       },
     },
-    { key: 'active' as keyof Job, header: 'Active', render: (v: number) => v || '-' },
-    { key: 'succeeded' as keyof Job, header: 'Succeeded', render: (v: number) => v || 0 },
-    { key: 'failed' as keyof Job, header: 'Failed', render: (v: number) => v || 0 },
+    { key: 'active' as keyof Job, header: 'Active', render: (value: unknown) => <span>{(value as number) || '-'}</span> },
+    { key: 'succeeded' as keyof Job, header: 'Succeeded', render: (value: unknown) => <span>{(value as number) || 0}</span> },
+    { key: 'failed' as keyof Job, header: 'Failed', render: (value: unknown) => <span>{(value as number) || 0}</span> },
   ];
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {

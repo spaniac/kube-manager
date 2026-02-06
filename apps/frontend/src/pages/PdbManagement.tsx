@@ -35,19 +35,16 @@ export default function PdbManagement() {
   const [selectorKey, setSelectorKey] = useState('');
   const [selectorValue, setSelectorValue] = useState('');
 
-  const { data: pdbData, isLoading, error, refetch } = useApiQuery(
+  const { data: pdbData, isLoading, error } = useApiQuery(
     ['pdbs', page, limit, namespace],
     () => getPodDisruptionBudgets({ page, limit, namespace: namespace || undefined }),
-    {
-      keepPreviousData: true,
-    },
   );
 
   const pdbs = pdbData?.items || [];
   const total = pdbData?.total || 0;
 
   const createMutation = useApiMutation(
-    async () => {
+    async (_unused?: void) => {
       const selector: Record<string, string> = {};
       if (selectorKey && selectorValue) {
         selector[selectorKey] = selectorValue;
@@ -70,7 +67,7 @@ export default function PdbManagement() {
         setMaxUnavailable(undefined);
         setSelectorKey('');
         setSelectorValue('');
-        refetch();
+        window.location.reload();
       },
       onError: (error) => {
         showToast({ message: `Failed to create PDB: ${(error as Error).message}`, type: 'error' });
@@ -79,17 +76,16 @@ export default function PdbManagement() {
   );
 
   const deleteMutation = useApiMutation(
-    async () => {
-      if (selectedPdb) {
-        return await deletePodDisruptionBudget(selectedPdb.namespace, selectedPdb.name);
-      }
+    async (_unused?: void) => {
+      if (!selectedPdb) return Promise.resolve();
+      return await deletePodDisruptionBudget(selectedPdb.namespace, selectedPdb.name);
     },
     {
       onSuccess: () => {
         showToast({ message: 'PodDisruptionBudget deleted successfully', type: 'success' });
         setShowDeleteModal(false);
         setSelectedPdb(null);
-        refetch();
+        window.location.reload();
       },
       onError: (error) => {
         showToast({ message: `Failed to delete PDB: ${(error as Error).message}`, type: 'error' });
@@ -102,24 +98,22 @@ export default function PdbManagement() {
     {
       key: 'namespace' as keyof Pdb,
       header: 'Namespace',
-      render: (value: string) => (
-        <span className="namespace-badge">{value}</span>
-      ),
+      render: (value: unknown, _row: any) => <span className="namespace-badge">{typeof value === 'string' ? value : String(value)}</span>,
     },
     {
       key: 'minAvailable' as keyof Pdb,
       header: 'Min Available',
-      render: (value: number) => value !== undefined ? value : '-',
+      render: (value: unknown, _row: any) => (typeof value === 'number' ? (value !== undefined ? value : '-') : '-'),
     },
     {
       key: 'maxUnavailable' as keyof Pdb,
       header: 'Max Unavailable',
-      render: (value: number) => value !== undefined ? value : '-',
+      render: (value: unknown, _row: any) => (typeof value === 'number' ? (value !== undefined ? value : '-') : '-'),
     },
     {
       key: 'currentHealthy' as keyof Pdb,
       header: 'Current Healthy',
-      render: (value: number) => `${value} / ${pdbs.find(pdb => pdb.currentHealthy === value)?.desiredHealthy || '-'}`,
+      render: (value: unknown, _row: any) => (typeof value === 'number' ? `${value} / ${pdbs.find(pdb => pdb.currentHealthy === value)?.desiredHealthy || '-'}` : '-'),
     },
     {
       key: 'status' as keyof Pdb,

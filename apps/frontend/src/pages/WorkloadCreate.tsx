@@ -130,7 +130,7 @@ export default function WorkloadCreate() {
 
   const handleTypeSelect = (type: string) => {
     setSelectedType(type);
-    setYaml(WORKLOAD_TEMPLATES[type]);
+    setYaml(WORKLOAD_TEMPLATES[type] ?? '');
     setStep('yaml');
   };
 

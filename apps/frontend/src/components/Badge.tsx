@@ -1,5 +1,6 @@
 interface BadgeProps {
   status: string;
+  label?: string;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
 }
@@ -17,13 +18,13 @@ const statusColors: Record<string, string> = {
   ImagePullBackOff: '#f59e0b',
 };
 
-export function Badge({ status, size = 'md', className = '' }: BadgeProps) {
+export function Badge({ status, label, size = 'md', className = '' }: BadgeProps) {
   const color = statusColors[status] || '#6b7280';
   const badgeClassName = `badge badge-${size} ${className}`;
 
   return (
     <span className={badgeClassName} style={{ backgroundColor: color }}>
-      {status}
+      {label || status}
     </span>
   );
 }

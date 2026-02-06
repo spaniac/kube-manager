@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useApiQuery } from '../hooks/useApi';
-import { getClusterMetrics, getNodes } from '../api/cluster';
+import { getClusterMetrics } from '../api/cluster';
 import { Spinner } from '../components/Spinner';
 import { Select } from '../components/Select';
 import {
@@ -38,7 +38,7 @@ export default function ClusterMetricsHistory() {
 
       return {
         timestamp,
-        value: Math.round(value * 100) / 100,
+        value: Math.round((baseValue + (Math.random() - 0.5) * variance) * 100) / 100,
         networkIn: metricType === 'network' ? Math.max(0, baseValue + (Math.random() - 0.5) * variance) : undefined,
         networkOut: metricType === 'network' ? Math.max(0, baseValue + (Math.random() + 0.5) * variance * 0.8) : undefined,
       };
@@ -79,7 +79,7 @@ export default function ClusterMetricsHistory() {
           <Select
             label="Time Range"
             value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value as TimeRange)}
+            onChange={(value) => setTimeRange(value as TimeRange)}
             options={[
               { value: '1h', label: 'Last 1 hour' },
               { value: '6h', label: 'Last 6 hours' },
@@ -91,7 +91,7 @@ export default function ClusterMetricsHistory() {
             <Select
               label="Metric"
               value={metricType}
-              onChange={(e) => setMetricType(e.target.value as MetricType)}
+              onChange={(value) => setMetricType(value as MetricType)}
               options={[
                 { value: 'cpu', label: 'CPU Usage' },
                 { value: 'memory', label: 'Memory Usage' },
@@ -111,7 +111,7 @@ export default function ClusterMetricsHistory() {
                : metricType === 'memory'
                ? currentMetrics?.memoryUsage || 0
                : metricType === 'network'
-               ? currentMetrics?.networkIn || 0
+               ? 0
                : currentMetrics?.podsCount || 0
            }
            unit={
@@ -153,7 +153,9 @@ export default function ClusterMetricsHistory() {
                 color: '#f3f4f6',
               }}
               labelStyle={{ color: '#f3f4f6' }}
-              formatter={(value: number) => `${value.toFixed(2)}${getUnit()}`}
+               formatter={(value: number | undefined) =>
+                 value !== undefined ? `${value.toFixed(2)}${getUnit()}` : ''
+               }
             />
             <Legend />
             {metricType === 'network' ? (

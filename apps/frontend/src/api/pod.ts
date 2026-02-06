@@ -1,8 +1,8 @@
 import apiClient from '@api/client';
 import { z } from 'zod';
 import { parseApiResponse, parsePaginationParams } from '@utils/apiResponse';
-import { podSchema, podLogsSchema, apiResponseSchema, resourceListSchema } from '../types/schemas';
-import type { Pod, PodLogs, ResourceList, ResourceYaml } from '../types/api';
+import { apiResponseSchema, podSchema, podLogsSchema, resourceListSchema } from '../types/schemas';
+import type { Pod, PodLogs, ResourceList, ResourceYaml, ApiResponse, Event as ApiEvent } from '../types/api';
 
 export async function getPods(params?: {
   page?: number;
@@ -39,7 +39,7 @@ export async function deletePod(namespace: string, name: string): Promise<void> 
   const response = await apiClient.delete<ApiResponse<void>>(
     `/api/v1/pods/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`,
   );
-  parseApiResponse(response.data, apiResponseSchema(z.undefined()));
+  parseApiResponse(response.data, z.undefined());
 }
 
 export async function getPodLogs(params: {
@@ -80,20 +80,18 @@ export async function getPodYaml(namespace: string, name: string): Promise<Resou
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(
-      z.object({
-        name: z.string(),
-        kind: z.string(),
-        namespace: z.string().optional(),
-        yaml: z.string(),
-      }),
-    ),
-  ).data;
+    z.object({
+      name: z.string(),
+      kind: z.string(),
+      namespace: z.string().optional(),
+      yaml: z.string(),
+    }),
+  );
 }
 
-export async function getPodEvents(namespace: string, name: string): Promise<Event[]> {
-  const response = await apiClient.get<ApiResponse<Event[]>>(
+export async function getPodEvents(namespace: string, name: string): Promise<ApiEvent[]> {
+  const response = await apiClient.get<ApiResponse<ApiEvent[]>>(
     `/api/v1/pods/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/events`,
   );
-  return parseApiResponse(response.data, apiResponseSchema(z.array(z.any()))).data;
+  return parseApiResponse(response.data, z.array(z.any()));
 }

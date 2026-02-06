@@ -1,13 +1,14 @@
-import { useNavigate, useParams } from 'react-router-dom';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
 import { getNodeDetails, cordonNode, uncordonNode, drainNode } from '@api/cluster';
 import { Badge } from '@components/Badge';
 import { Button } from '@components/Button';
-import { Spinner } from '@components/Spinner';
+import { Loading } from '@components/Spinner';
+import { ConfirmationDialog, ConfirmationDialogStyles } from '@components/ConfirmationDialog';
 import { Modal, ModalStyles } from '@components/Modal';
-import { ConfirmationDialog } from '@components/ConfirmationDialog';
-import type { Node, NodeCondition } from '../types/api';
+import type { NodeCondition } from '../types/api';
 import { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 export default function NodeDetails() {
   const { name } = useParams<{ name: string }>();
@@ -18,32 +19,38 @@ export default function NodeDetails() {
     name ? getNodeDetails(name) : Promise.reject('Node name is required'),
   );
 
-  const cordonMutation = useApiMutation({
-    mutationFn: () => name && cordonNode(name),
-    onSuccess: () => {
-      // Refetch node details
-      window.location.reload();
+  const cordonMutation = useApiMutation(
+    ({ nodeName }: { nodeName: string }) => name ? cordonNode(nodeName) : Promise.resolve(),
+    {
+      onSuccess: () => {
+        // Refetch node details
+        window.location.reload();
+      },
     },
-  });
+  );
 
-  const uncordonMutation = useApiMutation({
-    mutationFn: () => name && uncordonNode(name),
-    onSuccess: () => {
-      // Refetch node details
-      window.location.reload();
+  const uncordonMutation = useApiMutation(
+    ({ nodeName }: { nodeName: string }) => name ? uncordonNode(nodeName) : Promise.resolve(),
+    {
+      onSuccess: () => {
+        // Refetch node details
+        window.location.reload();
+      },
     },
-  });
+  );
 
-  const drainMutation = useApiMutation({
-    mutationFn: () => name && drainNode(name),
-    onSuccess: () => {
-      setShowDrainConfirm(false);
-      window.location.reload();
+  const drainMutation = useApiMutation(
+    ({ nodeName, timeoutSeconds }: { nodeName: string; timeoutSeconds?: number }) => drainNode(nodeName, timeoutSeconds),
+    {
+      onSuccess: () => {
+        setShowDrainConfirm(false);
+        window.location.reload();
+      },
     },
-  });
+  );
 
   if (isLoading) {
-    return <Spinner message={`Loading node ${name}...`} />;
+    return <Loading message={`Loading node ${name}...`} />;
   }
 
   if (error) {
@@ -84,15 +91,15 @@ export default function NodeDetails() {
           {isCordoned ? (
             <Button
               variant="primary"
-              onClick={() => uncordonMutation.mutate()}
+              onClick={() => uncordonMutation.mutate({ nodeName: name || '' })}
               disabled={uncordonMutation.isPending}
             >
               {uncordonMutation.isPending ? 'Uncordoning...' : 'Uncordon'}
             </Button>
           ) : (
             <Button
-              variant="warning"
-              onClick={() => cordonMutation.mutate()}
+              variant="secondary"
+              onClick={() => cordonMutation.mutate({ nodeName: name || '' })}
               disabled={cordonMutation.isPending}
             >
               {cordonMutation.isPending ? 'Cordoning...' : 'Cordon'}
@@ -182,7 +189,7 @@ export default function NodeDetails() {
         <ConfirmationDialog
           title="Drain Node?"
           message={`Are you sure you want to drain node ${node.name}? This will evict all pods from the node and mark it as unschedulable.`}
-          onConfirm={() => drainMutation.mutate()}
+          onConfirm={() => drainMutation.mutate({ nodeName: node.name })}
           onCancel={() => setShowDrainConfirm(false)}
         />
       )}

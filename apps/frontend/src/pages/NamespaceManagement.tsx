@@ -1,11 +1,10 @@
-import { useNavigate, useParams } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getNamespaceQuota, updateNamespaceQuota } from '@api/namespace';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { ResourceQuota } from '../types/api';
+import type { ResourceQuota } from '@/types/api';
 import { Input } from '@components/Input';
 import { Button } from '@components/Button';
-import { Select } from '@components/Select';
 import { useToast } from '@components/Toast';
 import { Badge } from '@components/Badge';
 
@@ -36,6 +35,9 @@ export default function NamespaceQuotaManagement() {
     cpuHard: '',
     memoryHard: '',
     podsHard: '',
+    cpuUsed: '',
+    memoryUsed: '',
+    podsUsed: '',
   });
   const [lockState, setLockState] = useState({
     locked: false,
@@ -52,12 +54,15 @@ export default function NamespaceQuotaManagement() {
   );
 
   // Initialize quotas from API
-  useState(() => {
+  useEffect(() => {
     if (quota) {
       setQuotas({
         cpuHard: quota.cpuHard || '',
         memoryHard: quota.memoryHard || '',
         podsHard: quota.podsHard || '',
+        cpuUsed: quota.cpuUsed || '',
+        memoryUsed: quota.memoryUsed || '',
+        podsUsed: quota.podsUsed || '',
       });
     }
   }, [quota]);
@@ -68,7 +73,7 @@ export default function NamespaceQuotaManagement() {
     },
     {
       onSuccess: () => {
-        showToast('Quota updated successfully', 'success');
+        showToast({ message: 'Quota updated successfully', type: 'success' });
         refetch();
       },
     },
@@ -85,7 +90,7 @@ export default function NamespaceQuotaManagement() {
     },
     {
       onSuccess: () => {
-        showToast(lockState.locked ? 'Namespace unlocked' : 'Namespace locked', 'success');
+        showToast({ message: lockState.locked ? 'Namespace unlocked' : 'Namespace locked', type: 'success' });
         refetch();
       },
     },
@@ -109,7 +114,7 @@ export default function NamespaceQuotaManagement() {
     },
     {
       onSuccess: () => {
-        showToast('Template applied successfully', 'success');
+        showToast({ message: 'Template applied successfully', type: 'success' });
         refetch();
       },
     },
@@ -125,7 +130,7 @@ export default function NamespaceQuotaManagement() {
     },
     {
       onSuccess: () => {
-        showToast('Role assigned successfully', 'success');
+        showToast({ message: 'Role assigned successfully', type: 'success' });
       },
     },
   );
@@ -236,6 +241,9 @@ export default function NamespaceQuotaManagement() {
                         cpuHard: quota.cpuHard || '',
                         memoryHard: quota.memoryHard || '',
                         podsHard: quota.podsHard || '',
+                        cpuUsed: quota.cpuUsed || '',
+                        memoryUsed: quota.memoryUsed || '',
+                        podsUsed: quota.podsUsed || '',
                       });
                     }
                   }}
@@ -299,7 +307,7 @@ export default function NamespaceQuotaManagement() {
                   </div>
                   <Button
                     variant={assignedRoles.includes(role.id) ? 'secondary' : 'primary'}
-                    size="small"
+                    size="sm"
                     onClick={() => handleAssignRole(role.id)}
                     disabled={assignRoleMutation.isPending}
                   >
@@ -322,7 +330,7 @@ export default function NamespaceQuotaManagement() {
                   </div>
                   <Button
                     variant={selectedTemplate === template.id ? 'secondary' : 'primary'}
-                    size="small"
+                    size="sm"
                     onClick={handleApplyTemplate}
                     disabled={applyTemplateMutation.isPending}
                   >

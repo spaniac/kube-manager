@@ -22,10 +22,10 @@ export function useApiMutation<TData, TVariables, TContext = unknown>(
 ) {
   return useMutation({
     mutationFn,
-    onError: (error) => {
+    onError: (error, variables, context, mutation) => {
       const errorMessage = handleApiError(error);
       console.error('Mutation error:', errorMessage);
-      options?.onError?.(error as Error);
+      options?.onError?.(error, variables, context, mutation);
     },
     ...options,
   });
@@ -33,7 +33,7 @@ export function useApiMutation<TData, TVariables, TContext = unknown>(
 
 export function useApiInfiniteQuery<T>(
   queryKey: unknown[],
-  queryFn: ({ pageParam }: { pageParam?: number }) => Promise<{
+  queryFn: (context: { pageParam?: unknown }) => Promise<{
     data: T[];
     nextPage?: number;
   }>,

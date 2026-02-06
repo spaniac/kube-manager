@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getDeployment } from '@api/deployment';
 import { cloneDeployment } from '@api/workload';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { Deployment } from '@types/api';
+import type { Deployment } from '@/types/api';
 import { Button } from '@components/Button';
 import { Input } from '@components/Input';
 import { Spinner } from '@components/Spinner';

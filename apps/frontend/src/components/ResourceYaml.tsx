@@ -99,18 +99,19 @@ function highlightYaml(code: string): HighlightedToken[] {
 
     // Key-value pairs
     if (trimmedLine.includes(':')) {
-      const [keyPart, ...rest] = line.split(':');
-      const valuePart = rest.join(':');
+      const parts = line.split(':');
+      const keyPart = parts[0];
+      const valuePart = parts.slice(1).join(':');
 
       // Key
-      const keyIndent = keyPart.search(/\S|$/);
-      const key = keyPart.trim();
+      const keyIndent = keyPart?.search(/\S|$/) || 0;
+      const key = keyPart?.trim() || '';
       tokens.push({ type: 'plain', value: ' '.repeat(keyIndent) });
       tokens.push({ type: 'key', value: key });
       tokens.push({ type: 'plain', value: ':' });
 
       // Value
-      const value = valuePart.trim();
+      const value = valuePart?.trim() || '';
 
       if (value === '') {
         tokens.push({ type: 'plain', value: '\n' });

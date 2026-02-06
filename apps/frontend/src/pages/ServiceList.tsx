@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getServices, deleteService } from '@api/service';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { Service } from '@types/api';
+import type { Service } from '@/types/api';
 import { Badge } from '@components/Badge';
 import { ConfirmationDialog } from '@components/ConfirmationDialog';
 import { useToast } from '@components/Toast';
@@ -62,7 +62,7 @@ export default function ServiceList() {
       key: 'name' as keyof Service,
       header: 'Name',
       sortable: true,
-      render: (value: string, row: Service) => (
+      render: (value: unknown, row: Service) => (
         <a
           href={`/services/${row.namespace}/${row.name}`}
           className="resource-link"
@@ -71,7 +71,7 @@ export default function ServiceList() {
             navigate(`/services/${row.namespace}/${row.name}`);
           }}
         >
-          {value}
+          {(value as string)}
         </a>
       ),
     },
@@ -84,21 +84,21 @@ export default function ServiceList() {
       key: 'type' as keyof Service,
       header: 'Type',
       sortable: true,
-      render: (value: string) => <Badge status={value} />,
+      render: (value: unknown, _row: Service) => <Badge status={value as string} />,
     },
     {
       key: 'clusterIPs' as keyof Service,
       header: 'Cluster IP',
       sortable: true,
-      render: (value: string[]) => value.join(', ') || '-',
+      render: (value: unknown, _row: Service) => <span>{(value as string[]).join(', ') || '-'}</span>,
     },
     {
       key: 'ports' as keyof Service,
       header: 'Ports',
       sortable: true,
-      render: (value: any[]) => (
+      render: (value: unknown, _row: Service) => (
         <div className="ports-cell">
-          {value.map((port, index) => (
+          {(value as Array<{ name?: string; port: number; protocol?: string }>).map((port, index) => (
             <span key={index} className="port-badge">
               {port.name ? `${port.name}: ` : ''}{port.port}/{port.protocol?.toLowerCase()}
             </span>
@@ -110,10 +110,11 @@ export default function ServiceList() {
       key: 'endpoints' as keyof Service,
       header: 'Endpoints',
       sortable: true,
-      render: (value: any[]) => {
-        const readyEndpoints = value.filter((e) => e.ready).length;
-        const totalEndpoints = value.length;
-        return `${readyEndpoints}/${totalEndpoints}`;
+      render: (value: unknown, _row: Service) => {
+        const typedValue = value as Array<{ ready: boolean }>;
+        const readyEndpoints = typedValue.filter((e) => e.ready).length;
+        const totalEndpoints = typedValue.length;
+        return <span>{`${readyEndpoints}/${totalEndpoints}`}</span>;
       },
     },
     {

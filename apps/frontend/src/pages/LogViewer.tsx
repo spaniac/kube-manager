@@ -22,9 +22,10 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
+import { useParams } from 'react-router-dom';
 import apiClient from '../api/client';
 import { useApiQuery } from '@hooks/useApi';
-import { Spinner } from '@components/Spinner';
+import { Loading } from '@components/Spinner';
 import { Input } from '@components/Input';
 import { Select, SelectStyles } from '@components/Select';
 import { Button, ButtonStyles } from '@components/Button';
@@ -77,7 +78,6 @@ export default function LogViewer() {
 
   // Log content state
   const [logs, setLogs] = useState<LogLine[]>([]);
-  const [filteredLogs, setFilteredLogs] = useState<LogLine[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
 
   // Filter state
@@ -103,24 +103,24 @@ export default function LogViewer() {
 
   // Log statistics
   const stats = useMemo<LogStats>(() => {
-    const infoCount = filteredLogs.filter(l => l.level === 'INFO').length;
-    const warningCount = filteredLogs.filter(l => l.level === 'WARNING').length;
-    const errorCount = filteredLogs.filter(l => l.level === 'ERROR').length;
+    const infoCount = logs.filter(l => l.level === 'INFO').length;
+    const warningCount = logs.filter(l => l.level === 'WARNING').length;
+    const errorCount = logs.filter(l => l.level === 'ERROR').length;
 
     return {
-      totalLines: filteredLogs.length,
+      totalLines: logs.length,
       infoCount,
       warningCount,
       errorCount,
     };
-  }, [filteredLogs]);
+  }, [logs]);
 
   /**
    * Fetch pod containers
    */
   const { data: podData, isLoading } = useApiQuery(
-    ['pods', ns, pod],
-    (q) => apiClient.get(`/api/v1/pods/${ns}/${podName}`)
+    ['pods', ns, podName],
+    () => apiClient.get(`/api/v1/pods/${ns}/${podName}`)
   );
 
   /**
@@ -151,8 +151,8 @@ export default function LogViewer() {
 
           setLogs((prev) => {
             const updated = [...prev, logLine];
-            if (autoScroll) {
-              return [updated[updated.length - 1]];
+            if (autoScroll && updated.length > 0) {
+              return [updated[updated.length - 1]!];
             }
             return updated.slice(-1000); // Keep last 1000 lines
           });
@@ -217,11 +217,11 @@ export default function LogViewer() {
   /**
    * Get containers for pod
    */
-  const containers = useMemo(() => {
+   const containers = useMemo(() => {
     if (!podData) return [];
 
-    const pod = podData?.[0];
-    return pod?.spec?.containers?.map(c => c.name) || [];
+    const pod = podData?.data;
+    return pod?.spec?.containers?.map((c: any) => c.name) || [];
   }, [podData, isLoading]);
 
   // Load bookmarks from localStorage
@@ -323,48 +323,22 @@ export default function LogViewer() {
   /**
    * Create shareable bookmark from a bookmark
    */
-  const createShareableBookmark = useCallback((line: number) => {
+  const createShareableBookmark = useCallback((line: number): ShareableLogBookmark | undefined => {
     const logLine = logs[line];
-    if (!logLine) return;
+    if (!logLine) return undefined;
 
     const bookmark: ShareableLogBookmark = {
       id: `shareable-${Date.now()}`,
       line,
       content: logLine.content,
       timestamp: logLine.timestamp,
-      createdAt: Date.now(),
-      namespace,
-      podName,
+      namespace: ns!,
+      podName: podName!,
     };
 
     setShareableBookmark(bookmark);
-  }, [logs, namespace, podName]);
-
-  /**
-   * Generate shareable URL for a bookmark
-   */
-  const generateShareableUrl = (bookmark: ShareableLogBookmark): string => {
-    const params = new URLSearchParams({
-      ns: bookmark.namespace,
-      pod: bookmark.podName,
-      line: bookmark.line.toString(),
-      content: bookmark.content,
-    });
-
-    return `${window.location.origin}/shared-logs?${params.toString()}`;
-  };
-
-  /**
-   * Copy shareable URL to clipboard
-   */
-  const copyToClipboard = useCallback(async (url: string) => {
-    try {
-      await navigator.clipboard.writeText(url);
-      alert('URL copied to clipboard!');
-    } catch (err) {
-      console.error('Failed to copy URL:', err);
-    }
-  }, []);
+    return bookmark;
+  }, [logs, ns, podName]);
 
   /**
    * Toggle auto-scroll
@@ -408,7 +382,7 @@ export default function LogViewer() {
   }, [logs, podName]);
 
   if (isLoading) {
-    return <Spinner message="Loading pod logs..." />;
+    return <Loading message="Loading pod logs..." />;
   }
 
   return (
@@ -428,8 +402,8 @@ export default function LogViewer() {
           <span className="label">Container:</span>
           <Select
             value={selectedContainer}
-            onChange={(e) => setSelectedContainer(e.target.value)}
-            options={containers.map(c => ({ value: c, label: c }))}
+            onChange={(value) => setSelectedContainer(value)}
+            options={containers.map((c: string) => ({ value: c, label: c }))}
           />
         </div>
       )}
@@ -517,8 +491,10 @@ export default function LogViewer() {
                     className="bookmark-actions-button"
                     onClick={() => {
                       const shareable = createShareableBookmark(bookmark.line);
-                      const url = generateShareableUrl(shareable);
-                      copyToClipboard(url);
+                      if (shareable) {
+                        const url = generateShareableUrl(shareable);
+                        copyToClipboard(url);
+                      }
                     }}
                   >
                     Share
@@ -553,7 +529,7 @@ export default function LogViewer() {
       {/* Loading indicator */}
       {isStreaming && (
         <div className="streaming-indicator">
-          <Spinner />
+          <Loading />
           <span>Streaming logs...</span>
         </div>
       )}

@@ -26,7 +26,7 @@ export async function connectTerminal(params: {
   const response = await apiClient.get<ApiResponse<TerminalSessionInfo>>(
     `/api/v1/terminal/connect/${encodeURIComponent(params.namespace)}/${encodeURIComponent(params.podName)}?${queryParams.toString()}`,
   );
-  return parseApiResponse(response.data, apiResponseSchema(terminalSessionInfoSchema)).data!;
+  return parseApiResponse(response.data, terminalSessionInfoSchema);
 }
 
 export async function getActiveSessions(): Promise<Record<string, TerminalSession>> {
@@ -35,24 +35,15 @@ export async function getActiveSessions(): Promise<Record<string, TerminalSessio
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(
-      z.record(
-        z.object({
-          sessionId: z.string(),
-          namespace: z.string(),
-          podName: z.string(),
-          container: z.string(),
-        }),
-      ),
-    ),
-  ).data!;
+    z.record(z.string(), terminalSessionInfoSchema),
+  );
 }
 
 export async function closeTerminal(sessionId: string): Promise<void> {
   const response = await apiClient.delete<ApiResponse<void>>(
     `/api/v1/terminal/sessions/${encodeURIComponent(sessionId)}`,
   );
-  parseApiResponse(response.data, apiResponseSchema(z.undefined()));
+  parseApiResponse(response.data, z.undefined());
 }
 
 export async function resizeTerminal(
@@ -63,7 +54,7 @@ export async function resizeTerminal(
     `/api/v1/terminal/sessions/${encodeURIComponent(sessionId)}/resize`,
     request,
   );
-  parseApiResponse(response.data, apiResponseSchema(z.undefined()));
+  parseApiResponse(response.data, z.undefined());
 }
 
 export async function sendTerminalCommand(
@@ -74,14 +65,14 @@ export async function sendTerminalCommand(
     `/api/v1/terminal/sessions/${encodeURIComponent(sessionId)}/command`,
     request,
   );
-  parseApiResponse(response.data, apiResponseSchema(z.undefined()));
+  parseApiResponse(response.data, z.undefined());
 }
 
 export async function interruptTerminal(sessionId: string): Promise<void> {
   const response = await apiClient.post<ApiResponse<void>>(
     `/api/v1/terminal/sessions/${encodeURIComponent(sessionId)}/interrupt`,
   );
-  parseApiResponse(response.data, apiResponseSchema(z.undefined()));
+  parseApiResponse(response.data, z.undefined());
 }
 
 export type TerminalWebSocketCallbacks = {
@@ -102,7 +93,7 @@ export function createTerminalWebSocket(
 
   const ws = new WebSocket(wsUrl);
 
-  ws.onopen = callbacks.onOpen;
+  ws.onopen = callbacks.onOpen || null;
   ws.onmessage = (event) => {
     if (event.data instanceof Blob) {
       // Handle binary data
@@ -114,8 +105,8 @@ export function createTerminalWebSocket(
       callbacks.onMessage?.(event.data);
     }
   };
-  ws.onclose = callbacks.onClose;
-  ws.onerror = callbacks.onError;
+  ws.onclose = callbacks.onClose || null;
+  ws.onerror = callbacks.onError || null;
 
   return ws;
 }

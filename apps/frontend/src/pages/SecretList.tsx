@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSecrets, deleteSecret } from '@api/secret';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { Secret } from '@types/api';
+import type { Secret } from '@/types/api';
 import { Badge } from '@components/Badge';
 import { ConfirmationDialog } from '@components/ConfirmationDialog';
 import { useToast } from '@components/Toast';
@@ -71,7 +71,7 @@ export default function SecretList() {
       key: 'name' as keyof Secret,
       header: 'Name',
       sortable: true,
-      render: (value: string, row: Secret) => (
+      render: (value: unknown, row: Secret) => (
         <a
           href={`/secrets/${row.namespace}/${row.name}`}
           className="resource-link"
@@ -80,7 +80,7 @@ export default function SecretList() {
             navigate(`/secrets/${row.namespace}/${row.name}`);
           }}
         >
-          {value}
+          {(value as string)}
         </a>
       ),
     },
@@ -93,17 +93,18 @@ export default function SecretList() {
       key: 'type' as keyof Secret,
       header: 'Type',
       sortable: true,
-      render: (value: string) => <Badge status={value} />,
+      render: (value: unknown, _row: Secret) => <Badge status={value as string} />,
     },
     {
       key: 'data' as keyof Secret,
       header: 'Keys',
       sortable: true,
-      render: (value: Record<string, string>) => {
-        if (!value || Object.keys(value).length === 0) {
+      render: (value: unknown, _row: Secret) => {
+        const typedValue = value as Record<string, string>;
+        if (!typedValue || Object.keys(typedValue).length === 0) {
           return '-';
         }
-        const keys = Object.keys(value);
+        const keys = Object.keys(typedValue);
         return (
           <div className="keys-cell">
             {keys.slice(0, 3).map((key) => (
@@ -120,13 +121,13 @@ export default function SecretList() {
       key: 'immutable' as keyof Secret,
       header: 'Immutable',
       sortable: true,
-      render: (value: boolean) => (value ? 'Yes' : 'No'),
+      render: (value: unknown, _row: Secret) => <span>{((value as boolean) ? 'Yes' : 'No')}</span>,
     },
     {
       key: 'creationTimestamp' as keyof Secret,
       header: 'Created',
       sortable: true,
-      render: (value: number) => new Date(value).toLocaleDateString(),
+      render: (value: unknown, _row: Secret) => <span>{new Date(value as number).toLocaleDateString()}</span>,
     },
     {
       key: 'actions' as keyof Secret,

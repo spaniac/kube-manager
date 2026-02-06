@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getDeployment } from '@api/deployment';
 import { updateContainerEnvVars } from '@api/workload';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { Deployment } from '@types/api';
+import type { Deployment } from '@/types/api';
 import { Button } from '@components/Button';
 import { Input } from '@components/Input';
 import { Spinner } from '@components/Spinner';
@@ -67,14 +67,24 @@ export default function WorkloadEnvEditor() {
   const handleEnvVarChange = (index: number, field: keyof EnvVar, value: string | boolean) => {
     setEnvVars(prev => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
+      const currentEnvVar = updated[index];
+
+      if (!currentEnvVar) return updated;
+
+      const newEnvVar: EnvVar = {
+        key: field === 'key' ? value as string : currentEnvVar.key,
+        value: field === 'value' ? value as string : currentEnvVar.value,
+        isSecret: field === 'isSecret' ? value as boolean : currentEnvVar.isSecret,
+      };
+      updated[index] = newEnvVar;
       return updated;
     });
   };
 
   const handleAddEnvVar = () => {
     if (newKey && newValue) {
-      setEnvVars(prev => [...prev, { key: newKey, value: newValue, isSecret: newIsSecret }]);
+      const newEnv: EnvVar = { key: newKey, value: newValue, isSecret: newIsSecret };
+      setEnvVars(prev => [...prev, newEnv]);
       setNewKey('');
       setNewValue('');
       setNewIsSecret(false);

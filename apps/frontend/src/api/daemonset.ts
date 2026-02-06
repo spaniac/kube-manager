@@ -1,7 +1,7 @@
 import apiClient from '@api/client';
 import { z } from 'zod';
 import { parseApiResponse, parsePaginationParams } from '@utils/apiResponse';
-import { daemonSetSchema, apiResponseSchema, resourceListSchema } from '../types/schemas';
+import { resourceListSchema, daemonSetSchema } from '../types/schemas';
 import type { DaemonSet, ResourceList, ResourceYaml, ApiResponse } from '../types/api';
 
 export async function getDaemonSets(params?: {
@@ -39,7 +39,7 @@ export async function deleteDaemonSet(namespace: string, name: string): Promise<
   const response = await apiClient.delete<ApiResponse<void>>(
     `/api/v1/daemonsets/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`,
   );
-  parseApiResponse(response.data, apiResponseSchema(z.undefined()));
+  parseApiResponse(response.data, z.undefined());
 }
 
 export async function getDaemonSetYaml(namespace: string, name: string): Promise<ResourceYaml> {
@@ -48,13 +48,11 @@ export async function getDaemonSetYaml(namespace: string, name: string): Promise
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(
-      z.object({
+    z.object({
         name: z.string(),
         kind: z.string(),
         namespace: z.string().optional(),
         yaml: z.string(),
       }),
-    ),
-  ).data;
+  );
 }

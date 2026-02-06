@@ -1,7 +1,7 @@
 import apiClient from '@api/client';
 import { z } from 'zod';
 import { parseApiResponse, parsePaginationParams } from '@utils/apiResponse';
-import { namespaceSchema, apiResponseSchema, resourceListSchema } from '../types/schemas';
+import { namespaceSchema, resourceListSchema } from '../types/schemas';
 import type { Namespace, ResourceList, ApiResponse } from '../types/api';
 
 export async function getNamespaces(params?: {
@@ -63,7 +63,7 @@ export async function deleteNamespace(
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(z.object({ message: z.string() })),
+    z.object({ message: z.string() }),
   );
 }
 
@@ -90,16 +90,14 @@ export async function getNamespaceQuota(
 
   return parseApiResponse(
     response.data,
-    apiResponseSchema(
-      z.object({
-        cpuUsed: z.string(),
-        cpuHard: z.string(),
-        memoryUsed: z.string(),
-        memoryHard: z.string(),
-        podsUsed: z.string(),
-        podsHard: z.string(),
-      }),
-    ),
+    z.object({
+      cpuUsed: z.string(),
+      cpuHard: z.string(),
+      memoryUsed: z.string(),
+      memoryHard: z.string(),
+      podsUsed: z.string(),
+      podsHard: z.string(),
+    }),
   );
 }
 
@@ -117,6 +115,6 @@ export async function updateNamespaceQuota(
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(z.object({ message: z.string() })),
+    z.object({ message: z.string() }),
   );
 }

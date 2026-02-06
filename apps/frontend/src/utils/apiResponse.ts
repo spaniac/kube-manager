@@ -9,9 +9,7 @@ export function parseApiResponse<T>(
 
   if (!validatedResponse.success || !validatedResponse.data) {
     throw new Error(
-      validatedResponse.error?.detail ||
-        validatedResponse.error?.title ||
-        validatedResponse.message ||
+      validatedResponse.error?.issues?.[0]?.message ||
         'API request failed',
     );
   }

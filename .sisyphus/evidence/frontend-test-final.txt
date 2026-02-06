@@ -1,0 +1,67 @@
+
+> k8s-manager-frontend@0.0.0 test:run
+> vitest run
+
+
+ RUN  v2.1.9 /home/spaniac/repos/kube-manager/apps/frontend
+
+stdout | src/utils/sse.test.ts > SSEClient > connect > should not reconnect if already connected
+SSE connection opened
+
+stdout | src/utils/sse.test.ts > SSEClient > isConnected > should return true when connected
+SSE connection opened
+
+stdout | src/utils/sse.test.ts > SSEClient > isConnected > should return false after disconnect
+SSE connection opened
+
+stdout | src/utils/sse.test.ts > SSEClient > reconnection logic > should attempt reconnection on error
+Reconnecting in 1000ms (attempt 1)
+
+stderr | src/utils/sse.test.ts > SSEClient > reconnection logic > should attempt reconnection on error
+SSE error: { type: 'error' }
+
+stdout | src/utils/sse.test.ts > SSEClient > reconnection logic > should stop retrying after max attempts
+Reconnecting in 1000ms (attempt 1)
+Reconnecting in 2000ms (attempt 2)
+Reconnecting in 4000ms (attempt 3)
+Reconnecting in 8000ms (attempt 4)
+Reconnecting in 16000ms (attempt 5)
+
+stdout | src/utils/sse.test.ts > SSEClient > reconnection logic > should reset retry count on successful connection
+Reconnecting in 1000ms (attempt 1)
+SSE connection opened
+
+stderr | src/utils/sse.test.ts > SSEClient > reconnection logic > should reset retry count on successful connection
+SSE error: { type: 'error' }
+
+ ✓ src/utils/sse.test.ts (32 tests) 17ms
+ ✓ src/utils/apiResponse.test.ts (36 tests) 36ms
+ ✓ src/components/Input.test.tsx (11 tests) 184ms
+ ✓ src/components/Select.test.tsx (9 tests) 193ms
+ ✓ src/components/Modal.test.tsx (12 tests) 200ms
+ ✓ src/components/Spinner.test.tsx (6 tests) 27ms
+ ✓ src/api/pod.test.ts (4 tests) 2ms
+ ✓ src/components/Badge.test.tsx (6 tests) 55ms
+ ✓ src/components/Button.test.tsx (6 tests) 79ms
+ ✓ src/pages/__tests__/NamespaceList.integration.test.tsx (1 test) 70ms
+ ✓ src/hooks/useApi.test.tsx (5 tests) 21145ms
+   ✓ useApiQuery Hook > should handle errors 7027ms
+   ✓ useApiQuery Hook > should retry on failure up to 3 times 7025ms
+   ✓ useApiQuery Hook > should not retry after max retries 7015ms
+
+<--- Last few GCs --->
+
+[22618:0x6e82000]    97232 ms: Scavenge (interleaved) 3535.5 (3611.7) -> 3484.6 (3615.2) MB, pooled: 0 MB, 6.85 / 0.00 ms  (average mu = 0.358, current mu = 0.346) allocation failure; 
+[22618:0x6e82000]    98642 ms: Mark-Compact 3525.7 (3618.7) -> 3465.2 (3629.2) MB, pooled: 0 MB, 173.96 / 0.00 ms  (+ 1155.9 ms in 609 steps since start of marking, biggest step 5.4 ms, walltime since start of marking 1390 ms) (average mu = 0.363, current
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 0x72dece node::OOMErrorHandler(char const*, v8::OOMDetails const&) [node (vitest 6)]
+ 2: 0xba1b20  [node (vitest 6)]
+ 3: 0xba1c0f  [node (vitest 6)]
+ 4: 0xe3a745  [node (vitest 6)]
+ 5: 0xe3a772  [node (vitest 6)]
+ 6: 0xe3aa6a  [node (vitest 6)]
+ 7: 0xe4af8a  [node (vitest 6)]
+ 8: 0xe4f330  [node (vitest 6)]
+ 9: 0x18e22f1  [node (vitest 6)]

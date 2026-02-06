@@ -7,6 +7,13 @@ import { Badge } from '@components/Badge';
 import { Input } from '@components/Input';
 import type { Node } from '../types/api';
 
+type Column<T> = {
+  key: keyof T;
+  header: string;
+  sortable?: boolean;
+  render?: (value: unknown, row: T) => React.ReactNode;
+};
+
 export default function NodeList() {
   const navigate = useNavigate();
   const { data: nodes, isLoading } = useApiQuery(['nodes'], getNodes);
@@ -29,54 +36,58 @@ export default function NodeList() {
     navigate(`/cluster/nodes/${node.name}`);
   };
 
-  const columns = [
+  const columns: Column<Node>[] = [
     {
-      key: 'name' as keyof Node,
+      key: 'name',
       header: 'Name',
       sortable: true,
     },
     {
-      key: 'status' as keyof Node,
+      key: 'status',
       header: 'Status',
       sortable: true,
-      render: (value: string) => <Badge status={value} />,
+      render: (value: unknown) => <Badge status={value as string} />,
     },
     {
-      key: 'roles' as keyof Node,
+      key: 'roles',
       header: 'Roles',
       sortable: true,
-      render: (value: string[]) => value.join(', ') || '-',
+      render: (value: unknown) => {
+        const roles = value as string[];
+        return roles.join(', ') || '-';
+      },
     },
     {
-      key: 'capacity' as keyof Node,
+      key: 'capacity',
       header: 'CPU Capacity',
       sortable: true,
-      render: (value: any) => value?.cpu || '-',
+      render: (_value: unknown, row: Node) => row.capacity?.cpu || '-',
     },
     {
-      key: 'capacity' as keyof Node,
+      key: 'capacity',
       header: 'Memory Capacity',
       sortable: true,
-      render: (value: any) => value?.memory || '-',
+      render: (_value: unknown, row: Node) => row.capacity?.memory || '-',
     },
     {
-      key: 'allocated' as keyof Node,
+      key: 'allocated',
       header: 'CPU Allocated',
       sortable: true,
-      render: (value: any) => value?.cpu || '-',
+      render: (_value: unknown, row: Node) => row.allocated?.cpu || '-',
     },
     {
-      key: 'allocated' as keyof Node,
+      key: 'allocated',
       header: 'Memory Allocated',
       sortable: true,
-      render: (value: any) => value?.memory || '-',
+      render: (_value: unknown, row: Node) => row.allocated?.memory || '-',
     },
     {
-      key: 'creationTimestamp' as keyof Node,
+      key: 'creationTimestamp',
       header: 'Age',
       sortable: true,
-      render: (value: number) => {
-        const days = Math.floor(Date.now() / 1000 - value) / 86400;
+      render: (value: unknown) => {
+        const timestamp = value as number;
+        const days = Math.floor(Date.now() / 1000 - timestamp) / 86400;
         if (days < 1) return '< 1d';
         if (days < 30) return `${Math.floor(days)}d`;
         const months = Math.floor(days / 30);

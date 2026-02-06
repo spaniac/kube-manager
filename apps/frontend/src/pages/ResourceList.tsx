@@ -3,7 +3,7 @@ import { Table, TableStyles } from '@components/Table';
 import { Input } from '@components/Input';
 import { Button } from '@components/Button';
 import { Select } from '@components/Select';
-import type { ResourceList } from '@types/api';
+import type { ResourceList } from '../types/api';
 
 interface ResourceListProps<T> {
   data: ResourceList<T> | undefined;

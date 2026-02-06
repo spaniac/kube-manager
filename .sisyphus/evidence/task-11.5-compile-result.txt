@@ -1,0 +1,245 @@
+
+> k8s-manager-frontend@0.0.0 compile
+> tsc -b
+
+src/pages/ClusterEvents.tsx(107,9): error TS2322: Type 'Event[]' is not assignable to type 'import("/home/spaniac/repos/kube-manager/apps/frontend/src/types/api").Event[]'.
+  Type 'Event' is missing the following properties from type 'Event': reason, message, count
+src/pages/ClusterMetricsHistory.tsx(41,27): error TS2304: Cannot find name 'value'.
+src/pages/ClusterMetricsHistory.tsx(82,45): error TS2339: Property 'target' does not exist on type 'string'.
+src/pages/ClusterMetricsHistory.tsx(94,48): error TS2339: Property 'target' does not exist on type 'string'.
+src/pages/ClusterMetricsHistory.tsx(114,34): error TS2339: Property 'networkIn' does not exist on type '{ cpuUsage: number; memoryUsage: number; podsCount: number; nodesCount: number; }'.
+src/pages/ClusterMetricsHistory.tsx(156,15): error TS2322: Type '(value: number) => string' is not assignable to type 'Formatter<number, NameType> & ((value: number, name: NameType, item: Payload<number, NameType>, index: number, payload: Payload<number, NameType>[]) => ReactNode | [...])'.
+  Type '(value: number) => string' is not assignable to type 'Formatter<number, NameType>'.
+    Types of parameters 'value' and 'value' are incompatible.
+      Type 'number | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
+src/pages/NodeDetails.tsx(6,30): error TS6133: 'ConfirmationDialogStyles' is declared but its value is never read.
+src/pages/NodeDetails.tsx(7,10): error TS6133: 'Modal' is declared but its value is never read.
+src/pages/NodeDetails.tsx(23,11): error TS2322: Type '"" | Promise<void> | undefined' is not assignable to type 'Promise<void>'.
+  Type 'undefined' is not assignable to type 'Promise<void>'.
+src/pages/NodeDetails.tsx(33,11): error TS2322: Type '"" | Promise<void> | undefined' is not assignable to type 'Promise<void>'.
+  Type 'undefined' is not assignable to type 'Promise<void>'.
+src/pages/NodeDetails.tsx(43,11): error TS2322: Type '"" | Promise<void> | undefined' is not assignable to type 'Promise<void>'.
+  Type 'undefined' is not assignable to type 'Promise<void>'.
+src/pages/NodeDetails.tsx(94,47): error TS2554: Expected 1-2 arguments, but got 0.
+src/pages/NodeDetails.tsx(102,45): error TS2554: Expected 1-2 arguments, but got 0.
+src/pages/NodeDetails.tsx(192,42): error TS2554: Expected 1-2 arguments, but got 0.
+src/pages/NamespaceDetails.tsx(198,26): error TS2554: Expected 1-2 arguments, but got 0.
+src/pages/NamespaceDetails.tsx(270,60): error TS2339: Property 'metadata' does not exist on type 'Namespace'.
+src/pages/NamespaceDetails.tsx(286,57): error TS2554: Expected 1-2 arguments, but got 0.
+src/pages/EditNamespace.tsx(39,6): error TS2554: Expected 0-1 arguments, but got 2.
+src/pages/NamespaceManagement.tsx(11,11): error TS6196: 'NamespaceQuotaState' is declared but never used.
+src/pages/NamespaceManagement.tsx(34,55): error TS2345: Argument of type '{ cpuHard: string; memoryHard: string; podsHard: string; }' is not assignable to parameter of type 'ResourceQuota | (() => ResourceQuota)'.
+  Type '{ cpuHard: string; memoryHard: string; podsHard: string; }' is missing the following properties from type 'ResourceQuota': cpuUsed, memoryUsed, podsUsed
+src/pages/NamespaceManagement.tsx(44,28): error TS6133: 'setSelectedTemplate' is declared but its value is never read.
+src/pages/NamespaceManagement.tsx(56,17): error TS2345: Argument of type '{ cpuHard: string; memoryHard: string; podsHard: string; }' is not assignable to parameter of type 'SetStateAction<ResourceQuota>'.
+  Type '{ cpuHard: string; memoryHard: string; podsHard: string; }' is missing the following properties from type 'ResourceQuota': cpuUsed, memoryUsed, podsUsed
+src/pages/NamespaceManagement.tsx(62,6): error TS2554: Expected 0-1 arguments, but got 2.
+src/pages/NamespaceManagement.tsx(234,33): error TS2345: Argument of type '{ cpuHard: string; memoryHard: string; podsHard: string; }' is not assignable to parameter of type 'SetStateAction<ResourceQuota>'.
+  Type '{ cpuHard: string; memoryHard: string; podsHard: string; }' is missing the following properties from type 'ResourceQuota': cpuUsed, memoryUsed, podsUsed
+src/api/pod.ts(4,10): error TS6133: 'apiResponseSchema' is declared but its value is never read.
+src/pages/PodList.tsx(6,1): error TS6133: 'ResourceListPage' is declared but its value is never read.
+src/pages/PodList.tsx(22,28): error TS6133: 'error' is declared but its value is never read.
+src/pages/PodList.tsx(71,11): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/pages/PodList.tsx(194,11): error TS2322: Type '({ key: keyof Pod; header: string; sortable: boolean; render: (value: unknown, row: Pod) => Element; } | { key: keyof Pod; header: string; sortable: boolean; render?: undefined; } | { ...; } | { ...; } | { ...; } | { ...; })[]' is not assignable to type 'Column<Pod>[]'.
+  Type '{ key: keyof Pod; header: string; sortable: boolean; render: (value: unknown, row: Pod) => Element; } | { key: keyof Pod; header: string; sortable: boolean; render?: undefined; } | { ...; } | { ...; } | { ...; } | { ...; }' is not assignable to type 'Column<Pod>'.
+    Type '{ key: keyof Pod; header: string; sortable: boolean; render: (value: string) => JSX.Element; }' is not assignable to type 'Column<Pod>'.
+      Types of property 'render' are incompatible.
+        Type '(value: string) => JSX.Element' is not assignable to type '(value: unknown, row: Pod) => ReactNode'.
+          Types of parameters 'value' and 'value' are incompatible.
+            Type 'unknown' is not assignable to type 'string'.
+src/pages/PodDetails.tsx(5,15): error TS6196: 'Pod' is declared but never used.
+src/pages/PodDetails.tsx(5,20): error TS6196: 'PodLogs' is declared but never used.
+src/pages/PodDetails.tsx(210,15): error TS2322: Type '({ key: keyof Event; header: string; render: (v: unknown) => string; } | { key: keyof Event; header: string; render?: undefined; })[]' is not assignable to type 'Column<Event>[]'.
+  Type '{ key: keyof Event; header: string; render: (v: unknown) => string; } | { key: keyof Event; header: string; render?: undefined; }' is not assignable to type 'Column<Event>'.
+    Type '{ key: keyof Event; header: string; render: (v: unknown) => string; }' is not assignable to type 'Column<Event>'.
+      Types of property 'key' are incompatible.
+        Type 'keyof import("/home/spaniac/repos/kube-manager/apps/frontend/src/types/api").Event' is not assignable to type 'keyof Event'.
+          Type '"reason"' is not assignable to type 'keyof Event'.
+src/pages/DeploymentList.tsx(116,11): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/pages/DeploymentList.tsx(129,16): error TS6133: 'value' is declared but its value is never read.
+src/pages/DeploymentDetails.tsx(143,43): error TS18048: 'deployment.template.containers.length' is possibly 'undefined'.
+src/pages/DeploymentDetails.tsx(192,21): error TS2554: Expected 1-2 arguments, but got 0.
+src/pages/DeploymentDetails.tsx(302,17): error TS2322: Type '({ key: keyof WorkloadCondition; header: string; render?: undefined; } | { key: keyof WorkloadCondition; header: string; render: (value: unknown) => Element; } | { ...; })[]' is not assignable to type 'Column<WorkloadCondition>[]'.
+  Type '{ key: keyof WorkloadCondition; header: string; render?: undefined; } | { key: keyof WorkloadCondition; header: string; render: (value: unknown) => Element; } | { ...; }' is not assignable to type 'Column<WorkloadCondition>'.
+    Type '{ key: keyof WorkloadCondition; header: string; render: (v: string) => string; }' is not assignable to type 'Column<WorkloadCondition>'.
+      Types of property 'render' are incompatible.
+        Type '(v: string) => string' is not assignable to type '(value: unknown, row: WorkloadCondition) => ReactNode'.
+          Types of parameters 'v' and 'value' are incompatible.
+            Type 'unknown' is not assignable to type 'string'.
+src/pages/DeploymentDetails.tsx(427,17): error TS2322: Type '"warning" | "primary"' is not assignable to type '"primary" | "secondary" | "danger" | "ghost" | undefined'.
+  Type '"warning"' is not assignable to type '"primary" | "secondary" | "danger" | "ghost" | undefined'.
+src/pages/DeploymentDetails.tsx(428,72): error TS2554: Expected 1-2 arguments, but got 0.
+src/pages/DeploymentDetails.tsx(428,98): error TS2554: Expected 1-2 arguments, but got 0.
+src/api/service.ts(4,10): error TS6133: 'apiResponseSchema' is declared but its value is never read.
+src/pages/ServiceList.tsx(56,9): error TS6133: 'handleFilterChange' is declared but its value is never read.
+src/pages/ServiceList.tsx(74,11): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/pages/ServiceList.tsx(175,11): error TS2322: Type '({ key: keyof Service; header: string; sortable: boolean; render: (value: unknown, row: Service) => Element; } | { key: keyof Service; header: string; sortable: boolean; render?: undefined; } | { ...; } | { ...; } | { ...; } | { ...; })[]' is not assignable to type 'Column<Service>[]'.
+  Type '{ key: keyof Service; header: string; sortable: boolean; render: (value: unknown, row: Service) => Element; } | { key: keyof Service; header: string; sortable: boolean; render?: undefined; } | { ...; } | { ...; } | { ...; } | { ...; }' is not assignable to type 'Column<Service>'.
+    Type '{ key: keyof Service; header: string; sortable: boolean; render: (value: string) => JSX.Element; }' is not assignable to type 'Column<Service>'.
+      Types of property 'render' are incompatible.
+        Type '(value: string) => JSX.Element' is not assignable to type '(value: unknown, row: Service) => ReactNode'.
+          Types of parameters 'value' and 'value' are incompatible.
+            Type 'unknown' is not assignable to type 'string'.
+src/api/configmap.ts(4,10): error TS6133: 'apiResponseSchema' is declared but its value is never read.
+src/pages/ConfigMapList.tsx(74,11): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/pages/ConfigMapList.tsx(166,11): error TS2322: Type '({ key: keyof ConfigMap; header: string; sortable: boolean; render: (value: unknown, row: ConfigMap) => Element; } | { key: keyof ConfigMap; header: string; sortable: boolean; render?: undefined; } | { ...; } | { ...; } | { ...; })[]' is not assignable to type 'Column<ConfigMap>[]'.
+  Type '{ key: keyof ConfigMap; header: string; sortable: boolean; render: (value: unknown, row: ConfigMap) => Element; } | { key: keyof ConfigMap; header: string; sortable: boolean; render?: undefined; } | { ...; } | { ...; } | { ...; }' is not assignable to type 'Column<ConfigMap>'.
+    Type '{ key: keyof ConfigMap; header: string; sortable: boolean; render: (value: Record<string, string>) => JSX.Element | "-"; }' is not assignable to type 'Column<ConfigMap>'.
+      Types of property 'render' are incompatible.
+        Type '(value: Record<string, string>) => JSX.Element | "-"' is not assignable to type '(value: unknown, row: ConfigMap) => ReactNode'.
+          Types of parameters 'value' and 'value' are incompatible.
+            Type 'unknown' is not assignable to type 'Record<string, string>'.
+src/api/secret.ts(4,10): error TS6133: 'apiResponseSchema' is declared but its value is never read.
+src/pages/SecretList.tsx(57,9): error TS6133: 'handleFilterChange' is declared but its value is never read.
+src/pages/SecretList.tsx(61,9): error TS6133: 'maskValue' is declared but its value is never read.
+src/pages/SecretList.tsx(83,11): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/pages/SecretList.tsx(183,11): error TS2322: Type '({ key: keyof Secret; header: string; sortable: boolean; render: (value: unknown, row: Secret) => Element; } | { key: keyof Secret; header: string; sortable: boolean; render?: undefined; } | ... 4 more ... | { ...; })[]' is not assignable to type 'Column<Secret>[]'.
+  Type '{ key: keyof Secret; header: string; sortable: boolean; render: (value: unknown, row: Secret) => Element; } | { key: keyof Secret; header: string; sortable: boolean; render?: undefined; } | ... 4 more ... | { ...; }' is not assignable to type 'Column<Secret>'.
+    Type '{ key: keyof Secret; header: string; sortable: boolean; render: (value: string) => JSX.Element; }' is not assignable to type 'Column<Secret>'.
+      Types of property 'render' are incompatible.
+        Type '(value: string) => JSX.Element' is not assignable to type '(value: unknown, row: Secret) => ReactNode'.
+          Types of parameters 'value' and 'value' are incompatible.
+            Type 'unknown' is not assignable to type 'string'.
+src/api/statefulset.ts(64,10): error TS2571: Object is of type 'unknown'.
+src/api/statefulset.ts(66,5): error TS2304: Cannot find name 'apiResponseSchema'.
+src/pages/StatefulSetList.tsx(6,1): error TS6133: 'Badge' is declared but its value is never read.
+src/pages/StatefulSetList.tsx(101,11): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/api/daemonset.ts(49,10): error TS2571: Object is of type 'unknown'.
+src/api/daemonset.ts(51,5): error TS2304: Cannot find name 'apiResponseSchema'.
+src/pages/DaemonSetList.tsx(73,11): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/components/ResourceYaml.tsx(106,25): error TS18048: 'keyPart' is possibly 'undefined'.
+src/components/ResourceYaml.tsx(107,19): error TS18048: 'keyPart' is possibly 'undefined'.
+src/components/ResourceYaml.tsx(120,13): error TS6133: 'valueIndent' is declared but its value is never read.
+src/pages/WorkloadCreate.tsx(6,1): error TS6133: 'Input' is declared but its value is never read.
+src/pages/WorkloadCreate.tsx(7,1): error TS6133: 'Spinner' is declared but its value is never read.
+src/pages/WorkloadCreate.tsx(110,23): error TS6133: 'setShowPreview' is declared but its value is never read.
+src/pages/WorkloadCreate.tsx(133,13): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'SetStateAction<string>'.
+  Type 'undefined' is not assignable to type 'SetStateAction<string>'.
+src/pages/WorkloadRollback.tsx(32,58): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/pages/WorkloadRollback.tsx(56,27): error TS2345: Argument of type '{ revision: number; annotations: Record<string, string>; } | undefined' is not assignable to parameter of type 'SetStateAction<Revision | null>'.
+  Type 'undefined' is not assignable to type 'SetStateAction<Revision | null>'.
+src/pages/WorkloadRollback.tsx(57,33): error TS18048: 'previousRevision' is possibly 'undefined'.
+src/pages/WorkloadRollback.tsx(70,7): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/pages/WorkloadRollback.tsx(79,9): error TS6133: 'getCreationTime' is declared but its value is never read.
+src/pages/WorkloadUpdateStrategy.tsx(3,25): error TS2724: '"@api/deployment"' has no exported member named 'updateDeploymentStrategy'. Did you mean 'updateDeploymentImage'?
+src/pages/WorkloadUpdateStrategy.tsx(3,25): error TS6133: 'updateDeploymentStrategy' is declared but its value is never read.
+src/pages/WorkloadUpdateStrategy.tsx(6,1): error TS6133: 'Deployment' is declared but its value is never read.
+src/pages/WorkloadResources.tsx(6,1): error TS6133: 'Deployment' is declared but its value is never read.
+src/pages/WorkloadResources.tsx(92,9): error TS6133: 'formatMemory' is declared but its value is never read.
+src/pages/WorkloadResources.tsx(104,9): error TS6133: 'formatCpu' is declared but its value is never read.
+src/pages/WorkloadEnvEditor.tsx(6,1): error TS6133: 'Deployment' is declared but its value is never read.
+src/pages/WorkloadEnvEditor.tsx(25,10): error TS6133: 'showAddModal' is declared but its value is never read.
+src/pages/WorkloadEnvEditor.tsx(70,7): error TS2322: Type '{ key?: string | undefined; value?: string | undefined; isSecret?: boolean | undefined; }' is not assignable to type 'EnvVar'.
+  Types of property 'key' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/pages/WorkloadEnvEditor.tsx(75,9): error TS6133: 'handleAddEnvVar' is declared but its value is never read.
+src/pages/WorkloadClone.tsx(6,1): error TS6133: 'Deployment' is declared but its value is never read.
+src/pages/JobList.tsx(30,7): error TS2353: Object literal may only specify known properties, and 'keepPreviousData' does not exist in type 'Omit<UseQueryOptions<ResourceList<Job>, Error, ResourceList<Job>, readonly unknown[]>, "queryKey" | "queryFn">'.
+src/pages/JobList.tsx(35,27): error TS2339: Property 'total' does not exist on type 'ResourceList<Job>'.
+src/pages/JobList.tsx(43,43): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/pages/JobList.tsx(129,15): error TS2322: Type '({ key: keyof Job; header: string; render?: undefined; } | { key: keyof Job; header: string; render: (value: string) => Element; } | { key: keyof Job; header: string; render: (v: number) => number | "-"; })[]' is not assignable to type 'Column<Job>[]'.
+  Type '{ key: keyof Job; header: string; render?: undefined; } | { key: keyof Job; header: string; render: (value: string) => Element; } | { key: keyof Job; header: string; render: (v: number) => number | "-"; }' is not assignable to type 'Column<Job>'.
+    Type '{ key: keyof Job; header: string; render: (value: string) => JSX.Element; }' is not assignable to type 'Column<Job>'.
+      Types of property 'render' are incompatible.
+        Type '(value: string) => JSX.Element' is not assignable to type '(value: unknown, row: Job) => ReactNode'.
+          Types of parameters 'value' and 'value' are incompatible.
+            Type 'unknown' is not assignable to type 'string'.
+src/pages/CronJobList.tsx(29,7): error TS2353: Object literal may only specify known properties, and 'keepPreviousData' does not exist in type 'Omit<UseQueryOptions<ResourceList<CronJob>, Error, ResourceList<CronJob>, readonly unknown[]>, "queryKey" | "queryFn">'.
+src/pages/CronJobList.tsx(34,31): error TS2339: Property 'total' does not exist on type 'ResourceList<CronJob>'.
+src/pages/CronJobList.tsx(42,43): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/pages/CronJobList.tsx(49,41): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/pages/CronJobList.tsx(127,15): error TS2322: Type '({ key: keyof CronJob; header: string; render?: undefined; } | { key: keyof CronJob; header: string; render: (value: boolean) => Element; } | { key: keyof CronJob; header: string; render: (v: number) => number; })[]' is not assignable to type 'Column<CronJob>[]'.
+  Type '{ key: keyof CronJob; header: string; render?: undefined; } | { key: keyof CronJob; header: string; render: (value: boolean) => Element; } | { key: keyof CronJob; header: string; render: (v: number) => number; }' is not assignable to type 'Column<CronJob>'.
+    Type '{ key: keyof CronJob; header: string; render: (value: boolean) => JSX.Element; }' is not assignable to type 'Column<CronJob>'.
+      Types of property 'render' are incompatible.
+        Type '(value: boolean) => JSX.Element' is not assignable to type '(value: unknown, row: CronJob) => ReactNode'.
+          Types of parameters 'value' and 'value' are incompatible.
+            Type 'unknown' is not assignable to type 'boolean'.
+src/pages/PdbManagement.tsx(23,9): error TS6133: 'navigate' is declared but its value is never read.
+src/pages/PdbManagement.tsx(42,7): error TS2353: Object literal may only specify known properties, and 'keepPreviousData' does not exist in type 'Omit<UseQueryOptions<{ items: { name: string; namespace: string; minAvailable: number; maxUnavailable: number; currentHealthy: number; desiredHealthy: number; }[]; total: number; }, Error, { items: { name: string; ... 4 more ...; desiredHealthy: number; }[]; total: number; }, readonly unknown[]>, "queryKey" | "query...'.
+src/pages/PdbManagement.tsx(106,43): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/pages/PdbManagement.tsx(163,20): error TS2554: Expected 1-2 arguments, but got 0.
+src/pages/PdbManagement.tsx(230,15): error TS2322: Type '({ key: keyof Pdb; header: string; render?: undefined; } | { key: keyof Pdb; header: string; render: (value: unknown) => Element; } | { key: keyof Pdb; header: string; render: (value: number) => number | "-"; } | { ...; } | { ...; })[]' is not assignable to type 'Column<{ name: string; namespace: string; minAvailable: number; maxUnavailable: number; currentHealthy: number; desiredHealthy: number; }>[]'.
+  Type '{ key: keyof Pdb; header: string; render?: undefined; } | { key: keyof Pdb; header: string; render: (value: unknown) => Element; } | { key: keyof Pdb; header: string; render: (value: number) => number | "-"; } | { ...; } | { ...; }' is not assignable to type 'Column<{ name: string; namespace: string; minAvailable: number; maxUnavailable: number; currentHealthy: number; desiredHealthy: number; }>'.
+    Type '{ key: keyof Pdb; header: string; render: (value: number) => number | "-"; }' is not assignable to type 'Column<{ name: string; namespace: string; minAvailable: number; maxUnavailable: number; currentHealthy: number; desiredHealthy: number; }>'.
+      Types of property 'render' are incompatible.
+        Type '(value: number) => number | "-"' is not assignable to type '(value: unknown, row: { name: string; namespace: string; minAvailable: number; maxUnavailable: number; currentHealthy: number; desiredHealthy: number; }) => ReactNode'.
+          Types of parameters 'value' and 'value' are incompatible.
+            Type 'unknown' is not assignable to type 'number'.
+src/pages/PdbManagement.tsx(370,45): error TS2554: Expected 1-2 arguments, but got 0.
+src/api/terminal.ts(5,3): error TS6133: 'apiResponseSchema' is declared but its value is never read.
+src/api/terminal.ts(36,3): error TS2322: Type 'Record<string | number | symbol, unknown>' is not assignable to type 'Record<string, TerminalSession>'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'TerminalSession'.
+src/api/terminal.ts(38,7): error TS2554: Expected 2-3 arguments, but got 1.
+src/api/terminal.ts(103,3): error TS2322: Type '(() => void) | undefined' is not assignable to type '((this: WebSocket, ev: Event) => any) | null'.
+  Type 'undefined' is not assignable to type '((this: WebSocket, ev: Event) => any) | null'.
+src/api/terminal.ts(115,3): error TS2322: Type '((event: CloseEvent) => void) | undefined' is not assignable to type '((this: WebSocket, ev: CloseEvent) => any) | null'.
+  Type 'undefined' is not assignable to type '((this: WebSocket, ev: CloseEvent) => any) | null'.
+src/api/terminal.ts(116,3): error TS2322: Type '((error: Event) => void) | undefined' is not assignable to type '((this: WebSocket, ev: Event) => any) | null'.
+  Type 'undefined' is not assignable to type '((this: WebSocket, ev: Event) => any) | null'.
+src/api/user.ts(8,5): error TS6133: 'apiResponseSchema' is declared but its value is never read.
+src/api/user.ts(9,5): error TS6133: 'resourceListSchema' is declared but its value is never read.
+src/components/Badge.test.tsx(1,32): error TS6133: 'beforeEach' is declared but its value is never read.
+src/components/Badge.test.tsx(3,1): error TS6133: 'userEvent' is declared but its value is never read.
+src/components/Select.test.tsx(8,35): error TS2741: Property 'onChange' is missing in type '{ options: { value: string; label: string; }[]; }' but required in type 'SelectProps'.
+src/components/Select.test.tsx(16,13): error TS2741: Property 'onChange' is missing in type '{ label: string; options: { value: string; label: string; }[]; }' but required in type 'SelectProps'.
+src/components/Select.test.tsx(21,13): error TS2741: Property 'onChange' is missing in type '{ value: string; options: { value: string; label: string; }[]; }' but required in type 'SelectProps'.
+src/components/Select.test.tsx(26,35): error TS2741: Property 'onChange' is missing in type '{ error: string; options: { value: string; label: string; }[]; }' but required in type 'SelectProps'.
+src/components/Select.test.tsx(33,35): error TS2741: Property 'onChange' is missing in type '{ disabled: true; options: { value: string; label: string; }[]; }' but required in type 'SelectProps'.
+src/components/Select.test.tsx(40,13): error TS2741: Property 'onChange' is missing in type '{ options: { value: string; label: string; }[]; }' but required in type 'SelectProps'.
+src/components/Select.test.tsx(60,13): error TS2741: Property 'onChange' is missing in type '{ options: { value: string; label: string; }[]; }' but required in type 'SelectProps'.
+src/components/Select.test.tsx(69,13): error TS2741: Property 'onChange' is missing in type '{ options: { value: string; label: string; }[]; }' but required in type 'SelectProps'.
+src/components/Spinner.test.tsx(1,32): error TS6133: 'vi' is declared but its value is never read.
+src/components/Spinner.test.tsx(2,18): error TS6133: 'screen' is declared but its value is never read.
+src/components/Terminal.tsx(5,29): error TS2307: Cannot find module '@xterm/addon-search' or its corresponding type declarations.
+src/components/Terminal.tsx(112,5): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string | (() => string)'.
+  Type 'undefined' is not assignable to type 'string | (() => string)'.
+src/components/Terminal.tsx(437,15): error TS2322: Type '{ value: string; onChange: Dispatch<SetStateAction<string>>; options: { value: string; label: string; }[]; className: string; }' is not assignable to type 'IntrinsicAttributes & SelectProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & SelectProps'.
+src/components/Terminal.tsx(452,15): error TS2322: Type '{ value: TerminalShell; onChange: (value: string) => void; options: { value: string; label: string; }[]; className: string; }' is not assignable to type 'IntrinsicAttributes & SelectProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & SelectProps'.
+src/components/Terminal.tsx(457,44): error TS2322: Type '{ status: string; variant: string; }' is not assignable to type 'IntrinsicAttributes & BadgeProps'.
+  Property 'variant' does not exist on type 'IntrinsicAttributes & BadgeProps'.
+src/components/Terminal.tsx(471,13): error TS2322: Type '{ value: TerminalTheme; onChange: (value: string) => void; options: { value: string; label: string; }[]; className: string; }' is not assignable to type 'IntrinsicAttributes & SelectProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & SelectProps'.
+src/components/Toast.test.tsx(5,10): error TS6133: 'TestComponent' is declared but its value is never read.
+src/components/Toast.test.tsx(6,9): error TS6133: 'showToast' is declared but its value is never read.
+src/components/Toast.test.tsx(123,12): error TS2339: Property 'click' does not exist on type 'Element'.
+src/components/YamlEditor.tsx(161,3): error TS6133: 'onValidate' is declared but its value is never read.
+src/components/YamlEditor.tsx(162,3): error TS6133: 'onApply' is declared but its value is never read.
+src/components/YamlEditor.tsx(165,3): error TS6133: 'namespace' is declared but its value is never read.
+src/components/YamlEditor.tsx(171,3): error TS6133: 'showValidationErrors' is declared but its value is never read.
+src/components/YamlEditor.tsx(182,10): error TS6133: 'monacoRef' is declared but its value is never read.
+src/components/YamlEditor.tsx(187,28): error TS6133: 'setValidationResult' is declared but its value is never read.
+src/components/YamlEditor.tsx(192,24): error TS6133: 'setIsValidating' is declared but its value is never read.
+src/components/YamlEditor.tsx(211,19): error TS6133: 'setHistory' is declared but its value is never read.
+src/components/YamlEditor.tsx(212,24): error TS6133: 'setHistoryIndex' is declared but its value is never read.
+src/components/YamlEditor.tsx(308,62): error TS2554: Expected 0 arguments, but got 2.
+src/components/YamlEditor.tsx(369,19): error TS2353: Object literal may only specify known properties, and 'original' does not exist in type 'DiffData | ((prevState: DiffData | null) => DiffData | null)'.
+src/components/YamlEditor.tsx(386,83): error TS6133: 'monaco' is declared but its value is never read.
+src/pages/LogViewer.tsx(18,8): error TS6133: 'React' is declared but its value is never read.
+src/pages/LogViewer.tsx(30,18): error TS6133: 'SelectStyles' is declared but its value is never read.
+src/pages/LogViewer.tsx(31,18): error TS6133: 'ButtonStyles' is declared but its value is never read.
+src/pages/LogViewer.tsx(32,1): error TS6133: 'Badge' is declared but its value is never read.
+src/pages/LogViewer.tsx(84,26): error TS6133: 'setSeverityFilter' is declared but its value is never read.
+src/pages/LogViewer.tsx(86,21): error TS6133: 'setStartTime' is declared but its value is never read.
+src/pages/LogViewer.tsx(87,19): error TS6133: 'setEndTime' is declared but its value is never read.
+src/pages/LogViewer.tsx(96,10): error TS6133: 'shareableBookmark' is declared but its value is never read.
+src/pages/LogViewer.tsx(249,9): error TS6133: 'addBookmark' is declared but its value is never read.
+src/pages/LogViewer.tsx(336,7): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/pages/LogViewer.tsx(337,7): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/pages/LogViewer.tsx(341,13): error TS2304: Cannot find name 'namespace'.
+src/pages/LogViewer.tsx(360,9): error TS6133: 'downloadLogs' is declared but its value is never read.
+src/pages/LogViewer.tsx(405,53): error TS2339: Property 'target' does not exist on type 'string'.
+src/pages/LogViewer.tsx(406,37): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/pages/LogViewer.tsx(472,41): error TS6133: 'index' is declared but its value is never read.
+src/pages/LogViewer.tsx(494,56): error TS2345: Argument of type 'void' is not assignable to parameter of type 'ShareableLogBookmark'.
+src/utils/apiResponse.test.ts(1,32): error TS6133: 'vi' is declared but its value is never read.
+src/utils/apiResponse.test.ts(1,36): error TS6133: 'beforeEach' is declared but its value is never read.

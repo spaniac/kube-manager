@@ -10,7 +10,7 @@ import { useToast } from '@components/Toast';
 
 interface Revision {
   revision: number;
-  annotations: Record<string, string>;
+  annotations: Record<string, string | undefined>;
 }
 
 export default function WorkloadRollback() {
@@ -27,10 +27,11 @@ export default function WorkloadRollback() {
   );
 
   const rollbackMutation = useApiMutation(
-    async (revision?: number) => {
+    async (revision: number) => {
       if (namespace && name) {
         return await rollbackDeployment(namespace, name, revision);
       }
+      return Promise.reject(new Error('Missing params or revision'));
     },
     {
       onSuccess: () => {
@@ -53,31 +54,41 @@ export default function WorkloadRollback() {
   const handleRollbackToPrevious = () => {
     if (revisions && revisions.length > 1) {
       const previousRevision = revisions[1];
+      if (previousRevision) {
       setSelectedRevision(previousRevision);
       setSelectedRevisionNumber(previousRevision.revision);
       setShowRollbackModal(true);
+      }
     }
   };
 
   const handleConfirmRollback = () => {
-    rollbackMutation.mutate(selectedRevisionNumber);
+    if (selectedRevisionNumber !== undefined) {
+      rollbackMutation.mutate(selectedRevisionNumber);
+    } else {
+      showToast({ message: 'No revision selected for rollback.', type: 'error' });
+    }
   };
 
   const getImageFromRevision = (revision: Revision): string => {
-    const changeCause = revision.annotations['kubectl.kubernetes.io/change-cause'];
-    if (changeCause && changeCause.includes('image:')) {
+    const changeCause = revision.annotations['kubectl.kubernetes.io/change-cause'] || '';
+    if (changeCause.includes('image:')) {
       const match = changeCause.match(/image:\s*(\S+)/);
-      return match ? match[1] : 'Unknown';
+      return (match && match[1]) || 'Unknown';
     }
     return 'Unknown';
   };
 
   const getChangeCause = (revision: Revision): string => {
-    return revision.annotations['kubectl.kubernetes.io/change-cause'] || 'Manual update';
+    const cause = revision.annotations['kubectl.kubernetes.io/change-cause'];
+    if (cause) {
+      return cause;
+    }
+    return 'Manual update';
   };
 
   const getCreationTime = (revision: Revision): string => {
-    const time = revision.annotations['deployment.kubernetes.io/revision'] || revision.revision.toString();
+    const time = revision.annotations['deployment.kubernetes.io/revision'] || revision.revision.toString() || '';
     return `Revision ${time}`;
   };
 

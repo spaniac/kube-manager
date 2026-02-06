@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@/test/test-utils';
+import { render, screen, fireEvent } from '@/test/test-utils';
 import { ToastProvider, useToast } from '@/components/Toast';
 
 function TestComponent({ children }: { children: React.ReactNode }) {
@@ -120,7 +120,7 @@ describe('Toast Component', () => {
     );
 
     const toast = screen.getByText('Success').closest('.toast');
-    toast?.click();
+    if (toast) fireEvent.click(toast);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,13 +1,13 @@
-import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { getNamespace, getNamespaceQuota, deleteNamespace } from '@api/namespace';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { Namespace, ResourceQuota } from '../types/api';
 import { Button } from '@components/Button';
 import { Input } from '@components/Input';
 import { ConfirmationDialog } from '@components/ConfirmationDialog';
 import { useToast } from '@components/Toast';
 import { Badge } from '@components/Badge';
+import type { Namespace, ResourceQuota } from '@/types/api';
 
 interface NamespaceLabelsEditorProps {
   labels: Record<string, string>;
@@ -37,7 +37,7 @@ function NamespaceLabelsEditor({ labels, onChange }: NamespaceLabelsEditorProps)
             <span className="label-value">{value}</span>
             <Button
              
-              size="small"
+              size="sm"
               onClick={() => removeLabel(key)}
             >
               ✕
@@ -58,7 +58,7 @@ function NamespaceLabelsEditor({ labels, onChange }: NamespaceLabelsEditorProps)
         />
         <Button
          
-          size="small"
+          size="sm"
           onClick={addLabel}
           disabled={!newLabel.key || !newLabel.value}
         >
@@ -150,7 +150,7 @@ export default function NamespaceDetails() {
   );
 
   const updateLabelsMutation = useApiMutation(
-    async () => {
+    async (_unused?: void) => {
       await fetch(`/api/v1/namespaces/${name}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -159,7 +159,7 @@ export default function NamespaceDetails() {
     },
     {
       onSuccess: () => {
-        showToast('Labels updated successfully', 'success');
+        showToast({ message: 'Labels updated successfully', type: 'success' });
         setIsEditingLabels(false);
         refetch();
       },
@@ -176,19 +176,19 @@ export default function NamespaceDetails() {
     },
     {
       onSuccess: () => {
-        showToast('Quota updated successfully', 'success');
+        showToast({ message: 'Quota updated successfully', type: 'success' });
         refetchQuota();
       },
     },
   );
 
   const deleteMutation = useApiMutation(
-    async () => {
+    async (_unused?: void) => {
       await deleteNamespace(name!);
     },
     {
       onSuccess: () => {
-        showToast('Namespace deleted successfully', 'success');
+        showToast({ message: 'Namespace deleted successfully', type: 'success' });
         window.location.href = '/namespaces';
       },
     },
@@ -267,7 +267,7 @@ export default function NamespaceDetails() {
             </div>
             <div className="info-row">
               <span className="info-label">UID:</span>
-              <span className="info-value mono">{namespace.metadata?.uid || 'N/A'}</span>
+              <span className="info-value mono">{namespace.name || 'N/A'}</span>
             </div>
           </div>
 
@@ -336,7 +336,7 @@ export default function NamespaceDetails() {
                 </div>
                 <Button
                  
-                  size="small"
+                  size="sm"
                   onClick={() => {
                     setLabels(namespace.labels || {});
                     setIsEditingLabels(true);

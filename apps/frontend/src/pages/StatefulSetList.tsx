@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getStatefulSets, deleteStatefulSet, scaleStatefulSet } from '@api/statefulset';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { StatefulSet } from '@types/api';
+import type { StatefulSet } from '@/types/api';
 import { Badge } from '@components/Badge';
 import { ConfirmationDialog } from '@components/ConfirmationDialog';
 import { useToast } from '@components/Toast';
@@ -89,7 +89,7 @@ export default function StatefulSetList() {
       key: 'name' as keyof StatefulSet,
       header: 'Name',
       sortable: true,
-      render: (value: string, row: StatefulSet) => (
+      render: (value: unknown, row: StatefulSet) => (
         <a
           href={`/statefulsets/${row.namespace}/${row.name}`}
           className="resource-link"
@@ -98,7 +98,7 @@ export default function StatefulSetList() {
             navigate(`/statefulsets/${row.namespace}/${row.name}`);
           }}
         >
-          {value}
+          {(value as string)}
         </a>
       ),
     },
@@ -111,7 +111,7 @@ export default function StatefulSetList() {
       key: 'replicas' as keyof StatefulSet,
       header: 'Replicas',
       sortable: true,
-      render: (value: number, row: StatefulSet) => `${row.readyReplicas}/${value}`,
+      render: (value: unknown, row: StatefulSet) => <span>{`${row.readyReplicas}/${value as number}`}</span>,
     },
     {
       key: 'currentReplicas' as keyof StatefulSet,

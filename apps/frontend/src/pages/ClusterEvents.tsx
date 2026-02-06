@@ -4,71 +4,75 @@ import { getClusterEvents } from '../api/cluster';
 import { Input } from '../components/Input';
 import { Badge } from '../components/Badge';
 import { Table, TableStyles } from '../components/Table';
-import type { Event } from '../types/api';
+import type { Event as ApiEvent } from '../types/api';
 
 type SeverityFilter = 'all' | 'Normal' | 'Warning' | 'Error';
+type Column<T> = {
+  key: keyof T;
+  header: string;
+  sortable?: boolean;
+  render?: (value: unknown, row: T) => React.ReactNode;
+};
 
 export default function ClusterEvents() {
   const [severity, setSeverity] = useState<SeverityFilter>('all');
   const [limit, setLimit] = useState(50);
-  const { data: events, isLoading } = useApiQuery(
+  const { data: eventsData, isLoading } = useApiQuery<ApiEvent[]>(
     ['cluster', 'events', severity, limit],
     () => getClusterEvents({ severity: severity === 'all' ? undefined : severity, limit }),
   );
 
-  const filteredEvents = severity === 'all' ? events : events?.filter((e) => e.type === severity);
+  const events: ApiEvent[] = eventsData || [];
 
-  const columns = [
+  const filteredEvents = severity === 'all' ? events : events.filter((e) => e.type === severity);
+
+  const columns: Column<ApiEvent>[] = [
     {
-      key: 'type' as keyof Event,
+      key: 'type',
       header: 'Severity',
       sortable: true,
-      render: (value: string) => {
-        return (
-          <Badge status={value}>
-            {value}
-          </Badge>
-        );
+      render: (value: unknown) => {
+        return <Badge status={value as string} />;
       },
     },
     {
-      key: 'lastTimestamp' as keyof Event,
+      key: 'lastTimestamp',
       header: 'Time',
       sortable: true,
-      render: (value: number) => new Date(value * 1000).toLocaleString(),
+      render: (value: unknown) => new Date((value as number) * 1000).toLocaleString(),
     },
     {
-      key: 'count' as keyof Event,
+      key: 'count',
       header: 'Count',
       sortable: true,
     },
     {
-      key: 'reason' as keyof Event,
+      key: 'reason',
       header: 'Reason',
       sortable: true,
     },
     {
-      key: 'message' as keyof Event,
+      key: 'message',
       header: 'Message',
       sortable: true,
-      render: (value: string) => (
-        <div className="event-message" title={value}>
-          {value}
+      render: (value: unknown) => (
+        <div className="event-message" title={value as string}>
+          {value as string}
         </div>
       ),
     },
     {
-      key: 'source' as keyof Event,
+      key: 'source',
       header: 'Source',
       sortable: true,
     },
   ];
 
   const severityCounts = {
-    all: events?.length || 0,
-    Normal: events?.filter((e) => e.type === 'Normal').length || 0,
-    Warning: events?.filter((e) => e.type === 'Warning').length || 0,
-    Error: events?.filter((e) => e.type === 'Error').length || 0,
+    all: events.length || 0,
+    Normal: (events as ApiEvent[]).filter((e) => e.type === 'Normal').length || 0,
+    Warning: (events as ApiEvent[]).filter((e) => e.type === 'Warning').length || 0,
+    Error: (events as ApiEvent[]).filter((e) => e.type === 'Error').length || 0,
   };
 
   return (
@@ -102,11 +106,11 @@ export default function ClusterEvents() {
 
       <TableStyles />
       <Table
-        data={filteredEvents || []}
+        data={filteredEvents}
         columns={columns}
         loading={isLoading}
         emptyMessage="No events found"
-        defaultSort={{ key: 'lastTimestamp' as keyof Event, order: 'desc' }}
+        defaultSort={{ key: 'lastTimestamp', order: 'desc' }}
       />
 
       <style>{`

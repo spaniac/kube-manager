@@ -34,7 +34,7 @@ export default function CreateNamespace() {
     },
     {
       onSuccess: (result: Namespace) => {
-        showToast(`Namespace "${result.name}" created successfully`, 'success');
+        showToast({ message: `Namespace "${result.name}" created successfully`, type: 'success' });
         navigate(`/namespaces/${result.name}`);
       },
     },
@@ -44,7 +44,7 @@ export default function CreateNamespace() {
     e.preventDefault();
 
     if (!formData.name.trim()) {
-      showToast('Namespace name is required', 'error');
+      showToast({ message: 'Namespace name is required', type: 'error' });
       return;
     }
 
@@ -137,7 +137,7 @@ export default function CreateNamespace() {
                   />
                   <Button
                     variant="danger"
-                    size="small"
+                    size="sm"
                     onClick={() => removeLabel(key)}
                   >
                     Remove
@@ -158,7 +158,7 @@ export default function CreateNamespace() {
               />
               <Button
                 variant="secondary"
-                size="small"
+                size="sm"
                 onClick={addLabel}
                 disabled={!newLabel.key || !newLabel.value}
               >
@@ -194,7 +194,7 @@ export default function CreateNamespace() {
                   />
                   <Button
                     variant="danger"
-                    size="small"
+                    size="sm"
                     onClick={() => removeAnnotation(key)}
                   >
                     Remove
@@ -215,7 +215,7 @@ export default function CreateNamespace() {
               />
               <Button
                 variant="secondary"
-                size="small"
+                size="sm"
                 onClick={addAnnotation}
                 disabled={!newAnnotation.key || !newAnnotation.value}
               >

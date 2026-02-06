@@ -1,7 +1,7 @@
 import apiClient from '@api/client';
 import { z } from 'zod';
 import { parseApiResponse, parsePaginationParams } from '@utils/apiResponse';
-import { serviceSchema, apiResponseSchema, resourceListSchema } from '../types/schemas';
+import { apiResponseSchema, resourceListSchema, serviceSchema } from '../types/schemas';
 import type { Service, ResourceList, ResourceYaml, ApiResponse } from '../types/api';
 
 export async function getServices(params?: {
@@ -39,7 +39,7 @@ export async function deleteService(namespace: string, name: string): Promise<vo
   const response = await apiClient.delete<ApiResponse<void>>(
     `/api/v1/services/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`,
   );
-  parseApiResponse(response.data, apiResponseSchema(z.undefined()));
+  parseApiResponse(response.data, z.undefined());
 }
 
 export async function getServiceYaml(namespace: string, name: string): Promise<ResourceYaml> {
@@ -48,13 +48,11 @@ export async function getServiceYaml(namespace: string, name: string): Promise<R
   );
   return parseApiResponse(
     response.data,
-    apiResponseSchema(
-      z.object({
-        name: z.string(),
-        kind: z.string(),
-        namespace: z.string().optional(),
-        yaml: z.string(),
-      }),
-    ),
-  ).data;
+    z.object({
+      name: z.string(),
+      kind: z.string(),
+      namespace: z.string().optional(),
+      yaml: z.string(),
+    }),
+  );
 }

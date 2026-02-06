@@ -38,7 +38,7 @@ interface NamespaceFilters {
     },
     {
       onSuccess: () => {
-        showToast('Namespace deleted successfully', 'success');
+        showToast({ message: 'Namespace deleted successfully', type: 'success' });
         refetch();
         setDeleteTarget(null);
       },
@@ -62,9 +62,9 @@ interface NamespaceFilters {
       key: 'name' as keyof Namespace,
       header: 'Name',
       sortable: true,
-      render: (value: string, row: Namespace) => (
+      render: (value: unknown, row: Namespace) => (
         <a href={`/namespaces/${row.name}`} className="namespace-link">
-          {value}
+          {value as string}
         </a>
       ),
     },
@@ -72,33 +72,33 @@ interface NamespaceFilters {
       key: 'status' as keyof Namespace,
       header: 'Status',
       sortable: true,
-      render: (value: string) => {
-        const variant = value === 'Active' ? 'success' : 'warning';
-        return <Badge status={value} variant={variant} />;
+      render: (value: unknown) => {
+        return <Badge status={value as string} />;
       },
     },
     {
       key: 'creationTimestamp' as keyof Namespace,
       header: 'Created',
       sortable: true,
-      render: (value: number) => new Date(value).toLocaleString(),
+      render: (value: unknown) => new Date(value as number).toLocaleString(),
     },
     {
       key: 'labels' as keyof Namespace,
       header: 'Labels',
-      render: (value: Record<string, string>) => {
-        if (!value || Object.keys(value).length === 0) {
+      render: (value: unknown) => {
+        const labels = value as Record<string, string>;
+        if (!labels || Object.keys(labels).length === 0) {
           return '-';
         }
-        const labelKeys = Object.keys(value).slice(0, 2);
+        const labelKeys = Object.keys(labels).slice(0, 2);
         return (
           <div className="labels-cell">
             {labelKeys.map((key) => (
               <span key={key} className="label">
-                {key}: {value[key]}
+                {key}: {labels[key]}
               </span>
             ))}
-            {Object.keys(value).length > 2 && <span className="label-more">...</span>}
+            {Object.keys(labels).length > 2 && <span className="label-more">...</span>}
           </div>
         );
       },
@@ -110,7 +110,7 @@ interface NamespaceFilters {
         <div className="actions-cell">
           <Button
            
-            size="small"
+            size="sm"
             onClick={(e) => {
               e.stopPropagation();
               window.location.href = `/namespaces/${row.name}/edit`;
@@ -120,7 +120,7 @@ interface NamespaceFilters {
           </Button>
           <Button
            
-            size="small"
+            size="sm"
             onClick={(e) => {
               e.stopPropagation();
               setDeleteTarget(row);

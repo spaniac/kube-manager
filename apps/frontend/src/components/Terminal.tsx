@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Terminal as XTerminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
+import { SearchAddon } from '@xterm/addon-search';
 import '@xterm/xterm/css/xterm.css';
 import {
   connectTerminal,
@@ -10,10 +11,10 @@ import {
   interruptTerminal,
   createTerminalWebSocket,
 } from '@api/terminal';
-import type { PodContainer } from '@types/api';
-import Button from './Button';
-import Select from './Select';
-import Badge from './Badge';
+import type { PodContainer } from '@/types/api';
+import { Button } from './Button';
+import { Select } from './Select';
+import { Badge } from './Badge';
 import { useToast } from './Toast';
 
 interface TerminalProps {
@@ -99,6 +100,7 @@ export default function Terminal({
   const xtermRef = useRef<XTerminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
   const webLinksAddonRef = useRef<WebLinksAddon | null>(null);
+  const searchAddonRef = useRef<SearchAddon | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const sessionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -107,7 +109,7 @@ export default function Terminal({
   const currentInputRef = useRef<string>('');
 
   const [selectedContainer, setSelectedContainer] = useState<string>(
-    initialContainer || (containers.length > 0 ? containers[0].name : ''),
+    initialContainer || (containers.length > 0 ? containers[0]?.name : '') || '',
   );
   const [selectedShell, setSelectedShell] = useState<TerminalShell>('bash');
   const [selectedTheme, setSelectedTheme] = useState<TerminalTheme>('dark');
@@ -179,7 +181,7 @@ export default function Terminal({
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       showToast({ message: `Failed to connect: ${errorMessage}`, type: 'error' });
     }
-  }, [namespace, podName, selectedContainer, resetSessionTimeout, handleClose]);
+  }, [namespace, podName, selectedContainer, resetSessionTimeout]);
 
   // Disconnect from terminal
   const disconnect = useCallback(async () => {
@@ -271,11 +273,11 @@ export default function Terminal({
   // Search in terminal
   const handleSearch = useCallback(
     (direction: 'next' | 'prev') => {
-      if (xtermRef.current && searchTerm) {
+      if (searchAddonRef.current && searchTerm) {
         if (direction === 'next') {
-          xtermRef.current.findNext(searchTerm);
+          searchAddonRef.current.findNext(searchTerm);
         } else {
-          xtermRef.current.findPrevious(searchTerm);
+          searchAddonRef.current.findPrevious(searchTerm);
         }
         resetSessionTimeout();
       }
@@ -298,9 +300,11 @@ export default function Terminal({
 
     const fitAddon = new FitAddon();
     const webLinksAddon = new WebLinksAddon();
+    const searchAddon = new SearchAddon();
 
     xterm.loadAddon(fitAddon);
     xterm.loadAddon(webLinksAddon);
+    xterm.loadAddon(searchAddon);
 
     xterm.open(terminalRef.current);
     fitAddon.fit();
@@ -308,6 +312,7 @@ export default function Terminal({
     xtermRef.current = xterm;
     fitAddonRef.current = fitAddon;
     webLinksAddonRef.current = webLinksAddon;
+    searchAddonRef.current = searchAddon;
 
     // Event handlers
     xterm.onData((data) => {
@@ -429,7 +434,6 @@ export default function Terminal({
               value={selectedContainer}
               onChange={setSelectedContainer}
               options={containers.map((c) => ({ value: c.name, label: c.name }))}
-              className="w-48"
             />
           </div>
 
@@ -444,12 +448,11 @@ export default function Terminal({
                 { value: 'sh', label: 'sh' },
                 { value: 'zsh', label: 'zsh' },
               ]}
-              className="w-32"
             />
           </div>
 
           {/* Connection status */}
-          <Badge status={connectionStatus} variant={getStatusColor()} />
+          <Badge status={connectionStatus} />
         </div>
 
         <div className="flex items-center gap-2">
@@ -463,7 +466,6 @@ export default function Terminal({
               { value: 'solarized', label: 'Solarized Dark' },
               { value: 'solarized-light', label: 'Solarized Light' },
             ]}
-            className="w-36"
           />
 
           {/* Font size controls */}

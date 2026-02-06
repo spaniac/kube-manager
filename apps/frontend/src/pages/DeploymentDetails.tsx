@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getDeployment, getDeploymentYaml, scaleDeployment, restartDeployment, updateDeploymentImage } from '@api/deployment';
 import { pauseDeployment, resumeDeployment } from '@api/workload';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { WorkloadCondition } from '@types/api';
+import type { WorkloadCondition } from '@/types/api';
 import { Badge } from '@components/Badge';
 import { Button } from '@components/Button';
 import { Modal } from '@components/Modal';
@@ -56,9 +56,8 @@ import { useToast } from '@components/Toast';
 
   const restartMutation = useApiMutation(
     async () => {
-      if (namespace && name) {
-        await restartDeployment(namespace, name);
-      }
+      if (!namespace || !name) return Promise.resolve();
+      await restartDeployment(namespace, name);
     },
     {
       onSuccess: () => {
@@ -73,6 +72,8 @@ import { useToast } from '@components/Toast';
     async (image: string) => {
       if (namespace && name) {
         await updateDeploymentImage(namespace, name, image);
+      } else {
+        return Promise.resolve();
       }
     },
     {
@@ -85,10 +86,9 @@ import { useToast } from '@components/Toast';
   );
 
   const pauseMutation = useApiMutation(
-    async () => {
-      if (namespace && name) {
-        await pauseDeployment(namespace, name);
-      }
+    async (_unused?: void) => {
+      if (!namespace || !name) return Promise.resolve();
+      await pauseDeployment(namespace, name);
     },
     {
       onSuccess: () => {
@@ -103,10 +103,9 @@ import { useToast } from '@components/Toast';
   );
 
   const resumeMutation = useApiMutation(
-    async () => {
-      if (namespace && name) {
-        await resumeDeployment(namespace, name);
-      }
+    async (_unused?: void) => {
+      if (!namespace || !name) return Promise.resolve();
+      await resumeDeployment(namespace, name);
     },
     {
       onSuccess: () => {
@@ -119,7 +118,7 @@ import { useToast } from '@components/Toast';
       },
     },
   );
-
+ 
   if (error) {
     return (
       <div className="deployment-details">
@@ -140,7 +139,7 @@ import { useToast } from '@components/Toast';
     return <div className="deployment-details">Deployment not found</div>;
   }
 
-  const conditions: WorkloadCondition[] = deployment.template?.containers.length > 0
+  const conditions: WorkloadCondition[] = (deployment.template?.containers && deployment.template?.containers.length > 0)
     ? [
         {
           type: 'Available',
@@ -160,12 +159,12 @@ import { useToast } from '@components/Toast';
     {
       key: 'status' as keyof WorkloadCondition,
       header: 'Status',
-      render: (value: string) => (
+      render: (value: unknown, _row: WorkloadCondition) => (
         <Badge status={value === 'True' ? 'Running' : 'Pending'} />
       ),
     },
     { key: 'reason' as keyof WorkloadCondition, header: 'Reason' },
-    { key: 'message' as keyof WorkloadCondition, header: 'Message', render: (v: string) => v || '-' },
+    { key: 'message' as keyof WorkloadCondition, header: 'Message', render: (v: unknown, _row: WorkloadCondition) => <span>{typeof v === 'string' ? v || '-' : String(v)}</span> },
   ];
 
   const handleScale = () => {
@@ -189,7 +188,7 @@ import { useToast } from '@components/Toast';
   };
 
   const handleRestartSubmit = () => {
-    restartMutation.mutate();
+    restartMutation.mutate(undefined);
   };
 
   const handleUpdateImageSubmit = () => {
@@ -424,8 +423,8 @@ import { useToast } from '@components/Toast';
                 Cancel
               </Button>
               <Button
-                variant={deployment.replicas > 0 ? 'warning' : 'primary'}
-                onClick={() => deployment.replicas > 0 ? pauseMutation.mutate() : resumeMutation.mutate()}
+                variant={deployment.replicas > 0 ? 'danger' : 'primary'}
+                onClick={() => deployment.replicas > 0 ? pauseMutation.mutate(undefined) : resumeMutation.mutate(undefined)}
                 loading={pauseMutation.isPending || resumeMutation.isPending}
               >
                 {deployment.replicas > 0 ? 'Pause' : 'Resume'}

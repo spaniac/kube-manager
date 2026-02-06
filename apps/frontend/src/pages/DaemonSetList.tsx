@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getDaemonSets, deleteDaemonSet } from '@api/daemonset';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { DaemonSet } from '@types/api';
+import type { DaemonSet } from '@/types/api';
 import { ConfirmationDialog } from '@components/ConfirmationDialog';
 import { useToast } from '@components/Toast';
  import { Table, TableStyles } from '@components/Table';
@@ -61,7 +61,7 @@ import { useToast } from '@components/Toast';
       key: 'name' as keyof DaemonSet,
       header: 'Name',
       sortable: true,
-      render: (value: string, row: DaemonSet) => (
+      render: (value: unknown, row: DaemonSet) => (
         <a
           href={`/daemonsets/${row.namespace}/${row.name}`}
           className="resource-link"
@@ -70,7 +70,7 @@ import { useToast } from '@components/Toast';
             navigate(`/daemonsets/${row.namespace}/${row.name}`);
           }}
         >
-          {value}
+          {(value as string)}
         </a>
       ),
     },

@@ -212,6 +212,7 @@ export interface ResourceList<T> {
   apiVersion: string;
   items: T[];
   metadata?: ResourceListMeta;
+  total?: number;
 }
 
 export interface LogEntry {

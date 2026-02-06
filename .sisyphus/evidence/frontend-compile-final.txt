@@ -1,0 +1,5 @@
+
+> k8s-manager-frontend@0.0.0 compile
+> tsc -b
+
+EXIT CODE: 0

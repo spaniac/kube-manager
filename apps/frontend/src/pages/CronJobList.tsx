@@ -25,39 +25,37 @@ export default function CronJobList() {
   const { data: cronJobsData, isLoading, error } = useApiQuery(
     ['cronjobs', page, limit, namespace, search],
     () => getCronJobs({ page, limit, namespace: namespace || undefined, search: search || undefined }),
-    {
-      keepPreviousData: true,
-    },
+    {},
   );
 
   const cronJobs = cronJobsData?.items || [];
   const total = cronJobsData?.total || 0;
 
   const columns = [
-    { key: 'name' as keyof CronJob, header: 'Name' },
+    { key: 'name' as keyof CronJob, header: 'Name', render: (value: unknown) => <span>{(value as string)}</span> },
     {
       key: 'namespace' as keyof CronJob,
       header: 'Namespace',
-      render: (value: string) => (
-        <span className="namespace-badge">{value}</span>
+      render: (value: unknown) => (
+        <span className="namespace-badge">{value as string}</span>
       ),
     },
     {
       key: 'schedule' as keyof CronJob,
       header: 'Schedule',
-      render: (value: string) => (
-        <code className="schedule-code">{value}</code>
+      render: (value: unknown) => (
+        <code className="schedule-code">{value as string}</code>
       ),
     },
     {
       key: 'suspend' as keyof CronJob,
       header: 'Status',
-      render: (value: boolean) => (
-        <Badge status={value ? 'Pending' : 'Running'} label={value ? 'Suspended' : 'Active'} />
+      render: (value: unknown) => (
+        <Badge status={(value as boolean) ? 'Pending' : 'Running'} label={(value as boolean) ? 'Suspended' : 'Active'} />
       ),
     },
-    { key: 'succeeded' as keyof CronJob, header: 'Succeeded', render: (v: number) => v || 0 },
-    { key: 'failed' as keyof CronJob, header: 'Failed', render: (v: number) => v || 0 },
+    { key: 'succeeded' as keyof CronJob, header: 'Succeeded', render: (value: unknown) => <span>{(value as number) || 0}</span> },
+    { key: 'failed' as keyof CronJob, header: 'Failed', render: (value: unknown) => <span>{(value as number) || 0}</span> },
   ];
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
