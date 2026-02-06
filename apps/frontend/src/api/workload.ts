@@ -98,6 +98,21 @@ export async function getDeploymentRevisions(
   );
 }
 
+export async function rollbackDeployment(
+  namespace: string,
+  name: string,
+  revision: number,
+): Promise<{ message: string }> {
+  const response = await apiClient.post<ApiResponse<{ message: string }>>(
+    `/api/v1/deployments/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/rollback`,
+    { revision },
+  );
+  return parseApiResponse(
+    response.data,
+    z.object({ message: z.string() }),
+  );
+}
+
 export async function updateContainerResources(
   namespace: string,
   name: string,

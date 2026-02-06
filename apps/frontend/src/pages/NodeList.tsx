@@ -5,7 +5,7 @@ import { getNodes } from '@api/cluster';
 import { Table, TableStyles } from '@components/Table';
 import { Badge } from '@components/Badge';
 import { Input } from '@components/Input';
-import type { Node } from '../api';
+import type { Node } from '../types/api';
 
 export default function NodeList() {
   const navigate = useNavigate();

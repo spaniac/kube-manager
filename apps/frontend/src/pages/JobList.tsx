@@ -6,7 +6,7 @@ import { Input } from '@components/Input';
 import { Spinner } from '@components/Spinner';
 import { Table, TableStyles } from '@components/Table';
 import { Badge } from '@components/Badge';
-import { TableStyles } from '@components/Table';
+
 
 interface Job {
   name: string;

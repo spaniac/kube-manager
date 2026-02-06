@@ -4,7 +4,7 @@ import { getClusterEvents } from '../api/cluster';
 import { Input } from '../components/Input';
 import { Badge } from '../components/Badge';
 import { Table, TableStyles } from '../components/Table';
-import type { Event } from '../api';
+import type { Event } from '../types/api';
 
 type SeverityFilter = 'all' | 'Normal' | 'Warning' | 'Error';
 
