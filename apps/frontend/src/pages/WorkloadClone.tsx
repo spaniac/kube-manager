@@ -12,6 +12,7 @@ import { useToast } from '@components/Toast';
 export default function WorkloadClone() {
   const { namespace, name } = useParams<{ namespace: string; name: string }>();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [newName, setNewName] = useState('');
   const [targetNamespace, setTargetNamespace] = useState('');
   const [cloneLabels, setCloneLabels] = useState(true);
@@ -32,18 +33,18 @@ export default function WorkloadClone() {
     },
     {
       onSuccess: (data) => {
-        Toast.show(`Deployment cloned successfully as ${data.name}`, 'success');
+        showToast({ message: `Deployment cloned successfully as ${data.name}`, type: 'success' });
         navigate(`/deployments/${data.namespace}/${data.name}`);
       },
       onError: (error) => {
-        Toast.show(`Failed to clone deployment: ${(error as Error).message}`, 'error');
+        showToast({ message: `Failed to clone deployment: ${(error as Error).message}`, type: 'error' });
       },
     },
   );
 
   const handleClone = () => {
     if (!newName || !targetNamespace) {
-      Toast.show('Please fill in all required fields', 'error');
+      showToast({ message: 'Please fill in all required fields', type: 'error' });
       return;
     }
 

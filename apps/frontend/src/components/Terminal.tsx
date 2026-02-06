@@ -14,7 +14,7 @@ import type { PodContainer } from '@types/api';
 import Button from './Button';
 import Select from './Select';
 import Badge from './Badge';
-import { Toast } from './Toast';
+import { useToast } from './Toast';
 
 interface TerminalProps {
   namespace: string;
@@ -94,6 +94,7 @@ export default function Terminal({
   initialContainer,
   onClose,
 }: TerminalProps) {
+  const { showToast } = useToast();
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XTerminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -122,7 +123,7 @@ export default function Terminal({
       clearTimeout(sessionTimeoutRef.current);
     }
     sessionTimeoutRef.current = setTimeout(() => {
-      Toast.error('Terminal session timeout - closing connection');
+      showToast({ message: 'Terminal session timeout - closing connection', type: 'error' });
       handleClose();
     }, SESSION_TIMEOUT);
   }, []);
@@ -144,7 +145,7 @@ export default function Terminal({
           setIsConnected(true);
           setConnectionStatus('connected');
           resetSessionTimeout();
-          Toast.success('Terminal connected');
+          showToast({ message: 'Terminal connected', type: 'success' });
         },
         onMessage: (data: string | Uint8Array) => {
           if (xtermRef.current) {
@@ -167,7 +168,7 @@ export default function Terminal({
         onError: (error) => {
           console.error('WebSocket error:', error);
           setConnectionStatus('error');
-          Toast.error('Terminal connection error');
+          showToast({ message: 'Terminal connection error', type: 'error' });
         },
       });
 
@@ -176,7 +177,7 @@ export default function Terminal({
       console.error('Failed to connect to terminal:', error);
       setConnectionStatus('error');
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      Toast.error(`Failed to connect: ${errorMessage}`);
+      showToast({ message: `Failed to connect: ${errorMessage}`, type: 'error' });
     }
   }, [namespace, podName, selectedContainer, resetSessionTimeout, handleClose]);
 
@@ -247,7 +248,7 @@ export default function Terminal({
       const selection = xtermRef.current.getSelection();
       if (selection) {
         await navigator.clipboard.writeText(selection);
-        Toast.success('Copied to clipboard');
+        showToast({ message: 'Copied to clipboard', type: 'success' });
         resetSessionTimeout();
       }
     }
@@ -263,7 +264,7 @@ export default function Terminal({
       }
     } catch (error) {
       console.error('Failed to paste:', error);
-      Toast.error('Failed to paste from clipboard');
+      showToast({ message: 'Failed to paste from clipboard', type: 'error' });
     }
   }, [resetSessionTimeout]);
 

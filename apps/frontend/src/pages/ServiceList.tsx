@@ -9,7 +9,7 @@ import { useToast } from '@components/Toast';
 import { Table, TableStyles } from '@components/Table';
 import { Button } from '@components/Button';
 
-export default function ServiceList() {
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const [filters, setFilters] = useState({ search: '', namespace: '' });
   const [deleteTarget, setDeleteTarget] = useState<Service | null>(null);
@@ -33,7 +33,7 @@ export default function ServiceList() {
     },
     {
       onSuccess: () => {
-        Toast.show('Service deleted successfully', 'success');
+        showToast({ message: 'Service deleted successfully', type: 'success' });
         refetch();
         setDeleteTarget(null);
       },

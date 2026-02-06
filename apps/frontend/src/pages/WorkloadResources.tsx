@@ -21,6 +21,7 @@ interface ContainerResources {
 export default function WorkloadResources() {
   const { namespace, name } = useParams<{ namespace: string; name: string }>();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [selectedContainer, setSelectedContainer] = useState<string>('');
   const [resources, setResources] = useState<ContainerResources>({
     containerName: '',
@@ -47,12 +48,12 @@ export default function WorkloadResources() {
     },
     {
       onSuccess: () => {
-        Toast.show('Container resources updated successfully', 'success');
+        showToast({ message: 'Container resources updated successfully', type: 'success' });
         refetch();
         navigate(-1);
       },
       onError: (error) => {
-        Toast.show(`Failed to update resources: ${(error as Error).message}`, 'error');
+        showToast({ message: `Failed to update resources: ${(error as Error).message}`, type: 'error' });
       },
     },
   );

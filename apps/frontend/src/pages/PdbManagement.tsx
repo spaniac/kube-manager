@@ -21,6 +21,7 @@ interface Pdb {
 
 export default function PdbManagement() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
   const [namespace, setNamespace] = useState('');
@@ -61,7 +62,7 @@ export default function PdbManagement() {
     },
     {
       onSuccess: () => {
-        Toast.show('PodDisruptionBudget created successfully', 'success');
+        showToast({ message: 'PodDisruptionBudget created successfully', type: 'success' });
         setShowCreateModal(false);
         setNewPdbName('');
         setNewPdbNamespace('');
@@ -72,7 +73,7 @@ export default function PdbManagement() {
         refetch();
       },
       onError: (error) => {
-        Toast.show(`Failed to create PDB: ${(error as Error).message}`, 'error');
+        showToast({ message: `Failed to create PDB: ${(error as Error).message}`, type: 'error' });
       },
     },
   );
@@ -85,13 +86,13 @@ export default function PdbManagement() {
     },
     {
       onSuccess: () => {
-        Toast.show('PodDisruptionBudget deleted successfully', 'success');
+        showToast({ message: 'PodDisruptionBudget deleted successfully', type: 'success' });
         setShowDeleteModal(false);
         setSelectedPdb(null);
         refetch();
       },
       onError: (error) => {
-        Toast.show(`Failed to delete PDB: ${(error as Error).message}`, 'error');
+        showToast({ message: `Failed to delete PDB: ${(error as Error).message}`, type: 'error' });
       },
     },
   );
@@ -150,12 +151,12 @@ export default function PdbManagement() {
 
   const handleCreatePdb = () => {
     if (!newPdbName || !newPdbNamespace) {
-      Toast.show('Please fill in all required fields', 'error');
+      showToast({ message: 'Please fill in all required fields', type: 'error' });
       return;
     }
 
     if (minAvailable === undefined && maxUnavailable === undefined) {
-      Toast.show('Please specify either minAvailable or maxUnavailable', 'error');
+      showToast({ message: 'Please specify either minAvailable or maxUnavailable', type: 'error' });
       return;
     }
 

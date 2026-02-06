@@ -19,6 +19,7 @@ interface EnvVar {
 export default function WorkloadEnvEditor() {
   const { namespace, name } = useParams<{ namespace: string; name: string }>();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [selectedContainer, setSelectedContainer] = useState<string>('');
   const [envVars, setEnvVars] = useState<EnvVar[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -42,12 +43,12 @@ export default function WorkloadEnvEditor() {
     },
     {
       onSuccess: () => {
-        Toast.show('Environment variables updated successfully', 'success');
+        showToast({ message: 'Environment variables updated successfully', type: 'success' });
         refetch();
         navigate(-1);
       },
       onError: (error) => {
-        Toast.show(`Failed to update environment variables: ${(error as Error).message}`, 'error');
+        showToast({ message: `Failed to update environment variables: ${(error as Error).message}`, type: 'error' });
       },
     },
   );

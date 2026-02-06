@@ -10,11 +10,12 @@ import { Modal } from '@components/Modal';
 import { Input } from '@components/Input';
 import { Spinner } from '@components/Spinner';
 import { Table, TableStyles } from '@components/Table';
-import { Toast } from '@components/Toast';
-
-export default function DeploymentDetails() {
-  const { namespace, name } = useParams<{ namespace: string; name: string }>();
-  const navigate = useNavigate();
+import { useToast } from '@components/Toast';
+ 
+ export default function DeploymentDetails() {
+   const { namespace, name } = useParams<{ namespace: string; name: string }>();
+   const navigate = useNavigate();
+   const { showToast } = useToast();
   const [selectedTab, setSelectedTab] = useState<'overview' | 'conditions' | 'yaml'>('overview');
   const [showScaleModal, setShowScaleModal] = useState(false);
   const [showRestartModal, setShowRestartModal] = useState(false);
@@ -46,7 +47,7 @@ export default function DeploymentDetails() {
     },
     {
       onSuccess: () => {
-        Toast.show('Deployment scaled successfully', 'success');
+        showToast({ message: 'Deployment scaled successfully', type: 'success' });
         refetch();
         setShowScaleModal(false);
       },
@@ -61,7 +62,7 @@ export default function DeploymentDetails() {
     },
     {
       onSuccess: () => {
-        Toast.show('Deployment restarted successfully', 'success');
+        showToast({ message: 'Deployment restarted successfully', type: 'success' });
         refetch();
         setShowRestartModal(false);
       },
@@ -76,7 +77,7 @@ export default function DeploymentDetails() {
     },
     {
       onSuccess: () => {
-        Toast.show('Deployment image updated successfully', 'success');
+        showToast({ message: 'Deployment image updated successfully', type: 'success' });
         refetch();
         setShowImageModal(false);
       },
@@ -91,12 +92,12 @@ export default function DeploymentDetails() {
     },
     {
       onSuccess: () => {
-        Toast.show('Deployment paused successfully', 'success');
+        showToast({ message: 'Deployment paused successfully', type: 'success' });
         refetch();
         setShowPauseModal(false);
       },
       onError: (error) => {
-        Toast.show(`Failed to pause deployment: ${(error as Error).message}`, 'error');
+        showToast({ message: `Failed to pause deployment: ${(error as Error).message}`, type: 'error' });
       },
     },
   );
@@ -109,12 +110,12 @@ export default function DeploymentDetails() {
     },
     {
       onSuccess: () => {
-        Toast.show('Deployment resumed successfully', 'success');
+        showToast({ message: 'Deployment resumed successfully', type: 'success' });
         refetch();
         setShowPauseModal(false);
       },
       onError: (error) => {
-        Toast.show(`Failed to resume deployment: ${(error as Error).message}`, 'error');
+        showToast({ message: `Failed to resume deployment: ${(error as Error).message}`, type: 'error' });
       },
     },
   );

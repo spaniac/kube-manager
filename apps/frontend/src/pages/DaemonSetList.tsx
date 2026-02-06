@@ -4,12 +4,13 @@ import { getDaemonSets, deleteDaemonSet } from '@api/daemonset';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
 import type { DaemonSet } from '@types/api';
 import { ConfirmationDialog } from '@components/ConfirmationDialog';
-import { Toast } from '@components/Toast';
-import { Table, TableStyles } from '@components/Table';
-import { Button } from '@components/Button';
-
-export default function DaemonSetList() {
-  const navigate = useNavigate();
+import { useToast } from '@components/Toast';
+ import { Table, TableStyles } from '@components/Table';
+ import { Button } from '@components/Button';
+ 
+ export default function DaemonSetList() {
+   const navigate = useNavigate();
+   const { showToast } = useToast();
   const [filters, setFilters] = useState({ search: '', namespace: '' });
   const [deleteTarget, setDeleteTarget] = useState<DaemonSet | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: keyof DaemonSet; order: 'asc' | 'desc' }>({
@@ -32,7 +33,7 @@ export default function DaemonSetList() {
     },
     {
       onSuccess: () => {
-        Toast.show('DaemonSet deleted successfully', 'success');
+        showToast({ message: 'DaemonSet deleted successfully', type: 'success' });
         refetch();
         setDeleteTarget(null);
       },

@@ -10,7 +10,8 @@ import { Table, TableStyles } from '@components/Table';
 import { Button } from '@components/Button';
 
 export default function SecretList() {
-  const navigate = useNavigate();
+   const navigate = useNavigate();
+   const { showToast } = useToast();
   const [filters, setFilters] = useState({ search: '', namespace: '' });
   const [deleteTarget, setDeleteTarget] = useState<Secret | null>(null);
   const [showMasked, setShowMasked] = useState(true);
@@ -34,7 +35,7 @@ export default function SecretList() {
     },
     {
       onSuccess: () => {
-        Toast.show('Secret deleted successfully', 'success');
+        showToast({ message: 'Secret deleted successfully', type: 'success' });
         refetch();
         setDeleteTarget(null);
       },

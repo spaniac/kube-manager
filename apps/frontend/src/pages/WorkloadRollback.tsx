@@ -16,6 +16,7 @@ interface Revision {
 export default function WorkloadRollback() {
   const { namespace, name } = useParams<{ namespace: string; name: string }>();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [showRollbackModal, setShowRollbackModal] = useState(false);
   const [selectedRevision, setSelectedRevision] = useState<Revision | null>(null);
   const [selectedRevisionNumber, setSelectedRevisionNumber] = useState<number | undefined>();
@@ -33,12 +34,12 @@ export default function WorkloadRollback() {
     },
     {
       onSuccess: () => {
-        Toast.show('Deployment rolled back successfully', 'success');
+        showToast({ message: 'Deployment rolled back successfully', type: 'success' });
         refetch();
         setShowRollbackModal(false);
       },
       onError: (error) => {
-        Toast.show(`Failed to rollback deployment: ${(error as Error).message}`, 'error');
+        showToast({ message: `Failed to rollback deployment: ${(error as Error).message}`, type: 'error' });
       },
     },
   );

@@ -4,12 +4,13 @@ import { getConfigMaps, deleteConfigMap } from '@api/configmap';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
 import type { ConfigMap } from '@types/api';
 import { ConfirmationDialog } from '@components/ConfirmationDialog';
-import { Toast } from '@components/Toast';
-import { Table, TableStyles } from '@components/Table';
-import { Button } from '@components/Button';
-
-export default function ConfigMapList() {
-  const navigate = useNavigate();
+import { useToast } from '@components/Toast';
+ import { Table, TableStyles } from '@components/Table';
+ import { Button } from '@components/Button';
+ 
+ export default function ConfigMapList() {
+   const navigate = useNavigate();
+   const { showToast } = useToast();
   const [filters, setFilters] = useState({ search: '', namespace: '' });
   const [deleteTarget, setDeleteTarget] = useState<ConfigMap | null>(null);
   const [selectedConfigMap, setSelectedConfigMap] = useState<ConfigMap | null>(null);
@@ -33,7 +34,7 @@ export default function ConfigMapList() {
     },
     {
       onSuccess: () => {
-        Toast.show('ConfigMap deleted successfully', 'success');
+        showToast({ message: 'ConfigMap deleted successfully', type: 'success' });
         refetch();
         setDeleteTarget(null);
       },

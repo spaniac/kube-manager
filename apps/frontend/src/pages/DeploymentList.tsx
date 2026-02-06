@@ -5,13 +5,14 @@ import { useApiQuery, useApiMutation } from '@hooks/useApi';
 import type { Deployment } from '@types/api';
 import { Button } from '@components/Button';
 import { ConfirmationDialog } from '@components/ConfirmationDialog';
-import { Toast } from '@components/Toast';
-import { Table, TableStyles } from '@components/Table';
-import { Modal } from '@components/Modal';
-import { Input } from '@components/Input';
-
-export default function DeploymentList() {
-  const navigate = useNavigate();
+import { useToast } from '@components/Toast';
+ import { Table, TableStyles } from '@components/Table';
+ import { Modal } from '@components/Modal';
+ import { Input } from '@components/Input';
+ 
+ export default function DeploymentList() {
+   const navigate = useNavigate();
+   const { showToast } = useToast();
   const [filters, setFilters] = useState({ search: '', namespace: '' });
   const [deleteTarget, setDeleteTarget] = useState<Deployment | null>(null);
   const [scaleTarget, setScaleTarget] = useState<Deployment | null>(null);
@@ -36,7 +37,7 @@ export default function DeploymentList() {
     },
     {
       onSuccess: () => {
-        Toast.show('Deployment deleted successfully', 'success');
+        showToast({ message: 'Deployment deleted successfully', type: 'success' });
         refetch();
         setDeleteTarget(null);
       },
@@ -49,7 +50,7 @@ export default function DeploymentList() {
     },
     {
       onSuccess: () => {
-        Toast.show('Deployment scaled successfully', 'success');
+        showToast({ message: 'Deployment scaled successfully', type: 'success' });
         refetch();
         setScaleTarget(null);
       },
@@ -62,7 +63,7 @@ export default function DeploymentList() {
     },
     {
       onSuccess: () => {
-        Toast.show('Deployment restarted successfully', 'success');
+        showToast({ message: 'Deployment restarted successfully', type: 'success' });
         refetch();
       },
     },

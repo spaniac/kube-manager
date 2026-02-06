@@ -13,6 +13,7 @@ import { useToast } from '@components/Toast';
 export default function WorkloadUpdateStrategy() {
   const { namespace, name } = useParams<{ namespace: string; name: string }>();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [strategy, setStrategy] = useState<'RollingUpdate' | 'Recreate'>('RollingUpdate');
   const [maxSurge, setMaxSurge] = useState('25%');
   const [maxUnavailable, setMaxUnavailable] = useState('25%');
@@ -33,11 +34,11 @@ export default function WorkloadUpdateStrategy() {
     },
     {
       onSuccess: () => {
-        Toast.show('Update strategy updated successfully', 'success');
+        showToast({ message: 'Update strategy updated successfully', type: 'success' });
         navigate(-1);
       },
       onError: (error) => {
-        Toast.show(`Failed to update strategy: ${(error as Error).message}`, 'error');
+        showToast({ message: `Failed to update strategy: ${(error as Error).message}`, type: 'error' });
       },
     },
   );

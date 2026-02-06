@@ -102,6 +102,7 @@ spec:
 
 export default function WorkloadCreate() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [step, setStep] = useState<'type' | 'yaml' | 'review'>('type');
   const [selectedType, setSelectedType] = useState<string>('');
   const [yaml, setYaml] = useState<string>('');
@@ -115,14 +116,14 @@ export default function WorkloadCreate() {
     {
       onSuccess: (data) => {
         if (dryRun) {
-          Toast.show('Validation successful - workload is valid', 'success');
+          showToast({ message: 'Validation successful - workload is valid', type: 'success' });
         } else {
-          Toast.show(`Workload ${data.kind} ${data.name} created successfully in ${data.namespace}`, 'success');
+          showToast({ message: `Workload ${data.kind} ${data.name} created successfully in ${data.namespace}`, type: 'success' });
           navigate(`/deployments/${data.namespace}/${data.name}`);
         }
       },
       onError: (error) => {
-        Toast.show(`Failed to create workload: ${(error as Error).message}`, 'error');
+        showToast({ message: `Failed to create workload: ${(error as Error).message}`, type: 'error' });
       },
     },
   );

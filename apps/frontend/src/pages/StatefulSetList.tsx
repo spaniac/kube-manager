@@ -11,7 +11,7 @@ import { Button } from '@components/Button';
 import { Modal } from '@components/Modal';
 import { Input } from '@components/Input';
 
-export default function StatefulSetList() {
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const [filters, setFilters] = useState({ search: '', namespace: '' });
   const [deleteTarget, setDeleteTarget] = useState<StatefulSet | null>(null);
@@ -37,7 +37,7 @@ export default function StatefulSetList() {
     },
     {
       onSuccess: () => {
-        Toast.show('StatefulSet deleted successfully', 'success');
+        showToast({ message: 'StatefulSet deleted successfully', type: 'success' });
         refetch();
         setDeleteTarget(null);
       },
@@ -50,7 +50,7 @@ export default function StatefulSetList() {
     },
     {
       onSuccess: () => {
-        Toast.show('StatefulSet scaled successfully', 'success');
+        showToast({ message: 'StatefulSet scaled successfully', type: 'success' });
         refetch();
         setScaleTarget(null);
       },
