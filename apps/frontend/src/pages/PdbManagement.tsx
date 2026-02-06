@@ -330,7 +330,7 @@ export default function PdbManagement() {
             <Button
               variant="primary"
               onClick={handleCreatePdb}
-              loading={createMutation.isLoading}
+              loading={createMutation.isPending}
             >
               Create PDB
             </Button>
@@ -368,7 +368,7 @@ export default function PdbManagement() {
             <Button
               variant="danger"
               onClick={() => deleteMutation.mutate()}
-              loading={deleteMutation.isLoading}
+              loading={deleteMutation.isPending}
             >
               Delete PDB
             </Button>

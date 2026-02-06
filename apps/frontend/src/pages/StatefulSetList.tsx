@@ -215,7 +215,7 @@ export default function StatefulSetList() {
                 <Button variant="secondary" onClick={() => setScaleTarget(null)}>
                   Cancel
                 </Button>
-                <Button variant="primary" onClick={handleScale} loading={scaleMutation.isLoading}>
+                <Button variant="primary" onClick={handleScale} loading={scaleMutation.isPending}>
                   Scale
                 </Button>
               </div>

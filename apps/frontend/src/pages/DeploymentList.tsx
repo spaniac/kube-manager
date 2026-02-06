@@ -155,7 +155,7 @@ import { useToast } from '@components/Toast';
               e.stopPropagation();
               handleRestart(row);
             }}
-            disabled={restartMutation.isLoading}
+            disabled={restartMutation.isPending}
           >
             Restart
           </button>
@@ -263,7 +263,7 @@ import { useToast } from '@components/Toast';
                 <Button
                   variant="primary"
                   onClick={handleScale}
-                  loading={scaleMutation.isLoading}
+                  loading={scaleMutation.isPending}
                 >
                   Scale
                 </Button>

@@ -207,7 +207,7 @@ export default function WorkloadCreate() {
                 <Button variant="secondary" size="sm" onClick={handleBack}>
                   Back
                 </Button>
-                <Button variant="secondary" size="sm" onClick={handleValidate} loading={createMutation.isLoading}>
+                <Button variant="secondary" size="sm" onClick={handleValidate} loading={createMutation.isPending}>
                   Validate
                 </Button>
                 <Button variant="primary" size="sm" onClick={() => setStep('review')}>
@@ -247,7 +247,7 @@ export default function WorkloadCreate() {
                 <Button
                   variant="primary"
                   onClick={handleCreate}
-                  loading={createMutation.isLoading}
+loading={createMutation.isPending}
                 >
                   Create Workload
                 </Button>

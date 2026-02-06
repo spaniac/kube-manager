@@ -152,7 +152,7 @@ export default function WorkloadRollback() {
                           variant="secondary"
                           size="sm"
                           onClick={() => handleRollbackClick(revision)}
-                          disabled={rollbackMutation.isLoading}
+                          disabled={rollbackMutation.isPending}
                         >
                           Rollback to this
                         </Button>
@@ -206,7 +206,7 @@ export default function WorkloadRollback() {
             <Button
               variant="primary"
               onClick={handleConfirmRollback}
-              loading={rollbackMutation.isLoading}
+              loading={rollbackMutation.isPending}
             >
               Confirm Rollback
             </Button>

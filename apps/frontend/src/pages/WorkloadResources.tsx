@@ -146,7 +146,7 @@ export default function WorkloadResources() {
             <Button
               variant="primary"
               onClick={handleSubmit}
-              loading={updateMutation.isLoading}
+              loading={updateMutation.isPending}
               disabled={!selectedContainer}
             >
               Update Resources

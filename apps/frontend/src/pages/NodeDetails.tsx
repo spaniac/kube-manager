@@ -85,25 +85,25 @@ export default function NodeDetails() {
             <Button
               variant="primary"
               onClick={() => uncordonMutation.mutate()}
-              disabled={uncordonMutation.isLoading}
+              disabled={uncordonMutation.isPending}
             >
-              {uncordonMutation.isLoading ? 'Uncordoning...' : 'Uncordon'}
+              {uncordonMutation.isPending ? 'Uncordoning...' : 'Uncordon'}
             </Button>
           ) : (
             <Button
               variant="warning"
               onClick={() => cordonMutation.mutate()}
-              disabled={cordonMutation.isLoading}
+              disabled={cordonMutation.isPending}
             >
-              {cordonMutation.isLoading ? 'Cordoning...' : 'Cordon'}
+              {cordonMutation.isPending ? 'Cordoning...' : 'Cordon'}
             </Button>
           )}
           <Button
             variant="danger"
             onClick={() => setShowDrainConfirm(true)}
-            disabled={isCordoned || drainMutation.isLoading}
+            disabled={isCordoned || drainMutation.isPending}
           >
-            {drainMutation.isLoading ? 'Draining...' : 'Drain'}
+            {drainMutation.isPending ? 'Draining...' : 'Drain'}
           </Button>
         </div>
       </div>

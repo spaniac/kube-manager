@@ -338,7 +338,7 @@ import { useToast } from '@components/Toast';
               <Button
                 variant="primary"
                 onClick={handleScaleSubmit}
-                loading={scaleMutation.isLoading}
+                loading={scaleMutation.isPending}
               >
                 Scale
               </Button>
@@ -361,7 +361,7 @@ import { useToast } from '@components/Toast';
               <Button
                 variant="danger"
                 onClick={handleRestartSubmit}
-                loading={restartMutation.isLoading}
+                loading={restartMutation.isPending}
               >
                 Restart
               </Button>
@@ -390,7 +390,7 @@ import { useToast } from '@components/Toast';
               <Button
                 variant="primary"
                 onClick={handleUpdateImageSubmit}
-                loading={updateImageMutation.isLoading}
+                loading={updateImageMutation.isPending}
               >
                 Update
               </Button>
@@ -426,7 +426,7 @@ import { useToast } from '@components/Toast';
               <Button
                 variant={deployment.replicas > 0 ? 'warning' : 'primary'}
                 onClick={() => deployment.replicas > 0 ? pauseMutation.mutate() : resumeMutation.mutate()}
-                loading={pauseMutation.isLoading || resumeMutation.isLoading}
+                loading={pauseMutation.isPending || resumeMutation.isPending}
               >
                 {deployment.replicas > 0 ? 'Pause' : 'Resume'}
               </Button>

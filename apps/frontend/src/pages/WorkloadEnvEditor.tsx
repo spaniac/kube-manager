@@ -134,7 +134,7 @@ export default function WorkloadEnvEditor() {
             <Button
               variant="primary"
               onClick={handleSubmit}
-              loading={updateMutation.isLoading}
+              loading={updateMutation.isPending}
               disabled={!selectedContainer}
             >
               Save Changes

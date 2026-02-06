@@ -87,7 +87,7 @@ export default function WorkloadClone() {
             <Button
               variant="primary"
               onClick={handleClone}
-              loading={cloneMutation.isLoading}
+              loading={cloneMutation.isPending}
             >
               Clone Deployment
             </Button>

@@ -89,7 +89,7 @@ export default function WorkloadUpdateStrategy() {
             <Button
               variant="primary"
               onClick={handleSubmit}
-              loading={updateMutation.isLoading}
+              loading={updateMutation.isPending}
             >
               Update Strategy
             </Button>
