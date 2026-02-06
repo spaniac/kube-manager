@@ -17,7 +17,7 @@ interface TableProps<T> {
   emptyMessage?: string;
 }
 
-export function Table<T extends Record<string, unknown>>({
+export function Table<T extends object>({
   data,
   columns,
   onSort,
@@ -26,12 +26,12 @@ export function Table<T extends Record<string, unknown>>({
   loading = false,
   emptyMessage = 'No data available',
 }: TableProps<T>) {
-  const [sort, setSort] = useState<{ key: keyof T; order: 'asc' | 'desc' }>(
-    defaultSort || (columns.length > 0 ? { key: columns[0].key, order: 'asc' } : { key: '' as keyof T, order: 'asc' }),
+  const [sort, setSort] = useState<{ key: keyof T; order: 'asc' | 'desc' } | undefined>(
+    defaultSort || (columns[0] ? { key: columns[0].key, order: 'asc' } : undefined),
   );
 
   const sortedData = useMemo(() => {
-    if (!sort.key || !onSort) {
+    if (!sort || !sort.key || !onSort) {
       return data;
     }
 
@@ -39,13 +39,23 @@ export function Table<T extends Record<string, unknown>>({
       const aValue = a[sort.key];
       const bValue = b[sort.key];
 
-      if (aValue < bValue) {
-        return sort.order === 'asc' ? -1 : 1;
+      // Handle null and undefined values by treating them as the lowest
+      const normalizedA = aValue == null ? '' : aValue;
+      const normalizedB = bValue == null ? '' : bValue;
+
+      let comparison = 0;
+      if (typeof normalizedA === 'string' && typeof normalizedB === 'string') {
+        comparison = normalizedA.localeCompare(normalizedB);
+      } else if (typeof normalizedA === 'number' && typeof normalizedB === 'number') {
+        comparison = normalizedA - normalizedB;
+      } else if (typeof normalizedA === 'boolean' && typeof normalizedB === 'boolean') {
+        comparison = (normalizedA === normalizedB) ? 0 : (normalizedA ? 1 : -1);
+      } else {
+        // Fallback for other types or mixed types, convert to string
+        comparison = String(normalizedA).localeCompare(String(normalizedB));
       }
-      if (aValue > bValue) {
-        return sort.order === 'asc' ? 1 : -1;
-      }
-      return 0;
+
+      return sort.order === 'asc' ? comparison : -comparison;
     });
   }, [data, sort, onSort]);
 
@@ -53,7 +63,7 @@ export function Table<T extends Record<string, unknown>>({
     if (!onSort) return;
 
     const newOrder =
-      sort.key === key && sort.order === 'asc' ? 'desc' : 'asc';
+      sort && sort.key === key && sort.order === 'asc' ? 'desc' : 'asc';
     setSort({ key, order: newOrder });
     onSort(key, newOrder);
   };
@@ -82,7 +92,7 @@ export function Table<T extends Record<string, unknown>>({
                 }
               >
                 {column.header}
-                {column.sortable && sort.key === column.key && (
+                {column.sortable && sort && sort.key === column.key && (
                   <span className="sort-indicator">{sort.order === 'asc' ? '↑' : '↓'}</span>
                 )}
               </th>
