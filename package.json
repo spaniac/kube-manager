@@ -1,4 +1,7 @@
 {
   "name": "k8s-manager",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "dependencies": {
+    "@xterm/addon-search": "^0.16.0"
+  }
 }
