@@ -2,7 +2,7 @@ import apiClient from '@api/client';
 import { z } from 'zod';
 import { parseApiResponse, parsePaginationParams } from '@utils/apiResponse';
 import { serviceSchema, apiResponseSchema, resourceListSchema } from '../types/schemas';
-import type { Service, ResourceList, ResourceYaml } from '../types/api';
+import type { Service, ResourceList, ResourceYaml, ApiResponse } from '../types/api';
 
 export async function getServices(params?: {
   page?: number;

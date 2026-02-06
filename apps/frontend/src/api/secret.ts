@@ -2,7 +2,7 @@ import apiClient from '@api/client';
 import { z } from 'zod';
 import { parseApiResponse, parsePaginationParams } from '@utils/apiResponse';
 import { secretSchema, apiResponseSchema, resourceListSchema } from '../types/schemas';
-import type { Secret, ResourceList, ResourceYaml } from '../types/api';
+import type { Secret, ResourceList, ResourceYaml, ApiResponse } from '../types/api';
 
 export async function getSecrets(params?: {
   page?: number;

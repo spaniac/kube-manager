@@ -10,6 +10,7 @@ import type {
   TerminalResizeRequest,
   TerminalCommandRequest,
   TerminalSession,
+  ApiResponse,
 } from '../types/api';
 
 export async function connectTerminal(params: {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { getNamespaces, deleteNamespace } from '@api/namespace';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { Namespace } from '@types/api';
+import type { Namespace } from '../types/api';
 import { Table } from '@components/Table';
 import { Input } from '@components/Input';
 import { Badge } from '@components/Badge';

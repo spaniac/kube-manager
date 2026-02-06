@@ -6,7 +6,7 @@ import {
   apiResponseSchema,
   resourceListSchema,
 } from '../types/schemas';
-import type { Deployment, ResourceList, ResourceYaml } from '../types/api';
+import type { Deployment, ResourceList, ResourceYaml, ApiResponse } from '../types/api';
 
 export async function getDeployments(params?: {
   page?: number;

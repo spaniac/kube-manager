@@ -6,7 +6,7 @@ import { Button } from '@components/Button';
 import { Spinner } from '@components/Spinner';
 import { Modal, ModalStyles } from '@components/Modal';
 import { ConfirmationDialog } from '@components/ConfirmationDialog';
-import type { Node, NodeCondition } from '../api';
+import type { Node, NodeCondition } from '../types/api';
 import { useState } from 'react';
 
 export default function NodeDetails() {

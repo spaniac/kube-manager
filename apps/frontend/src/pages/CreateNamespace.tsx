@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createNamespace } from '@api/namespace';
 import { useApiMutation } from '@hooks/useApi';
-import type { Namespace } from '@types/api';
+import type { Namespace } from '../types/api';
 import { Input } from '@components/Input';
 import { Button } from '@components/Button';
 import { useToast } from '@components/Toast';

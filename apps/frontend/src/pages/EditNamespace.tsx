@@ -1,8 +1,8 @@
-import { useParams, useNavigate } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { getNamespace, updateNamespace } from '@api/namespace';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { Namespace } from '@types/api';
+import type { Namespace } from '../types/api';
 import { Input } from '@components/Input';
 import { Button } from '@components/Button';
 import { useToast } from '@components/Toast';

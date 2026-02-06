@@ -2,7 +2,7 @@ import apiClient from '@api/client';
 import { z } from 'zod';
 import { parseApiResponse, parsePaginationParams } from '@utils/apiResponse';
 import { statefulSetSchema, apiResponseSchema, resourceListSchema } from '../types/schemas';
-import type { StatefulSet, ResourceList, ResourceYaml } from '../types/api';
+import type { StatefulSet, ResourceList, ResourceYaml, ApiResponse } from '../types/api';
 
 export async function getStatefulSets(params?: {
   page?: number;

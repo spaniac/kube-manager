@@ -1,8 +1,8 @@
-import { useParams } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { getNamespace, getNamespaceQuota, deleteNamespace } from '@api/namespace';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { Namespace, ResourceQuota } from '@types/api';
+import type { Namespace, ResourceQuota } from '../types/api';
 import { Button } from '@components/Button';
 import { Input } from '@components/Input';
 import { ConfirmationDialog } from '@components/ConfirmationDialog';

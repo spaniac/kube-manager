@@ -1,8 +1,8 @@
-import { useParams, useNavigate } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { getNamespaceQuota, updateNamespaceQuota } from '@api/namespace';
 import { useApiQuery, useApiMutation } from '@hooks/useApi';
-import type { ResourceQuota } from '@types/api';
+import type { ResourceQuota } from '../types/api';
 import { Input } from '@components/Input';
 import { Button } from '@components/Button';
 import { Select } from '@components/Select';

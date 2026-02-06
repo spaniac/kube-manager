@@ -375,12 +375,12 @@ Critical Path: 2 → 4 → 6 → 8 → 9 → 10 → 12 → 13
     Expected Result: login flow completes (mocked or real) and app renders protected layout
   ```
 
-- [ ] 11. Add MSW to enable deterministic frontend integration tests (Vitest)
+- [x] 11. Add MSW to enable deterministic frontend integration tests (Vitest)
 
   **What to do**:
   - Add MSW (Node) setup for Vitest:
-    - Server lifecycle in `setupFiles` (Vitest already uses `src/test/setup.ts` and `src/test/vi-setup.ts`).
-    - Central handler definitions for key endpoints used by pages/hooks.
+    - Server lifecycle management in `setupFiles` (Vitest already uses `src/test/setup.ts` and `src/test/vi-setup.ts`).
+    - Central handler definitions for key endpoints.
   - Ensure handlers cover:
     - A happy-path API response (e.g. `/api/v1/namespaces`)
     - An error response (e.g. 500) to validate UI error states
