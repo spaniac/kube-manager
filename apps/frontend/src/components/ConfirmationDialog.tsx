@@ -1,39 +1,46 @@
 import { Modal } from './Modal';
 
 interface ConfirmationDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  onCancel?: () => void;
   onConfirm: () => void;
   title: string;
   message: string;
   confirmText?: string;
   cancelText?: string;
   type?: 'danger' | 'warning' | 'info';
+  variant?: 'danger' | 'warning' | 'info';
   isLoading?: boolean;
 }
 
 export function ConfirmationDialog({
-  isOpen,
+  isOpen = true,
   onClose,
+  onCancel,
   onConfirm,
   title,
   message,
   confirmText = 'Confirm',
   cancelText = 'Cancel',
-  type = 'danger',
+  type,
+  variant,
   isLoading = false,
 }: ConfirmationDialogProps) {
+  const effectiveOnClose = onClose || onCancel || (() => {});
+  const effectiveType = type || variant || 'danger';
+
   const handleConfirm = () => {
     onConfirm();
-    onClose();
+    effectiveOnClose();
   };
 
-  const dialogClassName = `confirmation-dialog confirmation-dialog-${type}`;
+  const dialogClassName = `confirmation-dialog confirmation-dialog-${effectiveType}`;
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={effectiveOnClose}
       title={title}
       size="sm"
     >

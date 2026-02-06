@@ -7,7 +7,7 @@ export { Badge, BadgeStyles } from './Badge';
 export { Spinner, Loading } from './Spinner';
 export { ErrorBoundary, ErrorBoundaryStyles } from './ErrorBoundary';
 export { ToastProvider, useToast, ToastStyles } from './Toast';
-export { default as ConfirmationDialog, ConfirmationDialogStyles } from './ConfirmationDialog';
+export { ConfirmationDialog, ConfirmationDialogStyles } from './ConfirmationDialog';
 export { default as ProtectedRoute } from './ProtectedRoute';
 export { default as YamlEditor } from './YamlEditor';
 export { default as Terminal } from './Terminal';
