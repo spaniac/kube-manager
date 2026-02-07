@@ -1,0 +1,246 @@
+# Opencode, OMO, LLM 환경구성
+
+## sdkman! 설치
+```bash
+# sdkman! 설치
+curl -s "https://get.sdkman.io" | bash
+
+# eclipse-temurin java sdk 21 설치
+sdk install java 21.0.9-tem
+
+# 기본 JDK 설정
+sdk default java 21.0.9-tem
+```
+
+## OpenCode, OMO 설치
+
+### bun 설치
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+
+### opencode 설치
+```bash
+bun add -g opencode-ai
+```
+
+### OMO (Oh-My-Opencode) 설치
+```bash
+bunx oh-my-opencode install
+```
+
+## GLM 4.7 LLM 연결
+```bash
+opencode auth login
+
+## Z.ai - GLM-4.7 선택 후 API Key 입력
+```
+
+## LLM OAuth 인증을 위한 플러그인 설치
+
+### opencode-openai-codex-auth : OpenAI GPT OAuth Plugin
+```bash
+npx -y opencode-openai-codex-auth@latest
+
+opencode auth login
+
+# OpenAI - GPT-5.2 선택 후 안내 메세지 따라 OAuth 인증
+```
+
+### opencode-antigravity-auth : Antigravity OAuth Plugin
+
+Add the plugin to ~/.config/opencode/opencode.json:
+```json
+# ~/.config/opencode/opencode.json
+{
+  "$schema": "https://opencode.ai/config.json",
+  // 플러그인 추가
+  "plugin": ["opencode-antigravity-auth@latest"],
+  // google provider 추가
+  "provider": {
+    "google": {
+      "models": {
+        "antigravity-gemini-3-pro": {
+          "name": "Gemini 3 Pro (Antigravity)",
+          "limit": { "context": 1048576, "output": 65535 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] },
+          "variants": {
+            "low": { "thinkingLevel": "low" },
+            "high": { "thinkingLevel": "high" }
+          }
+        },
+        "antigravity-gemini-3-flash": {
+          "name": "Gemini 3 Flash (Antigravity)",
+          "limit": { "context": 1048576, "output": 65536 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] },
+          "variants": {
+            "minimal": { "thinkingLevel": "minimal" },
+            "low": { "thinkingLevel": "low" },
+            "medium": { "thinkingLevel": "medium" },
+            "high": { "thinkingLevel": "high" }
+          }
+        },
+        "antigravity-claude-sonnet-4-5": {
+          "name": "Claude Sonnet 4.5 (Antigravity)",
+          "limit": { "context": 200000, "output": 64000 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "antigravity-claude-sonnet-4-5-thinking": {
+          "name": "Claude Sonnet 4.5 Thinking (Antigravity)",
+          "limit": { "context": 200000, "output": 64000 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] },
+          "variants": {
+            "low": { "thinkingConfig": { "thinkingBudget": 8192 } },
+            "max": { "thinkingConfig": { "thinkingBudget": 32768 } }
+          }
+        },
+        "antigravity-claude-opus-4-5-thinking": {
+          "name": "Claude Opus 4.5 Thinking (Antigravity)",
+          "limit": { "context": 200000, "output": 64000 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] },
+          "variants": {
+            "low": { "thinkingConfig": { "thinkingBudget": 8192 } },
+            "max": { "thinkingConfig": { "thinkingBudget": 32768 } }
+          }
+        },
+        "gemini-2.5-flash": {
+          "name": "Gemini 2.5 Flash (Gemini CLI)",
+          "limit": { "context": 1048576, "output": 65536 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "gemini-2.5-pro": {
+          "name": "Gemini 2.5 Pro (Gemini CLI)",
+          "limit": { "context": 1048576, "output": 65536 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "gemini-3-flash-preview": {
+          "name": "Gemini 3 Flash Preview (Gemini CLI)",
+          "limit": { "context": 1048576, "output": 65536 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        },
+        "gemini-3-pro-preview": {
+          "name": "Gemini 3 Pro Preview (Gemini CLI)",
+          "limit": { "context": 1048576, "output": 65535 },
+          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
+        }
+      }
+    }
+  }
+}
+```
+```bash
+# 저장 후 다음 명령 실행
+opencode auth login
+
+# Google - Antigravity 선택 후 안내 메세지 따라 OAuth 인증
+```
+
+
+## OMO에서 각 파일의 문법 검사를 위한 LSP (Language Server Protocol) 설치
+
+* jdtls: eclipse java lsp
+~/.local/share/opencode/bin/jdtls/bin 경로가 있는지 확인 후 PATH 등록
+```bash
+# jdtls 디렉토리 생성, 다운로드 및 압축해제
+mkdir jdtls
+curl -L https://www.eclipse.org/downloads/download.php?file=/jdtls/milestones/1.9.0/jdt-language-server-1.9.0-202203031534.tar.gz | tar -xz -C jdtls
+```
+```json
+# 설치 후 ~/.config/opencode/opencode.json 에 plugins와 같은 레벨로 다음의 설정 추가
+
+"lsp": {
+
+// ...
+
+  "jdtls": {
+    "enabled": true,
+    "command": ["$HOME/workspace/lsp/jdtls/bin/jdtls"],
+    "extensions": [".java"]
+  }
+
+  // ...
+}
+```
+
+<!-- * typescript-language-server: typescript lsp
+```bash
+sudo npm install -g typescript-language-server
+```
+```json
+# 설치 후 ~/.config/opencode/opencode.json 에 plugins와 같은 레벨로 다음의 설정 추가
+
+"lsp": {
+
+// ...
+
+  "typescript-language-server": {
+        "enabled": true,
+        "command": ["$NVM_DIR/versions/node/v24.13.0/bin/typescript-language-server", "--stdio"],
+        "extensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"]
+
+      }
+
+// ...
+
+}
+``` -->
+
+* biome : typescript, javascript, html, css, json lsp
+```bash
+npm install -g @biomejs/biome
+```
+
+* yaml-language-server: yml, yaml lsp
+```
+npm install -g yaml-language-server
+```
+
+* marksman: markdown 파일 lsp
+```bash
+sudo snap install marksman
+```
+```json
+# 설치 후 ~/.config/opencode/opencode.json 에 plugins와 같은 레벨로 다음의 설정 추가
+
+"lsp": {
+
+// ...
+
+  "marksman": {
+    "enabled": true,
+    "command": ["marksman", "server"],
+    "extensions": [".md"]
+  }
+
+// ...
+
+}
+
+```
+
+* groovy-language-server: groovy, gradle lsp
+```bash
+# groovy-language-server git repo clone
+git clone https://github.com/GroovyLanguageServer/groovy-language-server.git
+
+# gradle build
+groovy-language-server/gradlew build
+```
+```json
+# 빌드 후 ~/.config/opencode/opencode.json 에 plugins와 같은 레벨로 다음의 설정 추가
+
+"lsp": {
+
+// ...
+
+  "groovy-language-server": {
+    "enabled": true,
+    // 빌드파일 경로
+    "command": ["java" "-jar" "$HOME/workspace/groovy-language-server/build/libs/groovy-language-server-all.jar"],
+    "extensions": [".gradle"]
+  }
+
+// ...
+
+}
+```

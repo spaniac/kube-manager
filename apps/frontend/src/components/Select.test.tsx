@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@/test/test-utils';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Select } from '@/components/Select';
 
@@ -56,7 +56,7 @@ describe('Select Component', () => {
     render(<Select options={[{ value: '1', label: 'Option 1' }, { value: '2', label: 'Option 2' }]} onChange={onChange} />);
     const combobox = screen.getByRole('combobox');
     await user.click(combobox);
-    const option = screen.getAllByRole('option').find((el) => el.textContent === 'Option 1');
+    const option = screen.getAllByRole('option').find((el: HTMLElement) => el.textContent === 'Option 1');
     await user.click(option!);
     expect(onChange).toHaveBeenCalledWith('1');
   });

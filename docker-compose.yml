@@ -18,10 +18,11 @@ services:
     networks:
       - k8s-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U k8smanager"]
+      test: ["CMD-SHELL", "pg_isready -U k8smanager -d k8smanager"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 6
+      start_period: 10s
     restart: unless-stopped
 
   # Keycloak Authentication Server
@@ -37,6 +38,7 @@ services:
       - KC_DB_URL=jdbc:postgresql://postgres:5432/keycloak
       - KC_DB_USERNAME=k8smanager
       - KC_DB_PASSWORD=changeit
+      - KC_HEALTH_ENABLED=true
     networks:
       - k8s-network
     depends_on:
@@ -44,10 +46,10 @@ services:
         condition: service_healthy
     command: start-dev
     healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 || exit 1"]
-      interval: 30s
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/realms/master || exit 1"]
+      interval: 15s
       timeout: 10s
-      retries: 3
+      retries: 12
       start_period: 40s
     restart: unless-stopped
 
@@ -68,11 +70,11 @@ services:
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy", "||", "exit", "1"]
-      interval: 30s
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1"]
+      interval: 15s
       timeout: 10s
-      retries: 3
-      start_period: 10s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
 
   # Backend Service (Spring Boot with Swagger UI)
@@ -80,7 +82,6 @@ services:
     build:
       context: ./apps/backend
       dockerfile: Dockerfile
-    # image: k8s-manager-backend:latest
     container_name: k8s-manager-backend
     ports:
       - "8080:8080"
@@ -102,50 +103,51 @@ services:
       keycloak:
         condition: service_healthy
       prometheus:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health", "||", "exit", "1"]
-      interval: 30s
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/api/v1/actuator/health || exit 1"]
+      interval: 20s
       timeout: 10s
-      retries: 3
-      start_period: 40s
+      retries: 8
+      start_period: 60s
     restart: unless-stopped
 
-  # Frontend Service (Node.js)
+  # Frontend Service (Node.js / Vite dev server)
   frontend:
-    build:
-      context: ./apps/frontend
-      dockerfile: Dockerfile
-    # image: k8s-manager-frontend:latest
+    image: node:18-alpine
     container_name: k8s-manager-frontend
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
     ports:
       - "5173:5173"
     environment:
-      # Backend API URL (connecting to backend on the same network)
-      - VITE_API_BASE_URL=http://backend:8080/api/v1
       - NODE_ENV=development
+      - VITE_API_BASE_URL=http://localhost:8080/api/v1
+      - VITE_WS_BASE_URL=ws://localhost:8080/api/v1
+    volumes:
+      - ./apps/frontend:/app
+      - frontend-node-modules:/app/node_modules
     networks:
       - k8s-network
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5173 || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 8
+      start_period: 30s
     restart: unless-stopped
 
-# Shared network for service communication
 networks:
   k8s-network:
     driver: bridge
 
-# Volumes for development (optional)
 volumes:
-  # Backend maven repository cache for faster builds
-  backend-maven-cache:
-    driver: local
-  # Frontend node_modules cache for faster builds
   frontend-node-modules:
     driver: local
-  # PostgreSQL data persistence
   postgres-data:
     driver: local
-  # Prometheus data persistence
   prometheus-data:
     driver: local

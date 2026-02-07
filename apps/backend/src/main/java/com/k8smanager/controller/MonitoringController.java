@@ -2,6 +2,7 @@ package com.k8smanager.controller;
 
 import com.k8smanager.common.response.ApiResponse;
 import com.k8smanager.dto.*;
+import com.k8smanager.service.AlertService;
 import com.k8smanager.service.MonitoringService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +21,11 @@ import java.util.List;
 public class MonitoringController {
 
     private final MonitoringService monitoringService;
+    private final AlertService alertService;
 
-    public MonitoringController(MonitoringService monitoringService) {
+    public MonitoringController(MonitoringService monitoringService, AlertService alertService) {
         this.monitoringService = monitoringService;
+        this.alertService = alertService;
     }
 
     /**
@@ -85,11 +88,16 @@ public class MonitoringController {
     public ResponseEntity<ApiResponse<MetricsResponseDTO>> getNetworkMetrics(
             @PathVariable String namespace,
             @PathVariable String name) {
-        MetricsResponseDTO metrics = monitoringService.getNetworkMetrics(namespace, name);
-        if (metrics == null) {
-            return ResponseEntity.status(404).body(ApiResponse.error("Metrics not found"));
+        try {
+            MetricsResponseDTO metrics = monitoringService.getNetworkMetrics(namespace, name);
+            if (metrics == null) {
+                return ResponseEntity.status(404).body(ApiResponse.error("Metrics not found for pod " + namespace + "/" + name));
+            }
+            return ResponseEntity.ok(ApiResponse.success(metrics));
+        } catch (MonitoringService.PrometheusUnavailableException e) {
+            return ResponseEntity.status(e.getStatus())
+                    .body(ApiResponse.error(e.getStatus(), e.getMessage()));
         }
-        return ResponseEntity.ok(ApiResponse.success(metrics));
     }
 
     /**
@@ -118,12 +126,18 @@ public class MonitoringController {
             @PathVariable String namespace,
             @PathVariable String name,
             @RequestParam(defaultValue = "1h") String range,
-            @RequestParam(required = false) String metricType) {
-        TimeSeriesDTO timeSeries = monitoringService.getHistoricalMetrics(namespace, name, range, metricType);
-        if (timeSeries == null || timeSeries.data().isEmpty()) {
-            return ResponseEntity.status(404).body(ApiResponse.error("Historical metrics not found"));
+            @RequestParam(required = false) String metricType,
+            @RequestParam(required = false) String step) {
+        try {
+            TimeSeriesDTO timeSeries = monitoringService.getHistoricalMetrics(namespace, name, range, metricType, step);
+            if (timeSeries == null || timeSeries.data().isEmpty()) {
+                return ResponseEntity.status(404).body(ApiResponse.error("Historical metrics not found for " + namespace + "/" + name));
+            }
+            return ResponseEntity.ok(ApiResponse.success(timeSeries));
+        } catch (MonitoringService.PrometheusUnavailableException e) {
+            return ResponseEntity.status(e.getStatus())
+                    .body(ApiResponse.error(e.getStatus(), e.getMessage()));
         }
-        return ResponseEntity.ok(ApiResponse.success(timeSeries));
     }
 
     /**
@@ -141,8 +155,9 @@ public class MonitoringController {
         );
 
         if (result.error() != null) {
-            return ResponseEntity.status(500)
-                    .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, result.error()));
+            HttpStatus status = monitoringService.resolvePrometheusErrorStatus(result.error());
+            return ResponseEntity.status(status)
+                    .body(ApiResponse.error(status, monitoringService.sanitizePrometheusErrorMessage(result.error())));
         }
 
         return ResponseEntity.ok(ApiResponse.success(result));
@@ -175,7 +190,7 @@ public class MonitoringController {
             @RequestParam(required = false) String namespace,
             @RequestParam(required = false) String severity,
             @AuthenticationPrincipal Jwt jwt) {
-        List<AlertDTO> alerts = monitoringService.getAlertHistory(namespace, severity);
+        List<AlertDTO> alerts = alertService.getAlertHistory(namespace, severity, null, 0, 100).alerts();
         return ResponseEntity.ok(ApiResponse.success(alerts));
     }
 
@@ -201,7 +216,8 @@ public class MonitoringController {
     public ResponseEntity<ApiResponse<Void>> acknowledgeAlert(
             @PathVariable Long alertId,
             @AuthenticationPrincipal Jwt jwt) {
-        boolean success = monitoringService.acknowledgeAlert(alertId);
+        String actor = jwt != null ? jwt.getSubject() : "legacy-monitoring-endpoint";
+        boolean success = alertService.acknowledgeAlert(alertId, actor) != null;
         if (!success) {
             return ResponseEntity.status(404)
                     .body(ApiResponse.error(HttpStatus.NOT_FOUND, "Alert not found"));

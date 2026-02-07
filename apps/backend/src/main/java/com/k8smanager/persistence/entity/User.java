@@ -45,6 +45,10 @@ public class User {
     @lombok.EqualsAndHashCode.Exclude
     private Set<UserRole> userRoles = new java.util.HashSet<>();
 
+    public Set<UserRole> getUserRoles() {
+        return userRoles;
+    }
+
     @OneToMany(mappedBy = "user")
     @lombok.ToString.Exclude
     @lombok.EqualsAndHashCode.Exclude
@@ -55,11 +59,16 @@ public class User {
     @lombok.EqualsAndHashCode.Exclude
     private Set<Session> sessions = new java.util.HashSet<>();
 
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
+    private Set<Dashboard> dashboards = new java.util.HashSet<>();
+
     /**
      * Check if user has a specific role.
      */
     public boolean hasRole(String roleName) {
         return userRoles.stream()
-                .anyMatch(userRole -> userRole.getRole().getName().equals(roleName));
+                .anyMatch(userRole -> userRole.getRole().getName().name().equals(roleName));
     }
 }

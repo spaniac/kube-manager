@@ -8,8 +8,11 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
@@ -28,6 +31,8 @@ public class MonitoringService {
 
     private final KubernetesClient kubernetesClient;
     private final WebClient prometheusWebClient;
+    private final AlertService alertService;
+    private final PrometheusQueryService prometheusQueryService;
 
     /**
      * Configuration for Prometheus client.
@@ -40,9 +45,14 @@ public class MonitoringService {
     private Duration prometheusTimeout;
 
     @Autowired
-    public MonitoringService(KubernetesClient kubernetesClient, WebClient prometheusWebClient) {
+    public MonitoringService(KubernetesClient kubernetesClient,
+                             WebClient prometheusWebClient,
+                             AlertService alertService,
+                             @Lazy PrometheusQueryService prometheusQueryService) {
         this.kubernetesClient = kubernetesClient;
         this.prometheusWebClient = prometheusWebClient;
+        this.alertService = alertService;
+        this.prometheusQueryService = prometheusQueryService;
     }
 
     /**
@@ -143,15 +153,24 @@ public class MonitoringService {
             return null;
         }
 
-        double networkRx = 0.0;
-        double networkTx = 0.0;
+        String receiveQuery = prometheusQueryService.getMetricQuery("network", namespace, name);
+        String transmitQuery = prometheusQueryService.getMetricQuery("network_tx", namespace, name);
+
+        PromQLQueryResultDTO receiveSeries = requirePrometheusData(
+                prometheusQueryService.executeTimeSeriesQuery("1h", "60s", receiveQuery),
+                "network receive metrics"
+        );
+        PromQLQueryResultDTO transmitSeries = requirePrometheusData(
+                prometheusQueryService.executeTimeSeriesQuery("1h", "60s", transmitQuery),
+                "network transmit metrics"
+        );
+
+        List<MetricPointDTO> combined = mergeByTimestamp(receiveSeries.data(), transmitSeries.data());
+        MetricSummaryDTO summary = combined.isEmpty() ? new MetricSummaryDTO(0, 0, 0, 0) : calculateSummary(combined);
 
         return new MetricsResponseDTO(
-                List.of(
-                        new MetricPointDTO(Instant.now(), networkRx),
-                        new MetricPointDTO(Instant.now().minusSeconds(60), networkRx)
-                ),
-                new MetricSummaryDTO(networkRx, networkRx, networkRx, 2)
+                combined,
+                summary
         );
     }
 
@@ -190,33 +209,29 @@ public class MonitoringService {
      * @return Time series data with multiple data points
      */
     public TimeSeriesDTO getHistoricalMetrics(String namespace, String name, String range, String metricType) {
-        int points = determineDataPoints(range);
-        List<MetricPointDTO> dataPoints = new java.util.ArrayList<>();
+        return getHistoricalMetrics(namespace, name, range, metricType, null);
+    }
 
-        for (int i = 0; i < points; i++) {
-            Instant timestamp = Instant.now().minusSeconds(60L * (points - 1 - i));
-
-            if ("cpu".equals(metricType)) {
-                double value = 50.0 + (Math.random() * 20);  // Simulated CPU usage
-                dataPoints.add(new MetricPointDTO(timestamp, value));
-            } else if ("memory".equals(metricType)) {
-                double value = 40.0 + (Math.random() * 30);  // Simulated memory usage (percentage)
-                dataPoints.add(new MetricPointDTO(timestamp, value));
-            } else if ("network".equals(metricType)) {
-                double value = 100.0 + (Math.random() * 50);  // Simulated network I/O (bytes/sec)
-                dataPoints.add(new MetricPointDTO(timestamp, value));
-            } else if ("storage".equals(metricType)) {
-                double value = 60.0 + (Math.random() * 20);  // Simulated storage usage (percentage)
-                dataPoints.add(new MetricPointDTO(timestamp, value));
-            }
+    public TimeSeriesDTO getHistoricalMetrics(String namespace, String name, String range, String metricType, String step) {
+        String normalizedMetricType = metricType == null ? "cpu" : metricType.toLowerCase();
+        String query = prometheusQueryService.getMetricQuery(normalizedMetricType, namespace, name);
+        if (query == null) {
+            return null;
         }
+
+        PromQLQueryResultDTO result = requirePrometheusData(
+                prometheusQueryService.executeTimeSeriesQuery(range, step == null ? determineStep(range) : step, query),
+                "historical " + normalizedMetricType + " metrics"
+        );
+
+        List<MetricPointDTO> dataPoints = result.data();
 
         if (dataPoints.isEmpty()) {
             return null;
         }
 
         return new TimeSeriesDTO(
-                metricType,
+                normalizedMetricType,
                 range,
                 determineStartTime(range),
                 Instant.now(),
@@ -236,6 +251,15 @@ public class MonitoringService {
             case "7d" -> 672;  // 1 data point per 15 minutes
             case "30d" -> 2880; // 1 data point per 15 minutes
             default -> 60;
+        };
+    }
+
+    private String determineStep(String range) {
+        return switch (range.toLowerCase()) {
+            case "1h", "6h" -> "60s";
+            case "24h" -> "600s";
+            case "7d", "30d" -> "900s";
+            default -> "60s";
         };
     }
 
@@ -297,9 +321,7 @@ public class MonitoringService {
      * @return List of alerts
      */
     public List<AlertDTO> getAlertHistory(String namespace, String severity) {
-        // In production, this would query from database
-        // For now, we return empty list
-        return List.of();
+        return alertService.getAlertHistory(namespace, severity, null, 0, 100).alerts();
     }
 
     /**
@@ -347,16 +369,18 @@ public class MonitoringService {
      * @return true if acknowledged successfully, false otherwise
      */
     public boolean acknowledgeAlert(Long alertId) {
-        // In production, this would update alert status in database
-        // For now, return true to simulate success
-        return true;
+        return alertService.acknowledgeAlert(alertId, "legacy-monitoring-endpoint") != null;
     }
 
     public PromQLQueryResultDTO executePromQLQuery(String query, String range) {
+        return executePromQLQuery(query, range, null);
+    }
+
+    public PromQLQueryResultDTO executePromQLQuery(String query, String range, String step) {
         if (prometheusWebClient == null) {
             logger.warn("Prometheus WebClient not configured");
             return new PromQLQueryResultDTO(query, range, List.of(), new MetricSummaryDTO(0, 0, 0, 0),
-                    "Prometheus client not configured");
+                    "[PROMETHEUS_503] Prometheus client is not configured");
         }
 
         try {
@@ -365,11 +389,11 @@ public class MonitoringService {
             Duration duration = parseRange(range);
             long endTime = Instant.now().getEpochSecond();
             long startTime = endTime - duration.getSeconds();
-            long step = calculateStep(duration);
+            long resolvedStep = step != null ? parseStep(step) : calculateStep(duration);
 
             String queryUrl = String.format("/api/v1/query_range?query=%s&start=%d&end=%d&step=%d",
                     java.net.URLEncoder.encode(query, java.nio.charset.StandardCharsets.UTF_8),
-                    startTime, endTime, step);
+                    startTime, endTime, resolvedStep);
 
             Map<String, Object> response = prometheusWebClient.get()
                     .uri(queryUrl)
@@ -380,7 +404,7 @@ public class MonitoringService {
             if (response == null || !response.containsKey("data")) {
                 logger.warn("No data returned from Prometheus for query: {}", query);
                 return new PromQLQueryResultDTO(query, range, List.of(), new MetricSummaryDTO(0, 0, 0, 0),
-                        "No data returned from Prometheus");
+                        "[PROMETHEUS_502] No data returned from Prometheus");
             }
 
             @SuppressWarnings("unchecked")
@@ -396,10 +420,96 @@ public class MonitoringService {
 
             return new PromQLQueryResultDTO(query, range, dataPoints, summary);
 
+        } catch (WebClientResponseException e) {
+            logger.error("Prometheus HTTP error for query: {}", query, e);
+            HttpStatus status = e.getStatusCode().is5xxServerError() ? HttpStatus.BAD_GATEWAY : HttpStatus.SERVICE_UNAVAILABLE;
+            String statusCode = status == HttpStatus.SERVICE_UNAVAILABLE ? "503" : "502";
+            return new PromQLQueryResultDTO(query, range, List.of(), new MetricSummaryDTO(0, 0, 0, 0),
+                    "[PROMETHEUS_" + statusCode + "] Prometheus request failed: " + e.getStatusCode().value());
         } catch (Exception e) {
             logger.error("Error executing PromQL query: {}", query, e);
             return new PromQLQueryResultDTO(query, range, List.of(), new MetricSummaryDTO(0, 0, 0, 0),
-                    "Query execution failed: " + e.getMessage());
+                    "[PROMETHEUS_503] Prometheus query execution failed: " + e.getMessage());
+        }
+    }
+
+    public HttpStatus resolvePrometheusErrorStatus(String errorMessage) {
+        if (errorMessage == null) {
+            return HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+        if (errorMessage.startsWith("[PROMETHEUS_503]")) {
+            return HttpStatus.SERVICE_UNAVAILABLE;
+        }
+        if (errorMessage.startsWith("[PROMETHEUS_502]")) {
+            return HttpStatus.BAD_GATEWAY;
+        }
+        return HttpStatus.BAD_GATEWAY;
+    }
+
+    public String sanitizePrometheusErrorMessage(String errorMessage) {
+        if (errorMessage == null) {
+            return "Prometheus query failed";
+        }
+        return errorMessage
+                .replace("[PROMETHEUS_503] ", "")
+                .replace("[PROMETHEUS_502] ", "");
+    }
+
+    private PromQLQueryResultDTO requirePrometheusData(PromQLQueryResultDTO result, String context) {
+        if (result.error() == null) {
+            return result;
+        }
+        HttpStatus status = resolvePrometheusErrorStatus(result.error());
+        String message = sanitizePrometheusErrorMessage(result.error());
+        throw new PrometheusUnavailableException(status, "Failed to fetch " + context + ": " + message);
+    }
+
+    private List<MetricPointDTO> mergeByTimestamp(List<MetricPointDTO> receive, List<MetricPointDTO> transmit) {
+        Map<Instant, Double> totals = new java.util.HashMap<>();
+        for (MetricPointDTO point : receive) {
+            totals.put(point.timestamp(), point.value());
+        }
+        for (MetricPointDTO point : transmit) {
+            totals.merge(point.timestamp(), point.value(), Double::sum);
+        }
+
+        return totals.entrySet().stream()
+                .map(entry -> new MetricPointDTO(entry.getKey(), entry.getValue()))
+                .sorted((a, b) -> a.timestamp().compareTo(b.timestamp()))
+                .toList();
+    }
+
+    private long parseStep(String step) {
+        if (step == null || step.isBlank()) {
+            return 60;
+        }
+        String trimmed = step.trim().toLowerCase();
+        try {
+            if (trimmed.endsWith("s")) {
+                return Long.parseLong(trimmed.substring(0, trimmed.length() - 1));
+            }
+            if (trimmed.endsWith("m")) {
+                return Long.parseLong(trimmed.substring(0, trimmed.length() - 1)) * 60;
+            }
+            if (trimmed.endsWith("h")) {
+                return Long.parseLong(trimmed.substring(0, trimmed.length() - 1)) * 3600;
+            }
+            return Long.parseLong(trimmed);
+        } catch (NumberFormatException e) {
+            return 60;
+        }
+    }
+
+    public static class PrometheusUnavailableException extends RuntimeException {
+        private final HttpStatus status;
+
+        public PrometheusUnavailableException(HttpStatus status, String message) {
+            super(message);
+            this.status = status;
+        }
+
+        public HttpStatus getStatus() {
+            return status;
         }
     }
 

@@ -22,13 +22,27 @@ import React, {
   useState,
   useRef,
   useEffect,
+  useCallback,
 } from 'react';
 import Editor, {
   Monaco,
   useMonaco,
 } from '@monaco-editor/react';
 import * as MonacoTypes from 'monaco-editor';
-import apiClient from '../api/client';
+import {
+  parseYaml,
+  YamlDiagnostic as FrontendYamlDiagnostic,
+} from '../utils/yamlValidation';
+import { encodeBase64, decodeBase64, isBase64 } from '../utils/secretCodec';
+import { SecretDataPanel } from './yaml/SecretDataPanel';
+import { calculateDiff, DiffLine } from '../utils/yamlDiff';
+import { formatYaml, minifyYaml } from '../utils/yamlFormat';
+import {
+  validateYaml as validateYamlApi,
+  getK8sSchemas as getK8sSchemasApi,
+  K8sSchema as BackendK8sSchema,
+  YamlValidationResponse,
+} from '../api/yaml';
 import {
   YamlEditorProps,
   YamlValidationResult,
@@ -36,7 +50,25 @@ import {
   EditorMode,
   DiffData,
 } from '../types/yaml';
+
+interface K8sSecret {
+  apiVersion: string;
+  kind: 'Secret';
+  metadata: {
+    name: string;
+    namespace?: string;
+  };
+  type?: string;
+  data?: { [key: string]: string };
+  stringData?: { [key: string]: string };
+}
+
+type K8sResource = K8sSecret | { kind: string; [key: string]: any };
+
 import styles from './YamlEditor.module.css';
+import { debounce } from 'lodash';
+import apiClient from '../api/client'; // Import apiClient
+import * as yaml from 'js-yaml'; // Import js-yaml
 
 // Default YAML templates
 const DEFAULT_TEMPLATES: ResourceTemplate[] = [
@@ -191,7 +223,44 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
   });
   const [isValidating, setIsValidating] = useState(false);
   const [templates, setTemplates] = useState<ResourceTemplate[]>(DEFAULT_TEMPLATES);
-  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+
+  // Secret specific states
+  const [isSecretResource, setIsSecretResource] = useState(false);
+  const [secretData, setSecretData] = useState<{ [key: string]: string } | null>(null);
+  const [secretStringData, setSecretStringData] = useState<{ [key: string]: string } | null>(null);
+  const [showSecretWarning, setShowSecretWarning] = useState(false);
+  const [isMasked, setIsMasked] = useState(true);
+
+  // Effect to parse YAML and detect Secret kind
+  useEffect(() => {
+    const { doc } = parseYaml(value);
+    if (doc && typeof doc === 'object' && doc !== null) {
+      const resource = doc as K8sResource;
+
+      if (resource.kind === 'Secret' && resource.apiVersion === 'v1') {
+        setIsSecretResource(true);
+        setSecretData(resource.data || null);
+        setSecretStringData(resource.stringData || null);
+
+        // Check for unencoded stringData
+        const hasUnencodedStringData = Object.values(resource.stringData || {}).some(
+          (val) => !isBase64(val as string)
+        );
+        setShowSecretWarning(hasUnencodedStringData);
+      } else {
+        setIsSecretResource(false);
+        setSecretData(null);
+        setSecretStringData(null);
+        setShowSecretWarning(false);
+      }
+    } else {
+      setIsSecretResource(false);
+      setSecretData(null);
+      setSecretStringData(null);
+      setShowSecretWarning(false);
+    }
+  }, [value]);
 
   // Find and replace state
   const [showFindReplace, setShowFindReplace] = useState(false);
@@ -210,9 +279,10 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
   // Editor history
   const [history, setHistory] = useState<string[]>([value]);
   const [historyIndex, setHistoryIndex] = useState(0);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Diff view data
-  const [diffData, setDiffData] = useState<DiffData | null>(null);
+  const [diffData, setDiffData] = useState<DiffLine[] | null>(null);
 
   // File upload
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -231,7 +301,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
           setTemplates(response.data.templates);
         }
       } catch (err) {
-        console.warn('Failed to fetch templates, using defaults:', err);
+          console.warn('Failed to fetch templates, using defaults:', err);
       } finally {
         setIsLoadingTemplates(false);
       }
@@ -239,18 +309,6 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
 
     fetchTemplates();
   }, []);
-
-  /**
-   * Load template into editor
-   */
-  useEffect(() => {
-    if (selectedTemplate) {
-      const template = templates.find((t) => t.name === selectedTemplate || t.kind === selectedTemplate);
-      if (template) {
-        handleLoadTemplate(template);
-      }
-    }
-  }, [selectedTemplate, templates]);
 
   /**
    * Update editor value from props
@@ -269,14 +327,50 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
    * Configure Monaco editor
    */
   useEffect(() => {
-    const monacoInstance = monaco;
-    if (!monacoInstance) return;
+    if (!monaco) return; // Ensure monaco is loaded
+
+    monacoRef.current = monaco; // Store monaco instance
+
+    // Fetch K8s schemas and configure Monaco YAML language
+    const fetchAndConfigureSchemas = async () => {
+      try {
+        const k8sSchemas = await getK8sSchemasApi();
+        const monacoSchemas = k8sSchemas.map((s) => ({
+          uri: `http://schemas.k8s.io/${s.apiVersion}/${s.kind}.json`,
+          fileMatch: [`*://schemas.k8s.io/${s.apiVersion}/${s.kind}.json`],
+          schema: {
+            type: 'object',
+            properties: {
+              apiVersion: { type: 'string', enum: [s.apiVersion] },
+              kind: { type: 'string', enum: [s.kind] },
+              ...Object.fromEntries(
+                Object.entries(s.properties).map(([key, prop]) => [
+                  key,
+                  { type: prop.type, description: prop.description },
+                ]),
+              ),
+            },
+            required: s.required,
+          },
+        }));
+
+        // monaco.languages.yaml.yamlDefaults.setDiagnosticsOptions({
+        //   validate: true,
+        //   schemas: monacoSchemas,
+        //   enableSchemaRequest: true,
+        // });
+      } catch (error) {
+        console.error('Failed to fetch K8s schemas for Monaco:', error);
+      }
+    };
+
+    fetchAndConfigureSchemas();
 
     // Register YAML language
-    monacoInstance.languages.register({ id: 'yaml' });
+    monaco.languages.register({ id: 'yaml' });
 
     // Configure YAML language features
-    monacoInstance.languages.setLanguageConfiguration('yaml', {
+    monaco.languages.setLanguageConfiguration('yaml', {
       comments: {
         lineComment: '#',
       },
@@ -303,16 +397,96 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
 
     // Set up auto-completion provider if enabled
     if (enableAutoComplete) {
-      monacoInstance.languages.registerCompletionItemProvider('yaml', {
-        provideCompletionItems: async (model, position) => {
-          const suggestions = await getCompletionSuggestions(model, position);
-          return { suggestions };
-        },
-      });
+      // monaco.languages.registerCompletionItemProvider('yaml', {
+      //   provideCompletionItems: async (model, position) => {
+      //     const suggestions = await getCompletionSuggestions(model, position);
+      //     return { suggestions };
+      //   },
+      // });
     }
-
-
   }, [monaco, enableAutoComplete]);
+
+  // Debounced validation effect
+  const debouncedValidate = useCallback(
+    debounce(async (content: string) => {
+      if (!monacoRef.current || !editorRef.current) return;
+
+      setIsValidating(true);
+      const editorModel = editorRef.current.getModel();
+      if (!editorModel) return;
+
+      const diagnostics: FrontendYamlDiagnostic[] = [];
+
+      // Frontend YAML syntax validation
+      const { doc, diagnostics: syntaxDiagnostics } = parseYaml(content);
+      diagnostics.push(...syntaxDiagnostics);
+
+      // Backend K8s schema validation
+      try {
+        const backendValidationResult = await validateYamlApi(content);
+        if (!backendValidationResult.valid) {
+          backendValidationResult.errors.forEach((err) => {
+            diagnostics.push({
+              message: err.message,
+              severity: 'error',
+              range: {
+                startLineNumber: err.line,
+                startColumn: err.column,
+                endLineNumber: err.line,
+                endColumn: err.column + 1, // Placeholder, ideally get actual range
+              },
+            });
+          });
+        }
+        backendValidationResult.warnings.forEach((warn) => {
+          diagnostics.push({
+            message: warn.message,
+            severity: 'warning',
+            range: {
+              startLineNumber: warn.line,
+              startColumn: warn.column,
+              endLineNumber: warn.line,
+              endColumn: warn.column + 1, // Placeholder
+            },
+          });
+        });
+      } catch (error) {
+        console.error('Backend validation failed:', error);
+        diagnostics.push({
+          message: 'Failed to connect to backend validation service.',
+          severity: 'error',
+          range: { startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1 },
+        });
+      }
+
+      // Set Monaco diagnostics
+      monacoRef.current.editor.setModelMarkers(editorModel, 'yaml-validation', diagnostics.map(d => ({
+        startLineNumber: d.range.startLineNumber,
+        startColumn: d.range.startColumn,
+        endLineNumber: d.range.endLineNumber,
+        endColumn: d.range.endColumn,
+        message: d.message,
+        severity: d.severity === 'error' ? monacoRef.current.MarkerSeverity.Error : monacoRef.current.MarkerSeverity.Warning,
+      })));
+
+      // Update local validation result state
+      setValidationResult({
+        valid: !diagnostics.some(d => d.severity === 'error'),
+        errors: diagnostics.filter(d => d.severity === 'error').map(d => ({ message: d.message, line: d.range.startLineNumber, column: d.range.startColumn })),
+        warnings: diagnostics.filter(d => d.severity === 'warning').map(d => ({ message: d.message, line: d.range.startLineNumber, column: d.range.startColumn })),
+      });
+
+      setIsValidating(false);
+    }, 500),
+    [],
+  );
+
+  useEffect(() => {
+    if (value) {
+      debouncedValidate(value);
+    }
+  }, [value, debouncedValidate]);
+
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -355,27 +529,16 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
     }
   };
 
-  const handleLoadTemplate = (template: ResourceTemplate) => {
-    if (editorRef.current) {
-      editorRef.current.setValue(template.template);
+  const handleSave = () => {
+    if (showSecretWarning) {
+      alert('Please encode all stringData values before saving.');
+      return;
+    }
+    if (onApply) {
+      onApply(editorRef.current?.getValue() || value);
+      setHasUnsavedChanges(false);
     }
   };
-
-  const getCompletionSuggestions = (model: MonacoTypes.editor.ITextModel, position: MonacoTypes.Position) => {
-    return [];
-  };
-
-  const calculateDiff = (original: string, current: string) => {
-    setDiffData({ originalLines: [], modifiedLines: [], changesCount: 0 });
-  };
-
-  const handleFormat = () => {};
-  const handleBeautify = () => {};
-  const handleMinify = () => {};
-  const handleUndo = () => {};
-  const handleRedo = () => {};
-  const handleSave = () => {};
-  const handleDryRun = () => {};
 
   const handleJumpToLine = (lineNumber: number) => {
     if (editorRef.current) {
@@ -385,13 +548,175 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
 
   const handleEditorDidMount = (editor: MonacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => {
     editorRef.current = editor;
+    monacoRef.current = monaco; // Store monaco instance
+
+    // Register keyboard shortcuts
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+      handleSave();
+    });
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyF, () => {
+      handleFormat();
+    });
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyZ, () => {
+      handleUndo();
+    });
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyZ, () => {
+      handleRedo();
+    });
   };
+
+  const debouncedOnChange = useCallback(
+    debounce((newValue: string) => {
+      onChange?.(newValue);
+      setHistory((prevHistory) => {
+        const newHistory = prevHistory.slice(0, historyIndex + 1);
+        if (newHistory[newHistory.length - 1] !== newValue) {
+          newHistory.push(newValue);
+        }
+        return newHistory;
+      });
+      setHistoryIndex((prevIndex) => prevIndex + 1);
+      setHasUnsavedChanges(true);
+    }, 300),
+    [onChange, historyIndex],
+  );
 
   const handleEditorChange = (value: string | undefined) => {
     if (value !== undefined) {
-      onChange?.(value);
+      debouncedOnChange(value);
     }
   };
+
+  const handleFormat = useCallback(() => {
+    if (editorRef.current) {
+      const formatted = formatYaml(editorRef.current.getValue());
+      editorRef.current.setValue(formatted);
+      onChange?.(formatted);
+    }
+  }, [onChange]);
+
+  const handleBeautify = useCallback(() => {
+    // For YAML, format and beautify are often the same.
+    // If there's a specific beautify logic, it would go here.
+    handleFormat();
+  }, [handleFormat]);
+
+  const handleMinify = useCallback(() => {
+    if (editorRef.current) {
+      const minified = minifyYaml(editorRef.current.getValue());
+      editorRef.current.setValue(minified);
+      onChange?.(minified);
+    }
+  }, [onChange]);
+
+  const handleUndo = useCallback(() => {
+    if (historyIndex > 0) {
+      const prevIndex = historyIndex - 1;
+      setHistoryIndex(prevIndex);
+      const prevValue = history[prevIndex];
+      if (editorRef.current) {
+        editorRef.current.setValue(prevValue);
+      }
+      onChange?.(prevValue);
+    }
+  }, [history, historyIndex, onChange]);
+
+  const handleRedo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      const nextIndex = historyIndex + 1;
+      setHistoryIndex(nextIndex);
+      const nextValue = history[nextIndex];
+      if (editorRef.current) {
+        editorRef.current.setValue(nextValue);
+      }
+      onChange?.(nextValue);
+    }
+  }, [history, historyIndex, onChange]);
+
+  const handleEncodeAll = useCallback(() => {
+    if (!isSecretResource || !editorRef.current) return;
+
+    const { doc } = parseYaml(editorRef.current.getValue());
+    if (doc && typeof doc === 'object' && doc !== null && doc.kind === 'Secret') {
+      const secret = doc as K8sSecret;
+      if (secret.stringData) {
+        const encodedStringData: { [key: string]: string } = {};
+        for (const key in secret.stringData) {
+          encodedStringData[key] = encodeBase64(secret.stringData[key]);
+        }
+        secret.data = { ...secret.data, ...encodedStringData };
+        delete secret.stringData;
+        const newYaml = formatYaml(yaml.dump(secret)); // Convert back to YAML
+        editorRef.current.setValue(newYaml);
+        onChange?.(newYaml);
+      }
+    }
+  }, [isSecretResource, onChange]);
+
+  const handleDecodeAll = useCallback(() => {
+    if (!isSecretResource || !editorRef.current) return;
+
+    const { doc } = parseYaml(editorRef.current.getValue());
+    if (doc && typeof doc === 'object' && doc !== null && doc.kind === 'Secret') {
+      const secret = doc as K8sSecret;
+      if (secret.data) {
+        const decodedStringData: { [key: string]: string } = {};
+        for (const key in secret.data) {
+          if (isBase64(secret.data[key])) {
+            decodedStringData[key] = decodeBase64(secret.data[key]);
+          } else {
+            decodedStringData[key] = secret.data[key]; // Keep as is if not base64
+          }
+        }
+        secret.stringData = { ...secret.stringData, ...decodedStringData };
+        delete secret.data;
+        const newYaml = formatYaml(yaml.dump(secret)); // Convert back to YAML
+        editorRef.current.setValue(newYaml);
+        onChange?.(newYaml);
+      }
+    }
+  }, [isSecretResource, onChange]);
+
+  const handleDryRun = useCallback(async () => {
+    if (!editorRef.current) return;
+    const content = editorRef.current.getValue();
+    setIsValidating(true);
+    try {
+      let finalValidationResult: YamlValidationResult;
+      if (onValidate) {
+        // Delegate validation to the prop and use its result
+        finalValidationResult = await onValidate(content);
+      } else {
+        // Perform internal validation if no prop is provided
+        finalValidationResult = await validateYamlApi(content);
+      }
+
+      // Update validation state based on the final validation result
+      setValidationResult({
+        valid: finalValidationResult.valid,
+        errors: finalValidationResult.errors.map(e => ({ message: e.message, line: e.line, column: e.column })),
+        warnings: finalValidationResult.warnings.map(w => ({ message: w.message, line: w.line, column: w.column })),
+      });
+    } catch (error) {
+      console.error('Dry run failed:', error);
+      setValidationResult({
+        valid: false,
+        errors: [{ message: 'Dry run failed: ' + (error as Error).message, line: 1, column: 1 }],
+        warnings: [],
+      });
+    } finally {
+      setIsValidating(false);
+    }
+  }, [onValidate]);
+
+  /**
+   * Load template into editor
+   */
+  const handleLoadTemplate = useCallback((template: ResourceTemplate) => {
+    if (editorRef.current) {
+      editorRef.current.setValue(template.template);
+    }
+  }, []);
 
   /**
    * Toggle editor mode
@@ -399,7 +724,10 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
   const toggleMode = (newMode: EditorMode) => {
     setEditorMode(newMode);
     if (newMode === 'diff' && originalValue) {
-      calculateDiff(originalValue, value);
+      const diffResult = calculateDiff(originalValue, value);
+      setDiffData(diffResult);
+    } else {
+      setDiffData(null);
     }
   };
 
@@ -496,6 +824,37 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
           </select>
         </div>
 
+        {isSecretResource && (
+          <div className={styles.toolbarGroup}>
+            <button
+              className={styles.toolbarButton}
+              onClick={handleEncodeAll}
+              disabled={readOnly}
+              title="Encode all stringData values to Base64"
+              type="button"
+            >
+              Encode All
+            </button>
+            <button
+              className={styles.toolbarButton}
+              onClick={handleDecodeAll}
+              disabled={readOnly}
+              title="Decode all data values to plain text"
+              type="button"
+            >
+              Decode All
+            </button>
+            <button
+              className={styles.toolbarButton}
+              onClick={() => setIsMasked(!isMasked)}
+              title={isMasked ? "Show Secret values" : "Hide Secret values"}
+              type="button"
+            >
+              {isMasked ? "Show Values" : "Hide Values"}
+            </button>
+          </div>
+        )}
+
         {/* Mode toggle */}
         <div className={styles.toolbarGroup}>
           <button
@@ -503,6 +862,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
             onClick={() => toggleMode('edit')}
             disabled={readOnly}
             title="Edit mode"
+            type="button"
           >
             Edit
           </button>
@@ -511,6 +871,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
             onClick={() => toggleMode('preview')}
             disabled={readOnly}
             title="Preview mode"
+            type="button"
           >
             Preview
           </button>
@@ -520,8 +881,9 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
               onClick={() => toggleMode('diff')}
               disabled={readOnly}
               title="Diff mode"
+              type="button"
             >
-              Diff ({diffData?.changesCount || 0})
+              Diff ({diffData ? diffData.filter(line => line.type !== 'unchanged').length : 0})
             </button>
           )}
         </div>
@@ -533,6 +895,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
             onClick={handleFormat}
             disabled={readOnly}
             title="Format (Ctrl+Shift+F)"
+            type="button"
           >
             Format
           </button>
@@ -541,6 +904,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
             onClick={handleBeautify}
             disabled={readOnly}
             title="Beautify"
+            type="button"
           >
             Beautify
           </button>
@@ -549,6 +913,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
             onClick={handleMinify}
             disabled={readOnly}
             title="Minify"
+            type="button"
           >
             Minify
           </button>
@@ -560,6 +925,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
             className={styles.toolbarButton}
             onClick={() => setShowFindReplace(!showFindReplace)}
             title="Find (Ctrl+F)"
+            type="button"
           >
             Find
           </button>
@@ -572,6 +938,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
             onClick={handleUndo}
             disabled={historyIndex <= 0}
             title="Undo (Ctrl+Z)"
+            type="button"
           >
             ↶
           </button>
@@ -580,6 +947,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
             onClick={handleRedo}
             disabled={historyIndex >= history.length - 1}
             title="Redo (Ctrl+Y)"
+            type="button"
           >
             ↷
           </button>
@@ -592,6 +960,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
             onClick={handleFileUploadClick}
             disabled={readOnly}
             title="Upload YAML file"
+            type="button"
           >
             Upload
           </button>
@@ -599,6 +968,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
             className={styles.toolbarButton}
             onClick={handleDownload}
             title="Download YAML file"
+            type="button"
           >
             Download
           </button>
@@ -609,19 +979,21 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
           {renderValidationStatus()}
           <button
             className={`${styles.toolbarButton} ${styles.toolbarButtonPrimary}`}
-            onClick={handleSave}
-            disabled={!validationResult.valid || loading || readOnly}
-            title="Save (Ctrl+S)"
-          >
-            Save
-          </button>
-          <button
-            className={`${styles.toolbarButton} ${styles.toolbarButtonSecondary}`}
             onClick={handleDryRun}
             disabled={!validationResult.valid || isValidating || readOnly}
             title="Dry run"
+            type="button"
           >
             Dry Run
+          </button>
+          <button
+            className={`${styles.toolbarButton} ${styles.toolbarButtonPrimary}`}
+            onClick={handleSave}
+            disabled={!validationResult.valid || loading || readOnly}
+            title="Save (Ctrl+S)"
+            type="button"
+          >
+            Save {hasUnsavedChanges && '*'}
           </button>
         </div>
       </div>
@@ -669,6 +1041,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
           <button
             className={styles.findCloseButton}
             onClick={() => setShowFindReplace(false)}
+            type="button"
           >
             ✕
           </button>
@@ -695,7 +1068,6 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
                 setTargetLine('');
               }
             }}
-            autoFocus
           />
           <button
             className={styles.lineJumpCloseButton}
@@ -703,6 +1075,7 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
               setShowLineJump(false);
               setTargetLine('');
             }}
+            type="button"
           >
             ✕
           </button>
@@ -711,7 +1084,12 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
 
       {/* Editor container */}
       <div className={styles.editorContainer} style={{ height: 'calc(100% - 50px)' }}>
-        {editorMode === 'edit' ? (
+        {isSecretResource && (secretData || secretStringData) ? (
+          <SecretDataPanel
+            data={secretData || secretStringData || {}}
+            encoded={!!secretData}
+          />
+        ) : editorMode === 'edit' ? (
           <Editor
             height="100%"
             defaultLanguage="yaml"
@@ -729,26 +1107,14 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
         ) : editorMode === 'diff' && diffData ? (
           <div className={styles.diffMode}>
             <div className={styles.diffPanel}>
-              <div className={styles.diffHeader}>Original</div>
+              <div className={styles.diffHeader}>Diff View</div>
               <div className={styles.diffContent}>
-                {diffData.originalLines.map((line, i) => (
+                {diffData.map((line, i) => (
                   <div
-                    key={i}
+                    key={`diff-line-${i}`}
                     className={`${styles.diffLine} ${styles[line.type]}`}
-                    onClick={() => line.line !== undefined && handleJumpToLine(line.line)}
                   >
-                    <span className={styles.diffLineNumber}>{line.line ?? ''}</span>
-                    <span className={styles.diffLineContent}>{line.content ?? ' '}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className={styles.diffPanel}>
-              <div className={styles.diffHeader}>Modified</div>
-              <div className={styles.diffContent}>
-                {diffData.modifiedLines.map((line, i) => (
-                  <div key={i} className={`${styles.diffLine} ${styles[line.type]}`}>
-                    <span className={styles.diffLineNumber}>{line.line}</span>
+                    <span className={styles.diffLineNumber}>{line.lineNumber || ''}</span>
                     <span className={styles.diffLineContent}>{line.content || ' '}</span>
                   </div>
                 ))}
@@ -757,6 +1123,62 @@ export const YamlEditor: React.FC<YamlEditorProps> = ({
           </div>
         ) : null}
       </div>
+
+      {showSecretWarning && (
+        <div className={styles.warningBanner}>
+          Warning: Unencoded stringData values detected. Please encode them before saving.
+        </div>
+      )}
+
+      {/* Validation Panel */}
+      {showValidationErrors && (validationResult.errors.length > 0 || validationResult.warnings.length > 0) && (
+        <div className={styles.validationPanel}>
+          {validationResult.errors.length > 0 && (
+            <div className={styles.validationGroup}>
+              <h4 className={styles.validationGroupHeader}>Errors ({validationResult.errors.length})</h4>
+              {validationResult.errors.map((error, index) => (
+                <button
+                  key={`error-${error.line}-${index}`} // Use a more stable key if available, e.g., error.id
+                  className={styles.validationItem}
+                  onClick={() => handleJumpToLine(error.line ?? 0)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      handleJumpToLine(error.line ?? 0);
+                    }
+                  }}
+                  tabIndex={0}
+                >
+                  <span className={styles.validationSeverity}>Error</span>
+                  <span className={styles.validationMessage}>{error.message}</span>
+                  <span className={styles.validationLocation}>Line {error.line}, Col {error.column}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {validationResult.warnings.length > 0 && (
+            <div className={styles.validationGroup}>
+              <h4 className={styles.validationGroupHeader}>Warnings ({validationResult.warnings.length})</h4>
+              {validationResult.warnings.map((warning, index) => (
+                <button
+                  key={`warning-${warning.line}-${index}`} // Use a more stable key if available, e.g., warning.id
+                  className={styles.validationItem}
+                  onClick={() => handleJumpToLine(warning.line ?? 0)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      handleJumpToLine(warning.line ?? 0);
+                    }
+                  }}
+                  tabIndex={0}
+                >
+                  <span className={styles.validationSeverity}>Warning</span>
+                  <span className={styles.validationMessage}>{warning.message}</span>
+                  <span className={styles.validationLocation}>Line {warning.line}, Col {warning.column}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Hidden file input */}
       <input

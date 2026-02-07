@@ -26,8 +26,17 @@ public class Role {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
+    @Column(nullable = true, length = 50)
     private RoleType name;
+
+    @Column(name = "role_key", nullable = false, length = 100)
+    private String roleKey;
+
+    @Column(name = "is_custom", nullable = false)
+    private boolean isCustom;
+
+    @Column(name = "display_name", nullable = false, length = 100)
+    private String displayName;
 
     @Column(length = 255)
     private String description;
@@ -44,6 +53,10 @@ public class Role {
         return rolePermissions.stream()
                 .map(RolePermission::getPermission)
                 .collect(Collectors.toSet());
+    }
+
+    public String getAuthorityName() {
+        return roleKey != null ? roleKey : (name != null ? name.name() : "");
     }
 
     @OneToMany(mappedBy = "role")

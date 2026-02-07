@@ -33,4 +33,10 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     );
 
     List<AuditLog> findByIpAddressContaining(String ipAddress);
+
+    List<AuditLog> findByResourceTypeAndCreatedAtBetweenOrderByCreatedAtDesc(
+            @Param("resourceType") String resourceType,
+            @Param("startDate") Instant startDate,
+            @Param("endDate") Instant endDate
+    );
 }

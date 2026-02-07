@@ -24,25 +24,20 @@ export default defineConfig({
   // Output directory
   outputDir: 'test-results',
 
-  // Use configuration
   use: {
-    // Base URL for relative navigation
     baseURL: process.env.BASE_URL || 'http://localhost:5173',
 
-    // Collect trace on first retry for debugging
     trace: 'on-first-retry',
 
-    // Screenshot settings
     screenshot: 'only-on-failure',
 
-    // Video settings
     video: 'retain-on-failure',
 
-    // Action timeout
     actionTimeout: 10000,
 
-    // Navigation timeout
     navigationTimeout: 30000,
+
+    viewport: { width: 1280, height: 720 },
   },
 
   // Browser projects for cross-browser testing
@@ -53,11 +48,12 @@ export default defineConfig({
     },
   ],
 
-  // Web server configuration for Vite
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  webServer: process.env.CI
+    ? undefined
+    : {
+        command: 'npm run dev',
+        url: 'http://localhost:5173',
+        reuseExistingServer: !process.env.CI,
+        timeout: 120 * 1000,
+      },
 });

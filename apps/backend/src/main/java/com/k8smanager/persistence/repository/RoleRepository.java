@@ -13,5 +13,17 @@ public interface RoleRepository extends JpaRepository<Role, Long> {
 
     Optional<Role> findByName(Role.RoleType name);
 
+    Optional<Role> findByRoleKey(String roleKey);
+
+    Optional<Role> findByDisplayName(String displayName);
+
+    List<Role> findByIsCustom(boolean isCustom);
+
+    List<Role> findAllByOrderByIsCustomAscDisplayNameAsc();
+
+    boolean existsByRoleKeyIgnoreCase(String roleKey);
+
+    boolean existsByRoleKeyIgnoreCaseAndIdNot(String roleKey, Long id);
+
     List<Role> findByUserRoles_User_Email(String userEmail);
 }

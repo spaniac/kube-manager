@@ -29,14 +29,17 @@ public class RbacPermissionEvaluator implements PermissionEvaluator {
         }
 
         String[] parts = (String[]) permission;
-        if (parts.length != 2) {
+        if (parts.length != 2 && parts.length != 3) {
             return false;
         }
-
-        Permission.PermissionType permissionType = Permission.PermissionType.valueOf(parts[0]);
-        Permission.ResourceType resourceType = Permission.ResourceType.valueOf(parts[1]);
-
-        return rbacService.hasPermission(permissionType, resourceType);
+        try {
+            Permission.PermissionType permissionType = Permission.PermissionType.valueOf(parts[0].toUpperCase());
+            Permission.ResourceType resourceType = Permission.ResourceType.valueOf(parts[1].toUpperCase());
+            String namespace = parts.length == 3 ? parts[2] : (targetDomainObject instanceof String ? (String) targetDomainObject : null);
+            return rbacService.hasPermission(permissionType, resourceType, namespace);
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     @Override
@@ -49,9 +52,10 @@ public class RbacPermissionEvaluator implements PermissionEvaluator {
         }
         String resourceType = (String) permission;
         try {
-            Permission.PermissionType permType = Permission.PermissionType.valueOf(permissionType);
-            Permission.ResourceType resType = Permission.ResourceType.valueOf(resourceType);
-            return rbacService.hasPermission(permType, resType);
+            Permission.PermissionType permType = Permission.PermissionType.valueOf(permissionType.toUpperCase());
+            Permission.ResourceType resType = Permission.ResourceType.valueOf(resourceType.toUpperCase());
+            String namespace = targetId == null ? null : targetId.toString();
+            return rbacService.hasPermission(permType, resType, namespace);
         } catch (IllegalArgumentException e) {
             return false;
         }

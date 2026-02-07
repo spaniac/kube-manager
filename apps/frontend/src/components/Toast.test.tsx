@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@/test/test-utils';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { ToastProvider, useToast } from '@/components/Toast';
 
 function TestComponent({ children }: { children: React.ReactNode }) {

@@ -35,6 +35,11 @@ public class Permission {
     @OneToMany(mappedBy = "permission", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<RolePermission> rolePermissions = new java.util.HashSet<>();
 
+    @OneToMany(mappedBy = "permission", cascade = CascadeType.ALL, orphanRemoval = true)
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
+    private Set<PermissionRule> permissionRules = new java.util.HashSet<>();
+
     public PermissionType getPermissionType() {
         return this.type;
     }

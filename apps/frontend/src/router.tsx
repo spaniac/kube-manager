@@ -5,6 +5,7 @@ import Login from '@pages/Login';
 import Dashboard from '@pages/Dashboard';
 import ClusterOverview from '@pages/ClusterOverview';
 import ClusterEvents from '@pages/ClusterEvents';
+import AlertHistory from '@pages/AlertHistory';
 import ClusterResources from '@pages/ClusterResources';
 import ClusterMetricsHistory from '@pages/ClusterMetricsHistory';
 import NodeList from '@pages/NodeList';
@@ -33,6 +34,9 @@ import WorkloadClone from '@pages/WorkloadClone';
 import JobList from '@pages/JobList';
 import CronJobList from '@pages/CronJobList';
 import PdbManagement from '@pages/PdbManagement';
+import RoleList from '@pages/RoleList';
+import RoleEditor from '@pages/RoleEditor';
+import DashboardBuilder from '@pages/DashboardBuilder';
 
 export const router = createBrowserRouter([
   {
@@ -52,6 +56,19 @@ export const router = createBrowserRouter([
         element: <Dashboard />,
       },
       {
+        path: 'dashboards',
+        children: [
+          {
+            path: 'new',
+            element: <DashboardBuilder />,
+          },
+          {
+            path: ':id/edit',
+            element: <DashboardBuilder />,
+          },
+        ],
+      },
+      {
         path: 'cluster',
         children: [
           {
@@ -69,6 +86,10 @@ export const router = createBrowserRouter([
           {
             path: 'events',
             element: <ClusterEvents />,
+          },
+          {
+            path: 'alerts',
+            element: <AlertHistory />,
           },
           {
             path: 'nodes',
@@ -188,6 +209,23 @@ export const router = createBrowserRouter([
           {
             index: true,
             element: <PdbManagement />,
+          },
+        ],
+      },
+      {
+        path: 'admin/roles',
+        children: [
+          {
+            index: true,
+            element: <RoleList />,
+          },
+          {
+            path: 'new',
+            element: <RoleEditor />,
+          },
+          {
+            path: ':roleId/edit',
+            element: <RoleEditor />,
           },
         ],
       },

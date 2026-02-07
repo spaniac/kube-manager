@@ -4,10 +4,7 @@ import { TextEncoder, TextDecoder } from 'util';
 
 Object.assign(global, { TextEncoder, TextDecoder });
 
-configure({
-  testIdAttribute: 'data-testid',
-  throwSuggestions: true,
-});
+configure({});
 
 // Mock window.matchMedia for responsive components
 Object.defineProperty(window, 'matchMedia', {

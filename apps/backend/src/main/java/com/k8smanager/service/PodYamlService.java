@@ -1,12 +1,14 @@
 package com.k8smanager.service;
 
 import com.k8smanager.dto.PodDTO;
+import com.k8smanager.dto.YamlValidationResponseDTO;
 import com.k8smanager.k8s.K8sMapper;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service for pod YAML display and management.
@@ -16,10 +18,12 @@ public class PodYamlService {
 
     private final KubernetesClient kubernetesClient;
     private final K8sMapper k8sMapper;
+    private final YamlValidationService yamlValidationService; // New dependency
 
-    public PodYamlService(KubernetesClient kubernetesClient, K8sMapper k8sMapper) {
+    public PodYamlService(KubernetesClient kubernetesClient, K8sMapper k8sMapper, YamlValidationService yamlValidationService) {
         this.kubernetesClient = kubernetesClient;
         this.k8sMapper = k8sMapper;
+        this.yamlValidationService = yamlValidationService;
     }
 
     /**
@@ -37,6 +41,20 @@ public class PodYamlService {
 
         PodDTO podDto = k8sMapper.mapToPodDto(pod);
         return convertToYaml(podDto);
+    }
+
+    /**
+     * Validate YAML content.
+     */
+    public YamlValidationResponseDTO validateYaml(String yamlContent) {
+        return yamlValidationService.validateYaml(yamlContent);
+    }
+
+    /**
+     * Get available Kubernetes schemas.
+     */
+    public Map<String, com.k8smanager.dto.K8sSchema> getYamlSchemas() { // Fully qualify K8sSchema to avoid conflict
+        return yamlValidationService.getSchemas();
     }
 
     /**

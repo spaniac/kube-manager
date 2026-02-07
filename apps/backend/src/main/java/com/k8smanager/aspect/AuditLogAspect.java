@@ -1,12 +1,14 @@
 package com.k8smanager.aspect;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.k8smanager.dto.RbacAuditEventDTO;
 import com.k8smanager.persistence.entity.AuditLog;
+import com.k8smanager.persistence.entity.Role;
 import com.k8smanager.persistence.repository.AuditLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
@@ -27,17 +29,30 @@ public class AuditLogAspect {
     private static final Logger logger = LoggerFactory.getLogger(AuditLogAspect.class);
 
     private final AuditLogRepository auditLogRepository;
+    private final ObjectMapper objectMapper;
 
-    public AuditLogAspect(AuditLogRepository auditLogRepository) {
+    public AuditLogAspect(AuditLogRepository auditLogRepository, ObjectMapper objectMapper) {
         this.auditLogRepository = auditLogRepository;
+        this.objectMapper = objectMapper;
     }
 
     /**
      * Pointcut for all public methods in controllers.
      */
     @Pointcut("within(@org.springframework.web.bind.annotation.RestController *)")
-    public void controllerMethods() {
-    }
+    public void controllerMethods() {}
+
+    /**
+     * Pointcut for RBAC role operations.
+     */
+    @Pointcut("execution(* com.k8smanager.controller.RoleController.*(..))")
+    public void roleControllerMethods() {}
+
+    /**
+     * Pointcut for RBAC role management operations.
+     */
+    @Pointcut("execution(* com.k8smanager.controller.RoleManagementController.*(..))")
+    public void roleManagementControllerMethods() {}
 
     /**
      * Log around all controller methods.
@@ -76,6 +91,156 @@ public class AuditLogAspect {
     }
 
     /**
+     * Log RBAC role operations with before/after data.
+     */
+    @AfterReturning(pointcut = "roleControllerMethods() || roleManagementControllerMethods()", returning = "result")
+    public void logRbacOperation(JoinPoint joinPoint, Object result) {
+        try {
+            String action = extractAction(joinPoint);
+            String userEmail = getCurrentUserEmail();
+            String ip = getClientIpAddress(getCurrentRequest());
+            String targetType = extractTargetType(joinPoint);
+            String targetId = extractTargetId(joinPoint);
+            String beforeData = extractBeforeData(joinPoint);
+            String afterData = extractAfterData(joinPoint, result);
+
+            // Save RBAC-specific audit log
+            saveRbacAuditLog(action, userEmail, ip, targetType, targetId, beforeData, afterData);
+
+            logger.info("RBAC Audit: {} {} by {} on {}", action, targetType, userEmail, targetId);
+        } catch (Exception e) {
+            logger.error("Failed to log RBAC audit event: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Log RBAC operation errors.
+     */
+    @AfterThrowing(pointcut = "roleControllerMethods() || roleManagementControllerMethods()", throwing = "ex")
+    public void logRbacOperationError(JoinPoint joinPoint, Exception ex) {
+        try {
+            String action = "ERROR_" + extractAction(joinPoint);
+            String userEmail = getCurrentUserEmail();
+            String ip = getClientIpAddress(getCurrentRequest());
+            String targetType = extractTargetType(joinPoint);
+            String targetId = extractTargetId(joinPoint);
+            String beforeData = extractBeforeData(joinPoint);
+            String afterData = "ERROR: " + ex.getMessage();
+
+            saveRbacAuditLog(action, userEmail, ip, targetType, targetId, beforeData, afterData);
+
+            logger.error("RBAC Audit Error: {} {} by {} on {}", action, targetType, userEmail, targetId);
+        } catch (Exception e) {
+            logger.error("Failed to log RBAC audit error: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Extract action name from method name.
+     */
+    private String extractAction(JoinPoint joinPoint) {
+        String methodName = joinPoint.getSignature().getName();
+        return methodName.toUpperCase();
+    }
+
+    /**
+     * Extract target type from join point.
+     */
+    private String extractTargetType(JoinPoint joinPoint) {
+        String className = joinPoint.getTarget().getClass().getSimpleName();
+        if (className.contains("RoleController")) {
+            return "ROLE";
+        } else if (className.contains("RoleManagementController")) {
+            Object[] args = joinPoint.getArgs();
+            if (args.length > 0) {
+                // Check if it's a role assignment or permission rule operation
+                String firstArg = args[0] != null ? args[0].getClass().getSimpleName() : "";
+                if (firstArg.contains("PermissionRule")) {
+                    return "PERMISSION_RULE";
+                }
+            }
+            return "ROLE_ASSIGNMENT";
+        }
+        return "UNKNOWN";
+    }
+
+    /**
+     * Extract target ID from join point.
+     */
+    private String extractTargetId(JoinPoint joinPoint) {
+        Object[] args = joinPoint.getArgs();
+        for (Object arg : args) {
+            if (arg instanceof String && ((String) arg).contains("@")) {
+                // Email or role key
+                return (String) arg;
+            } else if (arg instanceof Long) {
+                // ID
+                return String.valueOf(arg);
+            } else if (arg instanceof Role) {
+                return String.valueOf(((Role) arg).getId());
+            }
+        }
+        return "UNKNOWN";
+    }
+
+    /**
+     * Extract before data from join point.
+     */
+    private String extractBeforeData(JoinPoint joinPoint) {
+        try {
+            Object[] args = joinPoint.getArgs();
+            for (Object arg : args) {
+                if (arg != null && !arg.getClass().isPrimitive() && !(arg instanceof String)) {
+                    return objectMapper.writeValueAsString(arg);
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to extract before data: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Extract after data from result.
+     */
+    private String extractAfterData(JoinPoint joinPoint, Object result) {
+        try {
+            if (result != null && !(result instanceof Void)) {
+                return objectMapper.writeValueAsString(result);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to extract after data: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Save RBAC-specific audit log.
+     */
+    private void saveRbacAuditLog(String action, String userEmail, String ip,
+                                   String targetType, String targetId,
+                                   String beforeData, String afterData) {
+        try {
+            AuditLog auditLog = AuditLog.builder()
+                    .action(action)
+                    .resourceType(targetType)
+                    .resourceId(targetId)
+                    .user(null) // TODO: Find user by email
+                    .oldValues(beforeData)
+                    .newValues(afterData)
+                    .createdAt(Instant.now())
+                    .ipAddress(ip)
+                    .userAgent("RBAC_AUDIT")
+                    .result("SUCCESS")
+                    .build();
+
+            auditLogRepository.save(auditLog);
+        } catch (Exception e) {
+            logger.error("Failed to save RBAC audit log: {}", e.getMessage());
+        }
+    }
+
+    /**
      * Get current HTTP request.
      */
     private HttpServletRequest getCurrentRequest() {
@@ -103,7 +268,7 @@ public class AuditLogAspect {
             ip = request.getHeader("X-Real-IP");
         }
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
+            ip = request != null ? request.getRemoteAddr() : "UNKNOWN";
         }
         return ip;
     }
@@ -116,29 +281,19 @@ public class AuditLogAspect {
         try {
             AuditLog auditLog = AuditLog.builder()
                     .action(method + " " + uri)
-                    .resourceType(extractResourceType(uri))
-                    .resourceId(extractResourceId(uri))
+                    .resource(uri)
+                    .user(null) // TODO: Find user by email
                     .createdAt(Instant.now())
                     .ipAddress(ip)
-                    .userAgent("k8s-manager")
-                    .result(status + " (" + duration + "ms)")
+                    .userAgent("AUDIT")
+                    .result(status)
+                    .oldValues(errorType)
+                    .newValues("Duration: " + duration + "ms")
                     .build();
 
             auditLogRepository.save(auditLog);
         } catch (Exception e) {
             logger.error("Failed to save audit log: {}", e.getMessage());
         }
-    }
-
-    private String extractResourceType(String uri) {
-        if (uri == null) return null;
-        String[] parts = uri.split("/");
-        return parts.length > 1 ? parts[1] : null;
-    }
-
-    private String extractResourceId(String uri) {
-        if (uri == null) return null;
-        String[] parts = uri.split("/");
-        return parts.length > 2 ? parts[2] : null;
     }
 }

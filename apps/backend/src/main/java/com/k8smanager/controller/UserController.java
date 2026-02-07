@@ -56,7 +56,7 @@ public class UserController {
                 user.getCreatedAt(),
                 user.getLastLoginAt(),
                 user.getUserRoles().stream()
-                        .map(userRole -> userRole.getRole().getName().name())
+                        .map(userRole -> userRole.getRole().getAuthorityName())
                         .collect(Collectors.toSet())
         );
 

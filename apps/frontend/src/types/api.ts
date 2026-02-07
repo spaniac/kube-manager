@@ -389,15 +389,20 @@ export interface AlertThreshold {
 }
 
 export interface Alert {
-  id: string;
-  name: string;
-  severity: 'critical' | 'warning' | 'info';
+  id: number;
+  metricType: string;
+  condition: string;
+  currentValue: number;
+  thresholdValue: number;
+  severity: string;
   message: string;
-  resourceType: string;
   resourceName: string;
   namespace: string;
-  triggeredAt: number;
-  resolvedAt?: number;
+  timestamp: string;
+  acknowledged: boolean;
+  acknowledgedAt?: string;
+  acknowledgedBy?: string;
+  source: string;
 }
 
 export interface AnomalyDetection {

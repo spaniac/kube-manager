@@ -1,0 +1,4 @@
+ALTER TABLE dashboards
+ADD COLUMN visibility VARCHAR(20) DEFAULT 'PRIVATE',
+ADD COLUMN share_token VARCHAR(255),
+ADD COLUMN refresh_interval_sec INTEGER DEFAULT 60;

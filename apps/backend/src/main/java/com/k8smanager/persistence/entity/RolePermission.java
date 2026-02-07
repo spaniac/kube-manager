@@ -36,6 +36,10 @@ public class RolePermission {
     @lombok.EqualsAndHashCode.Exclude
     private Permission permission;
 
+    public Permission getPermission() {
+        return permission;
+    }
+
     @Column(length = 255, nullable = true)
     private String namespace;
 

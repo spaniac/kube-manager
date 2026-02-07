@@ -18,9 +18,11 @@ import java.util.stream.Collectors;
 public class ClusterService {
 
     private final KubernetesClient kubernetesClient;
+    private final PrometheusQueryService prometheusQueryService;
 
-    public ClusterService(KubernetesClient kubernetesClient) {
+    public ClusterService(KubernetesClient kubernetesClient, PrometheusQueryService prometheusQueryService) {
         this.kubernetesClient = kubernetesClient;
+        this.prometheusQueryService = prometheusQueryService;
     }
 
     /**
@@ -174,32 +176,69 @@ public class ClusterService {
      * Get cluster metrics history.
      */
     public ClusterMetricsHistoryDTO getMetricsHistory(String metricType, long sinceTimestamp) {
-        // TODO: This logic simulates dynamic metrics based on time to provide realistic
-        // data for the UI.
-        // It SHOULD be replaced with actual Prometheus query integration in the future.
-        // The current implementation generates deterministic pseudo-random values based
-        // on the timestamp.
-        List<MetricPointDTO> metrics = new java.util.ArrayList<>();
         long now = Instant.now().toEpochMilli();
         long start = sinceTimestamp > 0 ? sinceTimestamp : now - 3600000; // Default 1 hour
-        long step = 60000; // 1 minute step
+        String range = rangeFromTimestamps(start, now);
+        String step = stepForRange(range);
 
-        for (long time = start; time <= now; time += step) {
-            // Generate pseudo-random value based on time to look realistic but
-            // deterministic
-            double baseValue = 50.0 + (Math.sin(time / 600000.0) * 20.0);
-            double noise = (Math.random() * 10.0) - 5.0;
-            metrics.add(new MetricPointDTO(Instant.ofEpochMilli(time), Math.max(0, baseValue + noise)));
+        Pod pod = selectReferencePod();
+        if (pod == null || pod.getMetadata() == null) {
+            return new ClusterMetricsHistoryDTO(metricType, List.of(), 0.0, 0.0, 0.0);
         }
 
-        List<MetricPointDTO> mockMetrics = metrics;
+        String namespace = pod.getMetadata().getNamespace();
+        String podName = pod.getMetadata().getName();
+        String query = prometheusQueryService.getMetricQuery(metricType, namespace, podName);
+        if (query == null) {
+            return new ClusterMetricsHistoryDTO(metricType, List.of(), 0.0, 0.0, 0.0);
+        }
+
+        PromQLQueryResultDTO result = prometheusQueryService.executeTimeSeriesQuery(range, step, query);
+        if (result.error() != null || result.data().isEmpty()) {
+            return new ClusterMetricsHistoryDTO(metricType, List.of(), 0.0, 0.0, 0.0);
+        }
+
+        List<MetricPointDTO> metrics = result.data();
 
         return new ClusterMetricsHistoryDTO(
                 metricType,
-                mockMetrics,
-                mockMetrics.stream().mapToDouble(MetricPointDTO::value).average().orElse(0.0),
-                mockMetrics.stream().mapToDouble(MetricPointDTO::value).max().orElse(0.0),
-                mockMetrics.stream().mapToDouble(MetricPointDTO::value).min().orElse(0.0));
+                metrics,
+                metrics.stream().mapToDouble(MetricPointDTO::value).average().orElse(0.0),
+                metrics.stream().mapToDouble(MetricPointDTO::value).max().orElse(0.0),
+                metrics.stream().mapToDouble(MetricPointDTO::value).min().orElse(0.0));
+    }
+
+    private Pod selectReferencePod() {
+        PodList pods = kubernetesClient.pods().inAnyNamespace().list();
+        return pods.getItems().stream()
+                .filter(pod -> pod.getStatus() != null && "Running".equals(pod.getStatus().getPhase()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private String rangeFromTimestamps(long start, long end) {
+        long seconds = Math.max((end - start) / 1000, 3600);
+        if (seconds <= 3600) {
+            return "1h";
+        }
+        if (seconds <= 21600) {
+            return "6h";
+        }
+        if (seconds <= 86400) {
+            return "24h";
+        }
+        if (seconds <= 604800) {
+            return "7d";
+        }
+        return "30d";
+    }
+
+    private String stepForRange(String range) {
+        return switch (range) {
+            case "1h", "6h" -> "60s";
+            case "24h" -> "600s";
+            default -> "900s";
+        };
     }
 
     /**

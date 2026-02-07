@@ -6,7 +6,7 @@
  * YAML validation error details
  */
 export interface YamlValidationError {
-  path: string;
+  path?: string;
   message: string;
   line?: number;
   column?: number;
@@ -60,8 +60,7 @@ export interface DiffLine {
  * Diff view data
  */
 export interface DiffData {
-  originalLines: DiffLine[];
-  modifiedLines: DiffLine[];
+  diffLines: DiffLine[];
   changesCount: number;
 }
 

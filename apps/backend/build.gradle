@@ -18,6 +18,9 @@ dependencies {
     // Fabric8 Kubernetes client
     implementation 'io.fabric8:kubernetes-client:6.9.1'
 
+    // YAML processing
+    implementation 'org.yaml:snakeyaml:2.2'
+
     // Micrometer Prometheus
     implementation 'io.micrometer:micrometer-registry-prometheus:1.12.5'
     implementation 'io.micrometer:micrometer-core:1.12.5'
@@ -28,7 +31,11 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
 
     // Database
+    implementation 'org.flywaydb:flyway-core:10.0.0'
     runtimeOnly 'org.postgresql:postgresql'
+
+    // Hibernate Types for JSONB
+    implementation 'com.vladmihalcea:hibernate-types-60:2.21.1'
 
     // Configuration processor
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
